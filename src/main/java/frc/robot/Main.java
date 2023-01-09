@@ -4,12 +4,13 @@
 
 package frc.robot;
 
+import claw.CLAWRuntime;
 import edu.wpi.first.wpilibj.RobotBase;
 
 public final class Main {
   private Main() {}
 
   public static void main(String... args) {
-    RobotBase.startRobot(Robot::new);
+    RobotBase.startRobot(CLAWRuntime.fromRobot(Robot::new));
   }
 }
