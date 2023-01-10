@@ -42,7 +42,7 @@ public class Vision extends SubsystemCLAW{
     
     //Return Pose3d of any AprilTags provided
     public AprilTagPoseEstimate estimateTag (AprilTagDetection tag) {
-        return estimator.estimateOrthogonalIteration(tag, 1);
+        return estimator.estimate(tag);
     }
 
     //Return Translation3d of any AprilTags provided

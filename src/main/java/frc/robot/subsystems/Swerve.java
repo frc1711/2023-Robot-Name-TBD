@@ -5,6 +5,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.wpilibj.DriverStation;
 
 import com.kauailabs.navx.frc.AHRS;
 
@@ -30,10 +31,10 @@ public class Swerve extends SubsystemCLAW {
   //TODO: Measure Swerve Module distances for Translations
   private Swerve() {
 	gyro = new AHRS();
-	flPosition = new Translation2d();
-	frPosition = new Translation2d();
-	rlPosition = new Translation2d();
-	rrPosition = new Translation2d();
+	flPosition = new Translation2d(0, 0);
+	frPosition = new Translation2d(0, 0);
+	rlPosition = new Translation2d(0, 0);
+	rrPosition = new Translation2d(0, 0);
 	kinematics = new SwerveDriveKinematics(flPosition, frPosition, rlPosition, rrPosition);
 	speed = new ChassisSpeeds();
 	modules = kinematics.toSwerveModuleStates(speed);

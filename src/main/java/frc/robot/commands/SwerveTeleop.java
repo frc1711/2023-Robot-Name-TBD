@@ -33,9 +33,9 @@ public class SwerveTeleop extends CommandBase {
   //TODO: Add safety features (safety brake, slow mode, etc)
   @Override
   public void execute() {
-    swerveDrive.drive(xInput.getAsDouble()
-                      , yInput.getAsDouble()
-                      , theta.getAsDouble());
+    swerveDrive.drive(xInput.getAsDouble(),
+                      yInput.getAsDouble(),
+                      theta.getAsDouble());
   }
 
   @Override
