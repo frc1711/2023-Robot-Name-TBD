@@ -10,7 +10,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 
 public final class Autos {
   public static CommandBase exampleAuto(Swerve subsystem) {
-    return Commands.sequence(subsystem.exampleMethodCommand(), new ExampleCommand(subsystem));
+    return Commands.sequence(subsystem.exampleMethodCommand(), new SwerveTeleop(subsystem));
   }
 
   private Autos() {

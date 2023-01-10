@@ -5,16 +5,14 @@
 package frc.robot;
 
 import frc.robot.IDMap.OperatorConstants;
-import frc.robot.commands.Autos;
-import frc.robot.commands.ExampleCommand;
+import frc.robot.commands.SwerveTeleop;
 import frc.robot.subsystems.Swerve;
-import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
 public class RobotContainer {
 
-  private final Swerve exampleSubsystem = new Swerve();
+  private final Swerve swerveDrive = Swerve.getInstance();
 
   private final CommandXboxController driverController =
       new CommandXboxController(OperatorConstants.kDriverControllerPort);
@@ -26,13 +24,12 @@ public class RobotContainer {
 
   private void configureBindings() {
 
-    new Trigger(exampleSubsystem::exampleCondition)
-        .onTrue(new ExampleCommand(exampleSubsystem));
-
-    driverController.b().whileTrue(exampleSubsystem.exampleMethodCommand());
+    new Trigger(swerveDrive::canStartTeleop)
+        .onTrue(new SwerveTeleop(swerveDrive, 
+                                  () -> driverController.getLeftX(),
+                                  () -> driverController.getLeftY(),
+                                  () -> driverController.getRightX()));
   }
 
-  public Command getAutonomousCommand() {
-    return Autos.exampleAuto(exampleSubsystem);
-  }
+  // public Command getAutonomousCommand() {}
 }

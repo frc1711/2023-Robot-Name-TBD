@@ -12,14 +12,14 @@ import claw.subsystems.SubsystemCLAW;
 
 // Extends SubsystemCLAW instead of SubsystemBase
 public class Swerve extends SubsystemCLAW {
- private static Swerve swerveInstance;
+  private static Swerve swerveInstance;
 
-	public static Swerve getInstance() {
-		if (swerveInstance == null) swerveInstance = new Swerve();
-		return swerveInstance;
-	}
-
-	AHRS gyro;
+  public static Swerve getInstance() {
+    if (swerveInstance == null) swerveInstance = new Swerve();
+    return swerveInstance;
+  }
+  
+  AHRS gyro;
 
 	private final Translation2d flPosition, frPosition, rlPosition, rrPosition;
 	public final SwerveDriveKinematics kinematics;
@@ -28,7 +28,7 @@ public class Swerve extends SubsystemCLAW {
   
   //Create an array of the SwerveModuleStates using SwerveDriveKinematics and an empty instance of ChassisSpeeds
   //TODO: Measure Swerve Module distances for Translations
-  public Swerve() {
+  private Swerve() {
 	gyro = new AHRS();
 	flPosition = new Translation2d();
 	frPosition = new Translation2d();
@@ -53,14 +53,14 @@ public class Swerve extends SubsystemCLAW {
 	modules[2] = SwerveModuleState.optimize(targetStates[2], swerveInstance.getAngle(swerveInstance.modules[2]));
 	modules[3] = SwerveModuleState.optimize(targetStates[3], swerveInstance.getAngle(swerveInstance.modules[3]));
   }
-  
+
   public void stop () {
 	speed = new ChassisSpeeds();
   }
 
-  public boolean exampleCondition() {
-
-    return false;
+  public boolean canStartTeleop() {
+    if (DriverStation.isTeleopEnabled()) return true;
+    else return false;
   }
 
   @Override
