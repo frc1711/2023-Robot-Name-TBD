@@ -25,7 +25,9 @@ public class Swerve extends SubsystemCLAW {
 	public final SwerveDriveKinematics kinematics;
 	public SwerveModuleState[] modules;
 	public ChassisSpeeds speed;
-
+  
+  //Create an array of the SwerveModuleStates using SwerveDriveKinematics and an empty instance of ChassisSpeeds
+  //TODO: Measure Swerve Module distances for Translations
   public Swerve() {
 	gyro = new AHRS();
 	flPosition = new Translation2d();
@@ -37,10 +39,12 @@ public class Swerve extends SubsystemCLAW {
 	modules = kinematics.toSwerveModuleStates(speed);
   }
 
+  //return angle of a singular swerve module
   public Rotation2d getAngle (SwerveModuleState swerveModule) {
 	return swerveModule.angle;
   }
-
+  /*Create a new instance of ChassisSpeeds using directional inputs, then use kinematics 
+  to make an array of SwerveModuleStates which represent the target speed*/
   public void drive(double xInput, double yInput, double theta) {
 	ChassisSpeeds targetSpeeds = new ChassisSpeeds(xInput, yInput, theta);
 	SwerveModuleState[] targetStates = swerveInstance.kinematics.toSwerveModuleStates(targetSpeeds);
@@ -49,6 +53,7 @@ public class Swerve extends SubsystemCLAW {
 	modules[2] = SwerveModuleState.optimize(targetStates[2], swerveInstance.getAngle(swerveInstance.modules[2]));
 	modules[3] = SwerveModuleState.optimize(targetStates[3], swerveInstance.getAngle(swerveInstance.modules[3]));
   }
+  
   public void stop () {
 	speed = new ChassisSpeeds();
   }
