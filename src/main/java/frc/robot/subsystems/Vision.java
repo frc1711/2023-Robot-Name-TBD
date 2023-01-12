@@ -6,7 +6,6 @@ import org.opencv.videoio.VideoCapture;
 import claw.subsystems.SubsystemCLAW;
 import edu.wpi.first.apriltag.AprilTagDetection;
 import edu.wpi.first.apriltag.AprilTagDetector;
-import edu.wpi.first.apriltag.AprilTagPoseEstimate;
 import edu.wpi.first.apriltag.AprilTagPoseEstimator;
 import edu.wpi.first.math.geometry.Transform3d;
 
@@ -41,7 +40,7 @@ public class Vision extends SubsystemCLAW{
     }
     
     //Return Pose3d of any AprilTags provided
-    public AprilTagPoseEstimate estimateTag (AprilTagDetection tag) {
+    public Transform3d estimateTag (AprilTagDetection tag) {
         return estimator.estimate(tag);
     }
 

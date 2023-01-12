@@ -5,20 +5,27 @@
 package frc.robot;
 
 import frc.robot.IDMap.OperatorConstants;
+import frc.robot.commands.AprilTags;
 import frc.robot.commands.SwerveTeleop;
 import frc.robot.subsystems.Swerve;
+import frc.robot.subsystems.Vision;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
 public class RobotContainer {
 
   private final Swerve swerveDrive = Swerve.getInstance();
+  private final Vision vision = Vision.getInstance();
 
   private final CommandXboxController driverController =
       new CommandXboxController(OperatorConstants.kDriverControllerPort);
 
+  
   public RobotContainer() {
     configureBindings();
+    
   }
 
 
@@ -31,5 +38,7 @@ public class RobotContainer {
                                   () -> driverController.getRightX()));
   }
 
-  // public Command getAutonomousCommand() {}
+  public Command getAutonomousCommand() {
+    return new SequentialCommandGroup(new AprilTags(swerveDrive, vision));
+  }
 }
