@@ -4,35 +4,20 @@
 
 package frc.robot;
 
-import frc.robot.IDMap.OperatorConstants;
-import frc.robot.commands.Autos;
-import frc.robot.commands.ExampleCommand;
-import frc.robot.subsystems.Swerve;
+import frc.robot.subsystems.swerve.Swerve;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
 
 public class RobotContainer {
-
-  private final Swerve exampleSubsystem = new Swerve();
-
-  private final CommandXboxController driverController =
-      new CommandXboxController(OperatorConstants.kDriverControllerPort);
-
-  public RobotContainer() {
-    configureBindings();
-  }
-
-
-  private void configureBindings() {
-
-    new Trigger(exampleSubsystem::exampleCondition)
-        .onTrue(new ExampleCommand(exampleSubsystem));
-
-    driverController.b().whileTrue(exampleSubsystem.exampleMethodCommand());
-  }
-
-  public Command getAutonomousCommand() {
-    return Autos.exampleAuto(exampleSubsystem);
-  }
+    
+    private final Swerve swerveSubsystem = new Swerve();
+    
+    public RobotContainer () {
+        
+    }
+    
+    public Command getAutonomousCommand () {
+        // This can return null to not run a command
+        return null;
+    }
+    
 }

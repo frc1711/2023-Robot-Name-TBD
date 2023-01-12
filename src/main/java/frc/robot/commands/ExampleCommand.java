@@ -4,8 +4,8 @@
 
 package frc.robot.commands;
 
-import frc.robot.subsystems.Swerve;
 import edu.wpi.first.wpilibj2.command.CommandBase;
+import frc.robot.subsystems.swerve.Swerve;
 
 public class ExampleCommand extends CommandBase {
   @SuppressWarnings({"PMD.UnusedPrivateField", "PMD.SingularField"})
