@@ -11,6 +11,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.util.sendable.SendableBuilder;
 import frc.robot.IDMap;
 
 public class Swerve extends SubsystemCLAW {
@@ -81,6 +82,16 @@ public class Swerve extends SubsystemCLAW {
     }
     
     /**
+     * Zero all steer encoders and save their offsets.
+     */
+    public void zeroModules () {
+        flModule.zeroSteerEncoder();
+        frModule.zeroSteerEncoder();
+        rlModule.zeroSteerEncoder();
+        rrModule.zeroSteerEncoder();
+    }
+    
+    /**
      * Zeroes the gyro's yaw so that field-relative robot driving will see the current robot position as the
      * "starting orientation".
      */
@@ -96,6 +107,22 @@ public class Swerve extends SubsystemCLAW {
         frModule.stop();
         rlModule.stop();
         rrModule.stop();
+    }
+    
+    @Override
+    public void initSendable (SendableBuilder builder) {
+        super.initSendable(builder);
+        
+        addModule("front left",     flModule, builder);
+        addModule("front right",    frModule, builder);
+        addModule("rear left",      rlModule, builder);
+        addModule("rear right",     rrModule, builder);
+    }
+    
+    private void addModule (String moduleName, SwerveModule module, SendableBuilder builder) {
+        String prefix = moduleName + " ";
+        builder.addDoubleProperty(prefix + "drive voltage: ",   module::getDriveVoltage, null);
+        builder.addDoubleProperty(prefix + "rotation: ",        () -> module.getRotation().getDegrees(), null);
     }
     
 }

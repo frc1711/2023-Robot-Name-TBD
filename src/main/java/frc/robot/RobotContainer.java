@@ -6,7 +6,9 @@ package frc.robot;
 
 import frc.robot.commands.DriveCommand;
 import frc.robot.subsystems.swerve.Swerve;
+import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj2.command.Command;
 
 public class RobotContainer {
@@ -22,7 +24,12 @@ public class RobotContainer {
         driveController::getRightX);
     
     public RobotContainer () {
+        putSendable("Swerve Subsystem", swerveSubsystem);
         swerveSubsystem.setDefaultCommand(driveCommand);
+    }
+    
+    public static void putSendable (String title, Sendable sendable) {
+        Shuffleboard.getTab("Testing").add(title, sendable);
     }
     
     public Command getAutonomousCommand () {

@@ -26,6 +26,7 @@ class SwerveModule {
     
     private final CANSparkMax driveMotor, steerMotor;
     private final ResettableEncoder steerEncoder;
+    private double lastDriveVoltage = 0;
     
     /**
      * 1 unit input for this PID controller is a full 360 deg rotation.
@@ -54,6 +55,7 @@ class SwerveModule {
     
     private void updateDriveMotor (double desiredSpeedMetersPerSec) {
         double voltsOutput = METERS_PER_SEC_TO_DRIVE_VOLTS * desiredSpeedMetersPerSec;
+        lastDriveVoltage = voltsOutput;
         driveMotor.setVoltage(voltsOutput);
     }
     
@@ -71,8 +73,24 @@ class SwerveModule {
      * Stop all motor controllers assigned to this {@link SwerveModule}.
      */
     public void stop () {
+        lastDriveVoltage = 0;
         driveMotor.stopMotor();
         steerMotor.stopMotor();
+    }
+    
+    /**
+     * Zero the steer encoder and save its offset to the encoder.
+     */
+    public void zeroSteerEncoder () {
+        steerEncoder.zeroRotation();
+    }
+    
+    public double getDriveVoltage () {
+        return lastDriveVoltage;
+    }
+    
+    public Rotation2d getRotation () {
+        return steerEncoder.getRotation();
     }
     
 }

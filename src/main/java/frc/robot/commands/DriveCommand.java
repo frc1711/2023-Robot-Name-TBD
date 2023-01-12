@@ -4,6 +4,8 @@ import java.util.function.DoubleSupplier;
 
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.CommandBase;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
+import frc.robot.RobotContainer;
 import frc.robot.subsystems.swerve.Swerve;
 
 public class DriveCommand extends CommandBase {
@@ -17,6 +19,10 @@ public class DriveCommand extends CommandBase {
         this.strafeYAxis = strafeYAxis;
         this.rotateAxis = rotateAxis;
         addRequirements(swerve);
+        
+        // Add functionality which isn't button-bound to the shuffleboard
+        RobotContainer.putSendable("Zero Swerve Modules", new InstantCommand(() -> swerve.zeroModules(), swerve));
+        RobotContainer.putSendable("Zero Gyro", new InstantCommand(() -> swerve.zeroGyro(), swerve));
     }
     
     @Override
@@ -26,7 +32,7 @@ public class DriveCommand extends CommandBase {
     
     @Override
     public void execute () {
-        // TODO: Tuning this will also involve implementing CLAW HID interfaces (as they are being created)
+        // TODO: Tuning these speeds will also involve implementing CLAW HID interfaces (as they are being created)
         
         // Robot orientation and ChassisSpeeds is based on the idea that +x is the front of the robot,
         // +y is the left side of the robot, etc.
