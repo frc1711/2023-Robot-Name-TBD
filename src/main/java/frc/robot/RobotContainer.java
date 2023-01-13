@@ -10,35 +10,32 @@ import frc.robot.commands.SwerveTeleop;
 import frc.robot.subsystems.Swerve;
 import frc.robot.subsystems.Vision;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
 public class RobotContainer {
 
+  // private final Vision vision = Vision.getInstance();
   private final Swerve swerveDrive = Swerve.getInstance();
   private final Vision vision = Vision.getInstance();
 
   private final CommandXboxController driverController =
       new CommandXboxController(OperatorConstants.kDriverControllerPort);
 
-  
   public RobotContainer() {
     configureBindings();
-    
   }
 
-
+  
   private void configureBindings() {
-
-    new Trigger(swerveDrive::canStartTeleop)
-        .onTrue(new SwerveTeleop(swerveDrive, 
-                                  () -> driverController.getLeftX(),
-                                  () -> driverController.getLeftY(),
-                                  () -> driverController.getRightX()));
+   new Trigger(swerveDrive::canStartTeleop)
+       .onTrue(new SwerveTeleop(swerveDrive, 
+           () -> driverController.getLeftX(), 
+           () -> driverController.getLeftY(), 
+           () -> driverController.getRightX()));
   }
 
   public Command getAutonomousCommand() {
-    return new SequentialCommandGroup(new AprilTags(swerveDrive, vision));
+    return new AprilTags(swerveDrive, vision);
   }
 }

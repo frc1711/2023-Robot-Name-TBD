@@ -33,6 +33,7 @@ public class AprilTags extends CommandBase {
   @Override
   public void initialize() {
     swerveDrive.stop();
+    vision.start();
   }
 
   @Override
@@ -44,6 +45,7 @@ public class AprilTags extends CommandBase {
   @Override
   public void end(boolean interrupted) {
     swerveDrive.stop();
+    vision.stop();
   }
 
   @Override

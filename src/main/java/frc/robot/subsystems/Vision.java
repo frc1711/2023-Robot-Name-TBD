@@ -49,6 +49,14 @@ public class Vision extends SubsystemCLAW{
         return estimator.estimate(detection);
     }
 
+    public void start () {
+        usbCamera.open(0);
+    }
+
+    public void stop () {
+        usbCamera.release();
+    }
+
   @Override
   public void periodic() {}
 }
