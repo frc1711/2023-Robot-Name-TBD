@@ -30,12 +30,14 @@ public class AprilTags extends CommandBase {
     swerveDrive.drive(transform.getX(), transform.getY(), transform.getRotation().getAngle());
   }
 
+  // Check if any cameras have been activated, if true, continue normally, if false start a new camera
   @Override
   public void initialize() {
     swerveDrive.stop();
-    vision.start();
+    if (!vision.isStart()) vision.start();
   }
 
+  // Search for AprilTags on the camera. If any are found, drive toward them
   @Override
   public void execute() {
     AprilTagDetection detection = vision.detectAprilTags();

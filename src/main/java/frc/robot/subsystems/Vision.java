@@ -29,7 +29,7 @@ public class Vision extends SubsystemCLAW{
         mat = new Mat();
     }
 
-    //Use Mat images from the USB camera to scan for AprilTags
+    //Use Mat images from the USB camera to scan for AprilTags and store their locations
     public AprilTagDetection detectAprilTags () {
         AprilTagDetection[] detectionArray;
         if (usbCamera.retrieve(mat) == true) {
@@ -47,6 +47,10 @@ public class Vision extends SubsystemCLAW{
     //Return Translation3d of any AprilTags provided
     public Transform3d getTagDistance (AprilTagDetection detection) {
         return estimator.estimate(detection);
+    }
+
+    public boolean isStart () {
+        return usbCamera.isOpened();
     }
 
     public void start () {
