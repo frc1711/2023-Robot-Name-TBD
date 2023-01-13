@@ -34,18 +34,22 @@ public class Swerve extends SubsystemCLAW {
     
     private final SwerveModule
         flModule = new SwerveModule(
+            "FrontLeft",
             IDMap.FRONT_LEFT_MODULE_DRIVE_SPARK_ID,
             IDMap.FRONT_LEFT_MODULE_STEER_SPARK_ID,
             IDMap.FRONT_LEFT_MODULE_STEER_CANCODER_ID),
         frModule = new SwerveModule(
+            "FrontRight",
             IDMap.FRONT_RIGHT_MODULE_DRIVE_SPARK_ID,
             IDMap.FRONT_RIGHT_MODULE_STEER_SPARK_ID,
             IDMap.FRONT_RIGHT_MODULE_STEER_CANCODER_ID),
         rlModule = new SwerveModule(
+            "RearLeft",
             IDMap.REAR_LEFT_MODULE_DRIVE_SPARK_ID,
             IDMap.REAR_LEFT_MODULE_STEER_SPARK_ID,
             IDMap.REAR_LEFT_MODULE_STEER_CANCODER_ID),
         rrModule = new SwerveModule(
+            "RearRight",
             IDMap.REAR_RIGHT_MODULE_DRIVE_SPARK_ID,
             IDMap.REAR_RIGHT_MODULE_STEER_SPARK_ID,
             IDMap.REAR_RIGHT_MODULE_STEER_CANCODER_ID);
@@ -111,7 +115,7 @@ public class Swerve extends SubsystemCLAW {
     
     @Override
     public void initSendable (SendableBuilder builder) {
-        super.initSendable(builder);
+        // super.initSendable(builder);
         
         addModule("front left",     flModule, builder);
         addModule("front right",    frModule, builder);

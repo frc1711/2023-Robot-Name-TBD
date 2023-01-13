@@ -37,12 +37,13 @@ public class DriveCommand extends CommandBase {
         // Robot orientation and ChassisSpeeds is based on the idea that +x is the front of the robot,
         // +y is the left side of the robot, etc.
         // Axes, of course, do not work like this
-        double xSpeed = -strafeYAxis.getAsDouble();
-        double ySpeed = strafeXAxis.getAsDouble();
-        double rotateSpeed = rotateAxis.getAsDouble();
+        double xSpeed = -strafeYAxis.getAsDouble() * 3;
+        double ySpeed = strafeXAxis.getAsDouble() * 3;
+        double rotateSpeed = rotateAxis.getAsDouble() * 5;
         
         // Perform field-relative robot movement
-        swerve.moveFieldRelative(new ChassisSpeeds(xSpeed, ySpeed, rotateSpeed));
+        // swerve.moveFieldRelative(new ChassisSpeeds(xSpeed, ySpeed, rotateSpeed));
+        swerve.moveRobotRelative(new ChassisSpeeds(1, 0, 0));
     }
     
     @Override
