@@ -20,7 +20,7 @@ public class Vision extends SubsystemCLAW{
 
     //TODO: Properly implement Limelight
     private VideoCapture usbCamera;
-    private final Mat mat;
+    private Mat mat;
     private AprilTagDetector detector;
     private AprilTagPoseEstimator estimator;
 
@@ -32,7 +32,7 @@ public class Vision extends SubsystemCLAW{
     //Use Mat images from the USB camera to scan for AprilTags and store their locations
     public AprilTagDetection detectAprilTags () {
         AprilTagDetection[] detectionArray;
-        if (usbCamera.retrieve(mat) == true) {
+        if (usbCamera.read(mat) == true) {
             detectionArray = detector.detect(mat);
             return detectionArray[0];
         }
