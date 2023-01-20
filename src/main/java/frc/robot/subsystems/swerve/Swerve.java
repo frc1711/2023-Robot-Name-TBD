@@ -6,12 +6,11 @@ package frc.robot.subsystems.swerve;
 
 import com.kauailabs.navx.frc.AHRS;
 
-import claw.subsystems.SubsystemCLAW;
+import claw.api.subsystems.SubsystemCLAW;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.util.sendable.SendableBuilder;
 import frc.robot.IDMap;
 
 public class Swerve extends SubsystemCLAW {
@@ -34,22 +33,22 @@ public class Swerve extends SubsystemCLAW {
     
     private final SwerveModule
         flModule = new SwerveModule(
-            "FrontLeft",
+            "frontLeft",
             IDMap.FRONT_LEFT_MODULE_DRIVE_SPARK_ID,
             IDMap.FRONT_LEFT_MODULE_STEER_SPARK_ID,
             IDMap.FRONT_LEFT_MODULE_STEER_CANCODER_ID),
         frModule = new SwerveModule(
-            "FrontRight",
+            "frontRight",
             IDMap.FRONT_RIGHT_MODULE_DRIVE_SPARK_ID,
             IDMap.FRONT_RIGHT_MODULE_STEER_SPARK_ID,
             IDMap.FRONT_RIGHT_MODULE_STEER_CANCODER_ID),
         rlModule = new SwerveModule(
-            "RearLeft",
+            "rearLeft",
             IDMap.REAR_LEFT_MODULE_DRIVE_SPARK_ID,
             IDMap.REAR_LEFT_MODULE_STEER_SPARK_ID,
             IDMap.REAR_LEFT_MODULE_STEER_CANCODER_ID),
         rrModule = new SwerveModule(
-            "RearRight",
+            "rearRight",
             IDMap.REAR_RIGHT_MODULE_DRIVE_SPARK_ID,
             IDMap.REAR_RIGHT_MODULE_STEER_SPARK_ID,
             IDMap.REAR_RIGHT_MODULE_STEER_CANCODER_ID);
@@ -111,22 +110,6 @@ public class Swerve extends SubsystemCLAW {
         frModule.stop();
         rlModule.stop();
         rrModule.stop();
-    }
-    
-    @Override
-    public void initSendable (SendableBuilder builder) {
-        // super.initSendable(builder);
-        
-        addModule("front left",     flModule, builder);
-        addModule("front right",    frModule, builder);
-        addModule("rear left",      rlModule, builder);
-        addModule("rear right",     rrModule, builder);
-    }
-    
-    private void addModule (String moduleName, SwerveModule module, SendableBuilder builder) {
-        String prefix = moduleName + " ";
-        builder.addDoubleProperty(prefix + "drive voltage: ",   module::getDriveVoltage, null);
-        builder.addDoubleProperty(prefix + "rotation: ",        () -> module.getRotation().getDegrees(), null);
     }
     
 }

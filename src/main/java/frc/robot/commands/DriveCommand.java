@@ -2,13 +2,21 @@ package frc.robot.commands;
 
 import java.util.function.DoubleSupplier;
 
+import claw.api.CLAWLogger;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import frc.robot.RobotContainer;
+import frc.robot.commands.InputCurve.Input2D;
 import frc.robot.subsystems.swerve.Swerve;
 
 public class DriveCommand extends CommandBase {
+    
+    private static final CLAWLogger LOG = CLAWLogger.getLogger("commands.drive");
+    
+    private static final InputCurve
+        ROTATE_CURVE = InputCurve.THREE_HALVES_CURVE.withDeadband(0.14),
+        STRAFE_CURVE = InputCurve.THREE_HALVES_CURVE.withDeadband(0.14);
     
     private final Swerve swerve;
     private final DoubleSupplier strafeXAxis, strafeYAxis, rotateAxis;
@@ -32,18 +40,26 @@ public class DriveCommand extends CommandBase {
     
     @Override
     public void execute () {
-        // TODO: Tuning these speeds will also involve implementing CLAW HID interfaces (as they are being created)
+        
+        // Apply the input curves
+        Input2D strafeInputRaw = new Input2D(strafeXAxis.getAsDouble(), strafeYAxis.getAsDouble());
+        double rotateInputRaw = rotateAxis.getAsDouble();
+        
+        Input2D strafeSpeeds = InputCurve.apply(STRAFE_CURVE, strafeInputRaw).scale(3);
+        double rotateSpeed = InputCurve.apply(ROTATE_CURVE, rotateInputRaw) * 5;
+        
+        LOG.sublog("input").sublog("strafe").sublog("x").out(strafeInputRaw.x()+"");
+        LOG.sublog("input").sublog("strafe").sublog("y").out(strafeInputRaw.y()+"");
+        LOG.sublog("input").sublog("rotate").out(rotateInputRaw+"");
+        
+        LOG.sublog("inputAdj").sublog("strafe").sublog("x").out(strafeSpeeds.x()+"");
+        LOG.sublog("inputAdj").sublog("strafe").sublog("y").out(strafeSpeeds.y()+"");
+        LOG.sublog("inputAdj").sublog("rotate").out(rotateSpeed+"");
         
         // Robot orientation and ChassisSpeeds is based on the idea that +x is the front of the robot,
         // +y is the left side of the robot, etc.
         // Axes, of course, do not work like this
-        double xSpeed = -strafeYAxis.getAsDouble() * 3;
-        double ySpeed = strafeXAxis.getAsDouble() * 3;
-        double rotateSpeed = rotateAxis.getAsDouble() * 5;
-        
-        // Perform field-relative robot movement
-        // swerve.moveFieldRelative(new ChassisSpeeds(xSpeed, ySpeed, rotateSpeed));
-        swerve.moveRobotRelative(new ChassisSpeeds(1, 0, 0));
+        swerve.moveRobotRelative(new ChassisSpeeds(-strafeSpeeds.y(), strafeSpeeds.x(), rotateSpeed));
     }
     
     @Override

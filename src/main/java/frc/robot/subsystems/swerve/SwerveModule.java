@@ -4,9 +4,8 @@ import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
-import claw.logs.LogHandler;
-import claw.logs.RCTLog;
-import edu.wpi.first.math.controller.PIDController;
+import claw.api.CLAWLogger;
+import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.RobotController;
@@ -15,8 +14,7 @@ class SwerveModule {
     
     // TODO: Calculate this value
     private static final double
-        METERS_PER_SEC_TO_DRIVE_VOLTS = 1,
-        LOWER_STEER_VOLTAGE_LIMIT = 1;
+        METERS_PER_SEC_TO_DRIVE_VOLTS = 1;
     
     public static double getMaxDriveSpeedMetersPerSec () {
         return RobotController.getBatteryVoltage() / METERS_PER_SEC_TO_DRIVE_VOLTS;
@@ -28,25 +26,27 @@ class SwerveModule {
         return motor;
     }
     
-    private final RCTLog logger;
+    private final CLAWLogger log;
     private final CANSparkMax driveMotor, steerMotor;
     private final ResettableEncoder steerEncoder;
+    private final SimpleMotorFeedforward steerFeedForward = new SimpleMotorFeedforward(0.12, 1);
     private double lastDriveVoltage = 0;
     
     /**
      * 1 unit input for this PID controller is a full 360 deg rotation.
      * 1 unit output for this PID controller is one volt applied to the steer motor.
      */
-    // TODO: Tune this PID
-    private final PIDController steerPID = new PIDController(0.8, 0, 0);
+    private final RotationalPID steerPID;
     
     public SwerveModule (String modName, int driveSparkId, int steerSparkId, int steerCANCoderId) {
-        logger = LogHandler.getInstance().getLog("SwerveModule:"+modName);
+        log = CLAWLogger.getLogger("subsystems.swerve."+modName);
+        steerPID = new RotationalPID("subsystems.swerve."+modName+".pid", 0.7/90, 0, 0, 6);
         
         driveMotor = initializeMotor(driveSparkId);
         steerMotor = initializeMotor(steerSparkId);
         
-        steerEncoder = new ResettableEncoder(steerCANCoderId);
+        steerEncoder = new ResettableEncoder("subsystems.swerve."+modName+".encoder", steerCANCoderId);
+        steerEncoder.setInverted(true);
     }
     
     /**
@@ -55,8 +55,13 @@ class SwerveModule {
      * @param desiredState The desired {@link SwerveModuleState}.
      */
     public void update (SwerveModuleState desiredState) {
-        SwerveModuleState optimizedDesiredState = SwerveModuleState.optimize(desiredState, steerEncoder.getRotation());
+        SwerveModuleState optimizedDesiredState = SwerveModuleState.optimize(desiredState, getRotation());
+        
+        log.sublog("drive.Desired").out(desiredState.speedMetersPerSecond+" m/s");
         updateDriveMotor(optimizedDesiredState.speedMetersPerSecond);
+        
+        log.sublog("steer.Rotation").out(round(getRotation().getDegrees()) + " deg");
+        log.sublog("steer.Desired").out(round(desiredState.angle.getDegrees()) + " deg");
         updateSteerMotor(optimizedDesiredState.angle);
     }
     
@@ -64,23 +69,17 @@ class SwerveModule {
         double voltsOutput = METERS_PER_SEC_TO_DRIVE_VOLTS * desiredSpeedMetersPerSec;
         lastDriveVoltage = voltsOutput;
         driveMotor.setVoltage(voltsOutput);
+        log.sublog("drive.Voltage").out(voltsOutput+" V");
+    }
+    
+    private double round (double value) {
+        return Math.round(value * 100) / 100.;
     }
     
     private void updateSteerMotor (Rotation2d desiredRotation) {
-        // Measured in full, 360 degree rotations
-        double measuredAngle = steerEncoder.getRotation().getRotations();
-        double setAngle = desiredRotation.getRotations();
+        double voltsOutput = steerFeedForward.calculate(steerPID.calculate(getRotation(), desiredRotation));
         
-        // Steer PID calculates volts to apply to the steer motor
-        double voltsOutput = steerPID.calculate(measuredAngle, setAngle);
-        
-        logger.out("Desired:  " + desiredRotation.getDegrees());
-        logger.out("Measured: " + getRotation().getDegrees());
-        
-        voltsOutput = Math.abs(voltsOutput) >= LOWER_STEER_VOLTAGE_LIMIT
-            ? voltsOutput
-            : 0;
-        
+        log.sublog("steer.Voltage").out(voltsOutput + " V");
         steerMotor.setVoltage(voltsOutput);
     }
     
