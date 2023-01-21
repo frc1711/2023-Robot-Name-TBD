@@ -16,6 +16,9 @@ class SwerveModule {
     private static final double
         METERS_PER_SEC_TO_DRIVE_VOLTS = 1;
     
+    private static final SimpleMotorFeedforward STEER_FEEDFORWARD = new SimpleMotorFeedforward(0.14, 1);
+    private static final SimpleMotorFeedforward DRIVE_FEEDFORWARD = new SimpleMotorFeedforward(0.2, 1);
+    
     public static double getMaxDriveSpeedMetersPerSec () {
         return RobotController.getBatteryVoltage() / METERS_PER_SEC_TO_DRIVE_VOLTS;
     }
@@ -29,7 +32,6 @@ class SwerveModule {
     private final CLAWLogger log;
     private final CANSparkMax driveMotor, steerMotor;
     private final ResettableEncoder steerEncoder;
-    private final SimpleMotorFeedforward steerFeedForward = new SimpleMotorFeedforward(0.12, 1);
     private double lastDriveVoltage = 0;
     
     /**
@@ -70,7 +72,7 @@ class SwerveModule {
     }
     
     private void updateDriveMotor (double desiredSpeedMetersPerSec) {
-        double voltsOutput = METERS_PER_SEC_TO_DRIVE_VOLTS * desiredSpeedMetersPerSec;
+        double voltsOutput = DRIVE_FEEDFORWARD.calculate(METERS_PER_SEC_TO_DRIVE_VOLTS * desiredSpeedMetersPerSec);
         lastDriveVoltage = voltsOutput;
         driveMotor.setVoltage(voltsOutput);
         log.sublog("drive.Voltage").out(voltsOutput+" V");
@@ -81,7 +83,7 @@ class SwerveModule {
     }
     
     private void updateSteerMotor (Rotation2d desiredRotation) {
-        double voltsOutput = steerFeedForward.calculate(steerPID.calculate(getRotation(), desiredRotation));
+        double voltsOutput = STEER_FEEDFORWARD.calculate(steerPID.calculate(getRotation(), desiredRotation));
         
         log.sublog("steer.Voltage").out(voltsOutput + " V");
         steerMotor.setVoltage(voltsOutput);

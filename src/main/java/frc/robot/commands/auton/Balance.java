@@ -1,7 +1,7 @@
 package frc.robot.commands.auton;
 
 import claw.api.CLAWLogger;
-import edu.wpi.first.math.controller.SimpleMotorFeedforward;
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.commands.InputCurve;
@@ -10,12 +10,17 @@ import frc.robot.subsystems.swerve.Swerve;
 public class Balance extends CommandBase {
     
     private static final CLAWLogger LOG = CLAWLogger.getLogger("commands.balance");
+    
     private final Swerve swerve;
     private double startGyroYaw;
+    
+    private final PIDController drivePID = new PIDController(0.04, 0, 0.008);
     
     public Balance (Swerve swerve) {
         this.swerve = swerve;
         addRequirements(swerve);
+        
+        drivePID.setTolerance(1);
     }
     
     @Override
@@ -29,7 +34,7 @@ public class Balance extends CommandBase {
     public void execute () {
         LOG.sublog("pitch").out(swerve.getRobotPitch()+"");
         
-        double driveSpeed = getDriveSpeed(swerve.getRobotPitch());
+        double driveSpeed = -drivePID.calculate(swerve.getRobotPitch(), 0);
         LOG.sublog("driveSpeed").out(driveSpeed+"");
         
         LOG.sublog("yaw").out(swerve.getRobotYaw()+"");
@@ -41,16 +46,6 @@ public class Balance extends CommandBase {
         LOG.sublog("turnCorrection").out(turnCorrection+"");
         
         swerve.moveRobotRelative(new ChassisSpeeds(driveSpeed, 0, turnCorrection));
-    }
-    
-    private static final SimpleMotorFeedforward driveFeedforward = new SimpleMotorFeedforward(0.25, 1);
-    
-    private static final InputCurve speedCurve = ((InputCurve)((double input) -> Math.pow(input, 3.5))).withDeadband(1./14.);
-    
-    private static double getDriveSpeed (double pitch) {
-        double inputAngleVal = pitch / 14;
-        double appliedValue = InputCurve.apply(speedCurve, inputAngleVal) * 1.;
-        return driveFeedforward.calculate(appliedValue);
     }
     
     @Override
