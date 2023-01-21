@@ -102,6 +102,16 @@ public class Swerve extends SubsystemCLAW {
         gyro.zeroYaw();
     }
     
+    public double getRobotPitch () {
+        // The gyro is oriented 90 degrees to the right, so to get the robot's pitch you actually need the gyro's roll
+        return gyro.getRoll();
+    }
+    
+    public double getRobotYaw () {
+        // The gyro is oriented 90 degrees to the right, so to get the robot's pitch you actually need the gyro's roll
+        return gyro.getYaw();
+    }
+    
     /**
      * Stop all swerve modules immediately.
      */
