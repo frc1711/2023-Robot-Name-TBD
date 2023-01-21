@@ -22,7 +22,7 @@ class SwerveModule {
     
     private static CANSparkMax initializeMotor (int canId) {
         CANSparkMax motor = new CANSparkMax(canId, MotorType.kBrushless);
-        motor.setIdleMode(IdleMode.kCoast);
+        motor.setIdleMode(IdleMode.kBrake);
         return motor;
     }
     
@@ -40,7 +40,7 @@ class SwerveModule {
     
     public SwerveModule (String modName, int driveSparkId, int steerSparkId, int steerCANCoderId) {
         log = CLAWLogger.getLogger("subsystems.swerve."+modName);
-        steerPID = new RotationalPID("subsystems.swerve."+modName+".pid", 0.7/90, 0, 0, 6);
+        steerPID = new RotationalPID("subsystems.swerve."+modName+".pid", 6/90., 0, 0, 6);
         
         driveMotor = initializeMotor(driveSparkId);
         steerMotor = initializeMotor(steerSparkId);
@@ -60,9 +60,13 @@ class SwerveModule {
         log.sublog("drive.Desired").out(desiredState.speedMetersPerSecond+" m/s");
         updateDriveMotor(optimizedDesiredState.speedMetersPerSecond);
         
-        log.sublog("steer.Rotation").out(round(getRotation().getDegrees()) + " deg");
-        log.sublog("steer.Desired").out(round(desiredState.angle.getDegrees()) + " deg");
-        updateSteerMotor(optimizedDesiredState.angle);
+        if (desiredState.speedMetersPerSecond != 0) {
+            log.sublog("steer.Rotation").out(round(getRotation().getDegrees()) + " deg");
+            log.sublog("steer.Desired").out(round(desiredState.angle.getDegrees()) + " deg");
+            updateSteerMotor(optimizedDesiredState.angle);
+        } else {
+            steerMotor.setVoltage(0);
+        }
     }
     
     private void updateDriveMotor (double desiredSpeedMetersPerSec) {

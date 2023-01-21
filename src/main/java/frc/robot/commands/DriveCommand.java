@@ -45,8 +45,8 @@ public class DriveCommand extends CommandBase {
         Input2D strafeInputRaw = new Input2D(strafeXAxis.getAsDouble(), strafeYAxis.getAsDouble());
         double rotateInputRaw = rotateAxis.getAsDouble();
         
-        Input2D strafeSpeeds = InputCurve.apply(STRAFE_CURVE, strafeInputRaw).scale(3);
-        double rotateSpeed = InputCurve.apply(ROTATE_CURVE, rotateInputRaw) * 5;
+        Input2D strafeSpeeds = InputCurve.apply(STRAFE_CURVE, strafeInputRaw).scale(5);
+        double rotateSpeed = InputCurve.apply(ROTATE_CURVE, rotateInputRaw) * 6;
         
         LOG.sublog("input").sublog("strafe").sublog("x").out(strafeInputRaw.x()+"");
         LOG.sublog("input").sublog("strafe").sublog("y").out(strafeInputRaw.y()+"");
@@ -59,7 +59,7 @@ public class DriveCommand extends CommandBase {
         // Robot orientation and ChassisSpeeds is based on the idea that +x is the front of the robot,
         // +y is the left side of the robot, etc.
         // Axes, of course, do not work like this
-        swerve.moveRobotRelative(new ChassisSpeeds(-strafeSpeeds.y(), strafeSpeeds.x(), rotateSpeed));
+        swerve.moveRobotRelative(new ChassisSpeeds(-strafeSpeeds.y(), -strafeSpeeds.x(), rotateSpeed));
     }
     
     @Override
