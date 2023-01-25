@@ -84,6 +84,13 @@ public class Swerve extends SubsystemBase {
         moveRobotRelative(robotRelativeSpeeds);
     }
     
+    public void xMode () {
+        flModule.xMode(false);
+        frModule.xMode(true);
+        rlModule.xMode(true);
+        rrModule.xMode(false);
+    }
+    
     /**
      * Zero all steer encoders and save their offsets.
      */

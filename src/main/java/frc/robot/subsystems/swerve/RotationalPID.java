@@ -21,7 +21,10 @@ public class RotationalPID {
         double offsetDegrees = setpoint.getDegrees() - measured.getDegrees();
         log.sublog("offset").out(offsetDegrees+" deg");
         log.sublog("offsetWrap").out(MathUtil.inputModulus(offsetDegrees, -180, 180)+" deg");
-        return pid.calculate(0, MathUtil.inputModulus(offsetDegrees, -180, 180));
+        double calculatedValue = pid.calculate(0, MathUtil.inputModulus(offsetDegrees, -180, 180));
+        
+        if (pid.atSetpoint()) return 0;
+        else return calculatedValue;
     }
     
     public void reset () {

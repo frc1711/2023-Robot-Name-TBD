@@ -3,6 +3,8 @@ package frc.robot.commands.auton;
 import claw.CLAWLogger;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.subsystems.swerve.Swerve;
@@ -11,9 +13,12 @@ public class BalanceCommand extends CommandBase {
     
     private static final CLAWLogger LOG = CLAWLogger.getLogger("commands.balance");
     
+    private static final double PITCH_SETPOINT_ERROR_DEG = 1;
+    
     private final Swerve swerveDrive;
     
-    private final PIDController drivePID = new PIDController(-0.045, 0, -0.008);
+    private final PIDController drivePID = new PIDController(-0.06, 0, -0.008);
+    private final Debouncer balancedDebouncer = new Debouncer(1, DebounceType.kRising);
     
     private double initialRobotYaw = 0;
     
@@ -35,23 +40,10 @@ public class BalanceCommand extends CommandBase {
     @Override
     public void execute () {
         double pitch = swerveDrive.getRobotPitch();
-        
         LOG.sublog("robotPitch").out(pitch+" deg");
         
         double speed = drivePID.calculate(pitch);
-        
-        // if (Math.abs(pitch) > 10) {
-        //     speed = pitch > 0 ? PHASE_ONE_SPEED : -PHASE_ONE_SPEED;
-        // } else if (Math.abs(pitch) > 1) {
-        //     speed = pitch * PHASE_TWO_ANGLE_TO_SPEED_FACTOR;
-        // }
-        
-        // LOG.sublog("robotPitch").out(pitch+" deg");
-        // LOG.sublog("speedUnfiltered").out(speed+"");
-        // speed = accelerationLimiter.calculate(speed);
-        
-        if (Math.abs(pitch) < 1) speed = 0;
-        
+        if (Math.abs(pitch) < PITCH_SETPOINT_ERROR_DEG) speed = 0;
         LOG.sublog("speed").out(speed+"");
         
         swerveDrive.moveRobotRelative(new ChassisSpeeds(speed, 0, getTurnCorrection(speed)));
@@ -77,6 +69,11 @@ public class BalanceCommand extends CommandBase {
     @Override
     public void end (boolean interrupted) {
         swerveDrive.stop();
+    }
+    
+    @Override
+    public boolean isFinished () {
+        return balancedDebouncer.calculate(Math.abs(swerveDrive.getRobotPitch()) < PITCH_SETPOINT_ERROR_DEG);
     }
     
 }

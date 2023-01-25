@@ -71,6 +71,13 @@ class SwerveModule {
         }
     }
     
+    public void xMode (boolean turnDir) {
+        SwerveModuleState desiredState = new SwerveModuleState(0, Rotation2d.fromDegrees(45 + (turnDir ? 90 : 0)));
+        SwerveModuleState optimizedState = SwerveModuleState.optimize(desiredState, getRotation());
+        updateDriveMotor(0);
+        updateSteerMotor(optimizedState.angle);
+    }
+    
     private void updateDriveMotor (double desiredSpeedMetersPerSec) {
         double voltsOutput = DRIVE_FEEDFORWARD.calculate(METERS_PER_SEC_TO_DRIVE_VOLTS * desiredSpeedMetersPerSec);
         lastDriveVoltage = voltsOutput;

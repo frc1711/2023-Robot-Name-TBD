@@ -1,5 +1,6 @@
 package frc.robot.commands;
 
+import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 
 import claw.CLAWLogger;
@@ -19,10 +20,12 @@ public class DriveCommand extends CommandBase {
         STRAFE_CURVE = InputCurve.THREE_HALVES_CURVE.withDeadband(0.14);
     
     private final Swerve swerve;
+    private final BooleanSupplier xModeInput;
     private final DoubleSupplier strafeXAxis, strafeYAxis, rotateAxis;
     
-    public DriveCommand (Swerve swerve, DoubleSupplier strafeXAxis, DoubleSupplier strafeYAxis, DoubleSupplier rotateAxis) {
+    public DriveCommand (Swerve swerve, BooleanSupplier xModeInput, DoubleSupplier strafeXAxis, DoubleSupplier strafeYAxis, DoubleSupplier rotateAxis) {
         this.swerve = swerve;
+        this.xModeInput = xModeInput;
         this.strafeXAxis = strafeXAxis;
         this.strafeYAxis = strafeYAxis;
         this.rotateAxis = rotateAxis;
@@ -40,7 +43,12 @@ public class DriveCommand extends CommandBase {
     
     @Override
     public void execute () {
-        
+        if (xModeInput.getAsBoolean())
+            swerve.xMode();
+        else driveSwerveDefault();
+    }
+    
+    private void driveSwerveDefault () {
         // Apply the input curves
         Input2D strafeInputRaw = new Input2D(strafeXAxis.getAsDouble(), strafeYAxis.getAsDouble());
         double rotateInputRaw = rotateAxis.getAsDouble();
