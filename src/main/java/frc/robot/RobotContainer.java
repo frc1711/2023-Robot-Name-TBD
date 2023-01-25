@@ -5,7 +5,7 @@
 package frc.robot;
 
 import frc.robot.commands.DriveCommand;
-import frc.robot.commands.auton.Balance;
+import frc.robot.commands.auton.BalanceCommand;
 import frc.robot.subsystems.swerve.Swerve;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.wpilibj.XboxController;
@@ -35,7 +35,7 @@ public class RobotContainer {
     
     public Command getAutonomousCommand () {
         // This can return null to not run a command
-        return new Balance(swerveSubsystem);
+        return new BalanceCommand(swerveSubsystem);
     }
     
 }

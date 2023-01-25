@@ -2,7 +2,7 @@ package frc.robot.subsystems.swerve;
 
 import com.ctre.phoenix.sensors.CANCoder;
 
-import claw.api.CLAWLogger;
+import claw.CLAWLogger;
 import edu.wpi.first.math.geometry.Rotation2d;
 
 /**

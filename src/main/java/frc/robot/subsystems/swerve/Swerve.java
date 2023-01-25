@@ -6,14 +6,14 @@ package frc.robot.subsystems.swerve;
 
 import com.kauailabs.navx.frc.AHRS;
 
-import claw.api.subsystems.SubsystemCLAW;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.IDMap;
 
-public class Swerve extends SubsystemCLAW {
+public class Swerve extends SubsystemBase {
     
     private static Swerve swerve;
     
