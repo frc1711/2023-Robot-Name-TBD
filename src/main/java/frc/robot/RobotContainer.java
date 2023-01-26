@@ -4,38 +4,40 @@
 
 package frc.robot;
 
-import frc.robot.IDMap.OperatorConstants;
-import frc.robot.commands.AprilTags;
-import frc.robot.commands.SwerveTeleop;
-import frc.robot.subsystems.Swerve;
-import frc.robot.subsystems.Vision;
+import frc.robot.commands.DriveCommand;
+import frc.robot.commands.auton.BalanceCommand;
+import frc.robot.subsystems.swerve.Swerve;
+
+import edu.wpi.first.util.sendable.Sendable;
+import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
 
 public class RobotContainer {
-
-  // private final Vision vision = Vision.getInstance();
-  private final Swerve swerveDrive = Swerve.getInstance();
-  private final Vision vision = Vision.getInstance();
-
-  private final CommandXboxController driverController =
-      new CommandXboxController(OperatorConstants.kDriverControllerPort);
-
-  public RobotContainer() {
-    configureBindings();
-  }
-
-  
-  private void configureBindings() {
-   new Trigger(swerveDrive::canStartTeleop)
-       .onTrue(new SwerveTeleop(swerveDrive, 
-           () -> driverController.getLeftX(), 
-           () -> driverController.getLeftY(), 
-           () -> driverController.getRightX()));
-  }
-
-  public Command getAutonomousCommand() {
-    return new AprilTags(swerveDrive, vision);
-  }
+    
+    private final XboxController driveController = new XboxController(0);
+    
+    private final Swerve swerveSubsystem = new Swerve();
+    
+    private final DriveCommand driveCommand = new DriveCommand(
+        swerveSubsystem,
+        driveController::getStartButton,
+        driveController::getLeftX,
+        driveController::getLeftY,
+        driveController::getRightX);
+    
+    public RobotContainer () {
+        putSendable("Swerve Subsystem", swerveSubsystem);
+        swerveSubsystem.setDefaultCommand(driveCommand);
+    }
+    
+    public static void putSendable (String title, Sendable sendable) {
+        Shuffleboard.getTab("Testing").add(title, sendable);
+    }
+    
+    public Command getAutonomousCommand () {
+        // This can return null to not run a command
+        return new BalanceCommand(swerveSubsystem);
+    }
+    
 }

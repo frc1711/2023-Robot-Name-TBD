@@ -4,6 +4,7 @@
 
 package frc.robot;
 
+import claw.CLAWRobot;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
@@ -14,6 +15,11 @@ public class Robot extends TimedRobot {
 
   private RobotContainer m_robotContainer;
 
+  @Override
+  public void startCompetition () {
+    CLAWRobot.startCompetition(this, super::startCompetition);
+  }
+  
   @Override
   public void robotInit() {
     m_robotContainer = new RobotContainer();
