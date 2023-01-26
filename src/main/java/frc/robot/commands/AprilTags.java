@@ -4,7 +4,6 @@
 
 package frc.robot.commands;
 
-import edu.wpi.first.apriltag.AprilTagDetection;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.CommandBase;
@@ -31,9 +30,13 @@ public class AprilTags extends CommandBase {
   }
 
   boolean isFacingTag;
-  public void turnToTag () {
+  public boolean turnToTag () {
     isFacingTag = false;
-    if (vision.seesTarget()) swerveDrive.moveFieldRelative(new ChassisSpeeds(0, 0, vision.getHorizontalOffset()));
+    if (vision.seesTarget()) { 
+      swerveDrive.moveFieldRelative(new ChassisSpeeds(0, 0, vision.getHorizontalOffset()));
+      isFacingTag = true;
+    }
+    return isFacingTag;  
   }
 
   // Check if any cameras have been activated, if true, continue normally, if false start a new camera
@@ -46,8 +49,8 @@ public class AprilTags extends CommandBase {
   // Search for AprilTags on the camera. If any are found, drive toward them
   @Override
   public void execute() {
-    AprilTagDetection detection = vision.detectAprilTags();
-    if (detection != null) driveToTag();
+    if (vision.seesTarget() && vision.getHorizontalOffset() > vision.maxOffsetDegrees) turnToTag();
+    else if (vision.seesTarget() && vision.getHorizontalOffset() < vision.maxOffsetDegrees) driveToTag();
   }
 
   @Override

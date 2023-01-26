@@ -3,7 +3,6 @@ package frc.robot.subsystems;
 import org.opencv.core.Mat;
 import org.opencv.videoio.VideoCapture;
 
-import claw.subsystems.SubsystemCLAW;
 import edu.wpi.first.apriltag.AprilTagDetection;
 import edu.wpi.first.apriltag.AprilTagDetector;
 import edu.wpi.first.apriltag.AprilTagPoseEstimator;
@@ -11,11 +10,11 @@ import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-public class Vision extends SubsystemCLAW{
+public class Vision extends SubsystemBase{
     
     private static Vision visionInstance;
-
     public static Vision getInstance() {
         if (visionInstance == null) visionInstance = new Vision();
         return visionInstance;
@@ -32,6 +31,7 @@ public class Vision extends SubsystemCLAW{
             tx,
             ty,
             ta;
+    public double maxOffsetDegrees = 1;
 
     private Vision () {
         usbCamera = new VideoCapture();
@@ -53,12 +53,12 @@ public class Vision extends SubsystemCLAW{
         return tv.getDouble(0) == 1;
     }
 
-    //Returns the horizontal offset of the camera to the target
+    //Returns the horizontal offset of the camera to the target (-27 degrees to 27 degrees)
     public double getHorizontalOffset () {
         return tx.getDouble(0);
     }
 
-    //Returns the vertical offset of the camera to the target
+    //Returns the vertical offset of the camera to the target (-20.5 degrees to 20.5 degrees)
     public double getVerticalOffset () {
         return ty.getDouble(0);
     }
