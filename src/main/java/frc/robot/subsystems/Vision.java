@@ -43,7 +43,7 @@ public class Vision extends SubsystemCLAW{
         ta = limelight.getEntry("ta");
         limelight.getEntry("ledMode").setDouble(0); //Sets the LED to desired status. 0 to follow current pipeline, 1 for off, 2 for blinking, 3 for on
         limelight.getEntry("camMode").setDouble(0); //Enables or disables vision processing. 0 for processing, 1 for drive camera
-        limelight.getEntry("pipeline").setDouble(0) //Changes the pipeline of the Limelight
+        limelight.getEntry("pipeline").setDouble(0); //Changes the pipeline of the Limelight
     }
 
     
@@ -61,6 +61,10 @@ public class Vision extends SubsystemCLAW{
     //Returns the vertical offset of the camera to the target
     public double getVerticalOffset () {
         return ty.getDouble(0);
+    }
+
+    public double getDistance () {
+        return ta.getDouble(0);
     }
 
     //Use Mat images from the USB camera to scan for AprilTags and store their locations

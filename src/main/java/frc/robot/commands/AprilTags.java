@@ -25,9 +25,15 @@ public class AprilTags extends CommandBase {
 
   //Get Swerve to drive to the tag given as input
   Transform3d transform;
-  public void driveToTag (AprilTagDetection detection) {
-    transform = vision.getTagDistance(detection);
-    swerveDrive.drive(transform.getX(), transform.getY(), transform.getRotation().getAngle());
+  public void driveToTag () {
+    if (vision.seesTarget()) swerveDrive.drive(vision.getHorizontalOffset(), vision.getVerticalOffset(), vision.getDistance());
+  }
+
+  boolean isFacingTag;
+  public boolean turnToTag () {
+    isFacingTag = false;
+    if (vision.seesTarget()) return isFacingTag; //TODO: add swervedrive to turn to apriltag
+    else return isFacingTag;
   }
 
   // Check if any cameras have been activated, if true, continue normally, if false start a new camera
@@ -41,7 +47,7 @@ public class AprilTags extends CommandBase {
   @Override
   public void execute() {
     AprilTagDetection detection = vision.detectAprilTags();
-    if (detection != null) driveToTag(detection);
+    if (detection != null) driveToTag();
   }
 
   @Override
