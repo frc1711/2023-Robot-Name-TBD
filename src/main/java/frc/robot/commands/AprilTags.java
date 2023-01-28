@@ -4,10 +4,10 @@
 
 package frc.robot.commands;
 
-import java.lang.StackWalker.Option;
 import java.util.Optional;
-import java.util.OptionalLong;
 
+import edu.wpi.first.apriltag.AprilTagPoseEstimator;
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
@@ -27,7 +27,9 @@ public class AprilTags extends CommandBase {
   private Swerve swerveDrive;
   private Vision vision;
   private RotationalPID rotationPID = new RotationalPID("LimelightRotationPID", .16, 0, 0, MAX_OFFSET_DEGREES);
-  private NumericDebouncer aprilTagMeasurement = new NumericDebouncer (new Debouncer(0.2, DebounceType.kFalling));
+  private PIDController distancePID = new PIDController(1, 0, 0);
+  private NumericDebouncer rotationMeasurement = new NumericDebouncer (new Debouncer(0.2, DebounceType.kFalling));
+  private NumericDebouncer distanceMeasurement = new NumericDebouncer(new Debouncer(0.2, DebounceType.kFalling));
   private SlewRateLimiter turnRateLimiter = new SlewRateLimiter(8);
 
   public AprilTags(
@@ -39,9 +41,10 @@ public class AprilTags extends CommandBase {
   }
 
   //Get Swerve to drive to the tag given as input
-  Transform3d transform;
-  public void driveToTag () {
-    if (vision.seesTarget()) swerveDrive.moveFieldRelative(new ChassisSpeeds(0, vision.getDistance(), 0));
+  public void driveToTag (Optional<Double> targetDistanceMeters) {
+    if (targetDistanceMeters.isPresent()) {
+      
+    }
   }
 
   public double getTurnToTag (Optional<Double> targetRotationDegrees) {
@@ -70,10 +73,10 @@ public class AprilTags extends CommandBase {
     Optional<Double> targetRotation;
 
     if (vision.seesTarget()) {
-      Rotation2d rotationMeasurement = Rotation2d.fromDegrees(swerveDrive.getRobotYaw() + vision.getHorizontalOffset());
-      targetRotation = aprilTagMeasurement.calculate(Optional.of(rotationMeasurement.getDegrees()));
+      Rotation2d tagAbsRotation = Rotation2d.fromDegrees(swerveDrive.getRobotYaw() + vision.getHorizontalOffset());
+      targetRotation = rotationMeasurement.calculate(Optional.of(tagAbsRotation.getDegrees()));
     } else {
-      targetRotation = aprilTagMeasurement.calculate(Optional.empty());
+      targetRotation = rotationMeasurement.calculate(Optional.empty());
     }
 
     double turnRate = getTurnToTag(targetRotation);
