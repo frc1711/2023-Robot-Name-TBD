@@ -1,12 +1,5 @@
 package frc.robot.subsystems;
 
-import org.opencv.core.Mat;
-import org.opencv.videoio.VideoCapture;
-
-import edu.wpi.first.apriltag.AprilTagDetection;
-import edu.wpi.first.apriltag.AprilTagDetector;
-import edu.wpi.first.apriltag.AprilTagPoseEstimator;
-import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -22,10 +15,6 @@ public class Vision extends SubsystemBase{
 
     //TODO: Properly implement Limelight
     private final NetworkTable limelight;
-    private VideoCapture usbCamera;
-    private Mat mat;
-    private AprilTagDetector detector;
-    private AprilTagPoseEstimator estimator;
     private NetworkTableEntry 
             tv,
             tx,
@@ -34,8 +23,6 @@ public class Vision extends SubsystemBase{
     public double maxOffsetDegrees = 1;
 
     private Vision () {
-        usbCamera = new VideoCapture();
-        mat = new Mat();
         limelight = NetworkTableInstance.getDefault().getTable("limelight");
         tv = limelight.getEntry("tv");
         tx = limelight.getEntry("tx");
@@ -65,38 +52,6 @@ public class Vision extends SubsystemBase{
 
     public double getDistance () {
         return ta.getDouble(0);
-    }
-
-    //Use Mat images from the USB camera to scan for AprilTags and store their locations
-    public AprilTagDetection detectAprilTags () {
-        AprilTagDetection[] detectionArray;
-        if (usbCamera.read(mat) == true) {
-            detectionArray = detector.detect(mat);
-            return detectionArray[0];
-        }
-        else return null;
-    }
-    
-    //Return Pose3d of any AprilTags provided
-    public Transform3d estimateTag (AprilTagDetection tag) {
-        return estimator.estimate(tag);
-    }
-
-    //Return Translation3d of any AprilTags provided
-    public Transform3d getTagDistance (AprilTagDetection detection) {
-        return estimator.estimate(detection);
-    }
-
-    public boolean isStart () {
-        return usbCamera.isOpened();
-    }
-
-    public void start () {
-        usbCamera.open(0);
-    }
-
-    public void stop () {
-        usbCamera.release();
     }
 
   @Override
