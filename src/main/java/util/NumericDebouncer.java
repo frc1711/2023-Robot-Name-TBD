@@ -12,8 +12,8 @@ import edu.wpi.first.math.filter.Debouncer;
 public class NumericDebouncer {
 
     private final Debouncer debouncer;
-    private boolean hasMeasurement = false;
-    private double lastMeasurement;
+    private Optional<Double> lastMeasurement = Optional.empty();
+
     public NumericDebouncer (Debouncer debouncer) {
         this.debouncer = debouncer;
     }
@@ -23,8 +23,13 @@ public class NumericDebouncer {
         /**
          * Utilizes the WPILib Debouncer class and extends to use doubles
          */
-        hasMeasurement = debouncer.calculate(measurement.isPresent());
-        if (measurement.isPresent()) lastMeasurement = measurement.get();
-        return hasMeasurement ? Optional.of(lastMeasurement) : Optional.empty();
+        boolean hasMeasurement = debouncer.calculate(measurement.isPresent());
+
+        if (hasMeasurement) {
+            if (measurement.isPresent())
+                lastMeasurement = measurement;
+        } else lastMeasurement = Optional.empty();
+
+        return lastMeasurement;
     }
 }
