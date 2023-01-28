@@ -33,6 +33,7 @@ public class AprilTags extends CommandBase {
   }
 
   boolean isFacingTag;
+  boolean sawTag;
   public boolean turnToTag () {
     isFacingTag = false;
 
