@@ -6,18 +6,16 @@ package frc.robot.commands;
 
 import java.util.Optional;
 
-import edu.wpi.first.apriltag.AprilTagPoseEstimator;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.subsystems.swerve.RotationalPID;
 import frc.robot.subsystems.swerve.Swerve;
-import util.NumericDebouncer;
+import frc.robot.util.NumericDebouncer;
 import frc.robot.subsystems.Vision;
 
 public class AprilTags extends CommandBase {
@@ -38,13 +36,17 @@ public class AprilTags extends CommandBase {
     this.swerveDrive = swerveDrive;
     this.vision = vision;
     addRequirements(swerveDrive);
+    distancePID.setTolerance(1);
   }
 
   //Get Swerve to drive to the tag given as input
-  public void driveToTag (Optional<Double> targetDistanceMeters) {
-    if (targetDistanceMeters.isPresent()) {
-      
-    }
+  public double getDriveToTag (Optional<Double> targetDistance) {
+    double driveSpeed;
+
+    if (targetDistance.isPresent()) driveSpeed = distancePID.calculate(0, targetDistance.get());
+    else driveSpeed = 0;
+
+    return driveSpeed;
   }
 
   public double getTurnToTag (Optional<Double> targetRotationDegrees) {
@@ -71,17 +73,21 @@ public class AprilTags extends CommandBase {
   @Override
   public void execute() {
     Optional<Double> targetRotation;
+    Optional<Double> targetDistance;
 
     if (vision.seesTarget()) {
       Rotation2d tagAbsRotation = Rotation2d.fromDegrees(swerveDrive.getRobotYaw() + vision.getHorizontalOffset());
       targetRotation = rotationMeasurement.calculate(Optional.of(tagAbsRotation.getDegrees()));
+      targetDistance = distanceMeasurement.calculate(Optional.of(vision.getDistance()));
     } else {
       targetRotation = rotationMeasurement.calculate(Optional.empty());
+      targetDistance = distanceMeasurement.calculate(Optional.empty());
     }
 
     double turnRate = getTurnToTag(targetRotation);
+    double driveSpeed = getDriveToTag(targetDistance);
 
-    swerveDrive.moveRobotRelative(new ChassisSpeeds(0, 0, turnRate));
+    swerveDrive.moveRobotRelative(new ChassisSpeeds(driveSpeed, 0, turnRate));
   }
 
   @Override

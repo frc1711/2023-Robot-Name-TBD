@@ -1,5 +1,6 @@
 package frc.robot.subsystems;
 
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -13,14 +14,15 @@ public class Vision extends SubsystemBase{
         return visionInstance;
     }
 
-    //TODO: Properly implement Limelight
     private final NetworkTable limelight;
     private NetworkTableEntry 
             tv,
             tx,
             ty,
-            ta;
+            ta,
+            camtran;
     public double maxOffsetDegrees = 1;
+    private Transform2d cameraOffset; //TODO: Measure this value
 
     private Vision () {
         limelight = NetworkTableInstance.getDefault().getTable("limelight");
@@ -28,6 +30,7 @@ public class Vision extends SubsystemBase{
         tx = limelight.getEntry("tx");
         ty = limelight.getEntry("ty");
         ta = limelight.getEntry("ta");
+        camtran = limelight.getEntry("camtran");
         limelight.getEntry("ledMode").setDouble(0); //Sets the LED to desired status. 0 to follow current pipeline, 1 for off, 2 for blinking, 3 for on
         limelight.getEntry("camMode").setDouble(0); //Enables or disables vision processing. 0 for processing, 1 for drive camera
         limelight.getEntry("pipeline").setDouble(0); //Changes the pipeline of the Limelight
@@ -51,7 +54,7 @@ public class Vision extends SubsystemBase{
     }
 
     public double getDistance () {
-        return ta.getDouble(0);
+        return ((camtran.getDoubleArray(new double[5]))[2] - cameraOffset.getY());
     }
 
   @Override
