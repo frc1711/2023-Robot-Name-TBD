@@ -8,6 +8,8 @@ import claw.CLAWRobot;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.limelight.Limelight;
+import frc.robot.limelight.Limelight.LEDMode;
 
 public class Robot extends TimedRobot {
   private Command m_autonomousCommand;
@@ -27,10 +29,13 @@ public class Robot extends TimedRobot {
   @Override
   public void robotPeriodic() {
     CommandScheduler.getInstance().run();
+    Limelight.update();
   }
 
   @Override
-  public void disabledInit() {}
+  public void disabledInit() {
+    Limelight.setLEDMode(LEDMode.PIPELINE_DEFAULT);
+  }
 
   @Override
   public void disabledPeriodic() {}
@@ -60,6 +65,8 @@ public class Robot extends TimedRobot {
   @Override
   public void testInit() {
     CommandScheduler.getInstance().cancelAll();
+    Limelight.takeSnapshot();
+    Limelight.setLEDMode(LEDMode.FORCE_BLINK);
   }
 
   @Override
