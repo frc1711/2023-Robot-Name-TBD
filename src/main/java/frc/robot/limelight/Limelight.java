@@ -57,16 +57,8 @@ public class Limelight {
         }
     }
     public static Optional<AprilTagData> getAprilTag () {
-        boolean tagIsFriendly = false;  //Boolean which is used to determine if an Apriltag is on the same alliance as the robot
-        if (ENTRY_TID.getDouble(0) >= 1 && ENTRY_TID.getDouble(0) <= 4) {
-            if (DriverStation.getAlliance() == Alliance.Red) tagIsFriendly = true;
-        }
 
-        else if (ENTRY_TID.getDouble(0) >= 5 && ENTRY_TID.getDouble(0) <= 8) {
-            if (DriverStation.getAlliance() == Alliance.Blue) tagIsFriendly = true;
-        }
-
-        if (!hasValidTarget() && tagIsFriendly == true) {
+        if (!hasValidTarget()) {
             return Optional.empty();
         } else {
             return Optional.of(new AprilTagData(
