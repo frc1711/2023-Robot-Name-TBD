@@ -15,19 +15,21 @@ public class Limelight {
      * Basic targeting data
      */
     private static final NetworkTableEntry
-        ENTRY_TV =      TABLE.getEntry("tv"),       // Whether the limelight has any valid targets (0 or 1)
-        ENTRY_TX =      TABLE.getEntry("tx"),       // Horizontal offset from crosshair to target
-        ENTRY_TY =      TABLE.getEntry("ty"),       // Vertical offset from crosshair to target
-        ENTRY_TA =      TABLE.getEntry("ta"),       // Target area of image (percentage)
-        ENTRY_TL =      TABLE.getEntry("tl"),       // Pipeline's latency contribution (ms)
-        ENTRY_TSHORT =  TABLE.getEntry("tshort"),   // Sidelength of shortest side of the fitted bounding box (pixels)
-        ENTRY_TLONG =   TABLE.getEntry("tlong"),    // Sidelength of longest side of the fitted bounding box (pixels)
-        ENTRY_THOR =    TABLE.getEntry("thor"),     // Horizontal sidelength of the rough bounding box (pixels)
-        ENTRY_TVERT =   TABLE.getEntry("tvert"),    // Vertical sidelength of the rough bounding box (pixels)
-        ENTRY_GETPIPE = TABLE.getEntry("getpipe"),  // True active pipeline index of the camera (0 .. 9)
-        ENTRY_JSON =    TABLE.getEntry("json"),     // Full JSON dump of targeting results
-        ENTRY_TCLASS =  TABLE.getEntry("tclass"),   // Class ID of primary neural detector result or neural classifier result
-        ENTRY_TC =      TABLE.getEntry("tc");       // Get the average HSV color underneath the crosshair region as a NumberArray
+        ENTRY_TV =      TABLE.getEntry("tv"),                   // Whether the limelight has any valid targets (0 or 1)
+        ENTRY_TX =      TABLE.getEntry("tx"),                   // Horizontal offset from crosshair to target
+        ENTRY_TY =      TABLE.getEntry("ty"),                   // Vertical offset from crosshair to target
+        ENTRY_TA =      TABLE.getEntry("ta"),                   // Target area of image (percentage)
+        ENTRY_TL =      TABLE.getEntry("tl"),                   // Pipeline's latency contribution (ms)
+        ENTRY_TSHORT =  TABLE.getEntry("tshort"),               // Sidelength of shortest side of the fitted bounding box (pixels)
+        ENTRY_TLONG =   TABLE.getEntry("tlong"),                // Sidelength of longest side of the fitted bounding box (pixels)
+        ENTRY_THOR =    TABLE.getEntry("thor"),                 // Horizontal sidelength of the rough bounding box (pixels)
+        ENTRY_TVERT =   TABLE.getEntry("tvert"),                // Vertical sidelength of the rough bounding box (pixels)
+        ENTRY_GETPIPE = TABLE.getEntry("getpipe"),              // True active pipeline index of the camera (0 .. 9)
+        ENTRY_JSON =    TABLE.getEntry("json"),                 // Full JSON dump of targeting results
+        ENTRY_TCLASS =  TABLE.getEntry("tclass"),               // Class ID of primary neural detector result or neural classifier result
+        ENTRY_TC =      TABLE.getEntry("tc"),                   // Get the average HSV color underneath the crosshair region as a NumberArray
+        ENTRY_TPOSE =   TABLE.getEntry("targetpose_robotspace"),// Get the pose of the target relative to the robot in an array of 6 ints
+        ENTRY_TID =     TABLE.getEntry("tid");                  // Get the ID of the tag identified (Only effective for AprilTags)
     
     // Basic target recognition
     
@@ -36,7 +38,7 @@ public class Limelight {
     }
     
     public static Optional<TargetData> getTarget () {
-        if (hasValidTarget()) {
+        if (!hasValidTarget()) {
             return Optional.empty();
         } else {
             return Optional.of(new TargetData(
@@ -49,6 +51,19 @@ public class Limelight {
                 ENTRY_TVERT.getDouble(0),
                 (int)ENTRY_TCLASS.getInteger(-1),
                 ENTRY_TC.getDoubleArray(new double[0])
+            ));
+        }
+    }
+
+    public static Optional<AprilTagData> getAprilTag () {
+        if (!hasValidTarget()) {
+            return Optional.empty();
+        } else {
+            return Optional.of(new AprilTagData(
+                ENTRY_TID.getDouble(0), 
+                ENTRY_TX.getDouble(0), 
+                ENTRY_TY.getDouble(0), 
+                ENTRY_TPOSE.getDoubleArray(new double[0])
             ));
         }
     }
@@ -65,6 +80,12 @@ public class Limelight {
         double[] crosshairHSV
     ) { }
     
+    public static record AprilTagData (
+        double targetID,
+        double verticalOffset,
+        double horizontalOffset,
+        double[] targetPose
+    ) { }
     // Misc. data
     
     public static double getPipelineLatency () {
@@ -73,6 +94,10 @@ public class Limelight {
     
     public static String getJSONDump () {
         return ENTRY_JSON.getString("{}");
+    }
+
+    public static int getTargetID () {
+        return (int)ENTRY_TID.getInteger(0);
     }
     
     public static int getActivePipeline () {
