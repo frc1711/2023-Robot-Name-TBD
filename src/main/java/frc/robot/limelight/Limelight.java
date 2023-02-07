@@ -5,8 +5,6 @@ import java.util.Optional;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
 
 public class Limelight {
     
@@ -56,17 +54,21 @@ public class Limelight {
             ));
         }
     }
+
+    public static boolean hasAprilTag() {
+        return ENTRY_TID.getDouble(0) != 0;
+    }
     public static Optional<AprilTagData> getAprilTag () {
 
-        if (!hasValidTarget()) {
-            return Optional.empty();
-        } else {
+        if (hasAprilTag()) {
             return Optional.of(new AprilTagData(
                 ENTRY_TID.getDouble(0), 
                 ENTRY_TX.getDouble(0), 
                 ENTRY_TY.getDouble(0), 
                 ENTRY_TPOSE.getDoubleArray(new double[0])
-            ));
+                ));
+        } else {
+            return Optional.empty();
         }
     }
     
