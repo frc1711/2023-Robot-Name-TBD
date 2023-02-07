@@ -5,6 +5,8 @@ import java.util.Optional;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 
 public class Limelight {
     
@@ -56,6 +58,17 @@ public class Limelight {
     }
 
     public static Optional<AprilTagData> getAprilTag () {
+        boolean tagIsFriendly;
+        if (ENTRY_TID.getDouble(0) >= 1 && ENTRY_TID.getDouble(0) <= 4) {
+            if (DriverStation.getAlliance() == Alliance.Red) tagIsFriendly = true;
+        }
+
+        else if (ENTRY_TID.getDouble(0) >= 5 && ENTRY_TID.getDouble(0) <= 8) {
+            if (DriverStation.getAlliance() == Alliance.Blue) tagIsFriendly = true;
+        }
+
+        else tagIsFriendly = false;
+
         if (!hasValidTarget()) {
             return Optional.empty();
         } else {
