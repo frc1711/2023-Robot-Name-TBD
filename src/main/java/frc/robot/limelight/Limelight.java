@@ -29,6 +29,7 @@ public class Limelight {
         ENTRY_TCLASS =  TABLE.getEntry("tclass"),               // Class ID of primary neural detector result or neural classifier result
         ENTRY_TC =      TABLE.getEntry("tc"),                   // Get the average HSV color underneath the crosshair region as a NumberArray
         ENTRY_TPOSE =   TABLE.getEntry("targetpose_robotspace"),// Get the pose of the target relative to the robot in an array of 6 ints
+        ENTRY_RPOSE =   TABLE.getEntry("botpose"),
         ENTRY_TID =     TABLE.getEntry("tid");                  // Get the ID of the tag identified (Only effective for AprilTags)
     
     // Basic target recognition
@@ -65,7 +66,8 @@ public class Limelight {
                 ENTRY_TID.getDouble(0), 
                 ENTRY_TX.getDouble(0), 
                 ENTRY_TY.getDouble(0), 
-                ENTRY_TPOSE.getDoubleArray(new double[0])
+                ENTRY_TPOSE.getDoubleArray(new double[0]),
+                ENTRY_RPOSE.getDoubleArray(new double[0])
                 ));
         } else {
             return Optional.empty();
@@ -88,7 +90,8 @@ public class Limelight {
         double targetID,
         double verticalOffset,
         double horizontalOffset,
-        double[] targetPose
+        double[] targetPose,
+        double[] robotPose
     ) { }
     // Misc. data
     
