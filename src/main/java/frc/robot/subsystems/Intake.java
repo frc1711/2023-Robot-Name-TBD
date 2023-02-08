@@ -27,45 +27,66 @@ public class Intake extends SubsystemBase {
     return intakeInstance;
   }
 
-  private CANSparkMax leftArm, rightArm, topIntakeBar, lowerIntakeBar;
+  private CANSparkMax leftArm, rightArm, topBar, lowerBar;
   private DigitalInput leftLimitSwitch, rightLimitSwitch;
   private double multiplier;
 
   public Intake(
               CANSparkMax leftArm,
               CANSparkMax rightArm,
-              CANSparkMax topIntakeBar,
-              CANSparkMax lowerIntakeBar,
+              CANSparkMax topBar,
+              CANSparkMax lowerBar,
               DigitalInput leftLimitSwitch,
               DigitalInput rightLimitSwitch,
               double multiplier
               ) {
         this.leftArm = leftArm;
         this.rightArm = rightArm;
-        this.topIntakeBar = topIntakeBar;
-        this.lowerIntakeBar = lowerIntakeBar;
+        this.topBar = topBar;
+        this.lowerBar = lowerBar;
         this.leftLimitSwitch = leftLimitSwitch;
         this.rightLimitSwitch = rightLimitSwitch;
         this.multiplier = multiplier;
         }
 
-        public void setBoundArm (double speed) {
+        public void raiseArmUnbound (double input) {
+          leftArm.setVoltage(input * multiplier);
+          rightArm.setVoltage(input * multiplier);
+        }
+
+        public void raiseArmBound (double input) {
 
           if (leftLimitSwitch.get() || rightLimitSwitch.get()) {
-            stop();
+            stopArm();
           }
 
           else {
-            leftArm.setVoltage(speed * multiplier);
-            rightArm.setVoltage(speed*multiplier);
+            leftArm.setVoltage(input * multiplier);
+            rightArm.setVoltage(input * multiplier);
           }
         }
 
-        public void stop() {
+        public void stopArm() {
           leftArm.setVoltage(0);
           rightArm.setVoltage(0);
         }
 
+        public void stopTopBar () {
+          topBar.setVoltage(0);
+        }
+
+        public void stopLowerBar () {
+          lowerBar.setVoltage(0);
+        }
+
+        public void setTopBarSpeed (double input) {
+          topBar.setVoltage(input * multiplier);
+        }
+        
+        public void setLowerBarSpeed (double input) {
+          lowerBar.setVoltage(input * multiplier);
+        }
+        
   @Override
   public void periodic() {  }
 }
