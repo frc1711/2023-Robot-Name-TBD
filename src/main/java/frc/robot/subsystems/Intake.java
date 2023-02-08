@@ -22,12 +22,14 @@ public class Intake extends SubsystemBase {
                                                       new CANSparkMax(IDMap.INTAKE_TOP_BAR, MotorType.kBrushless), 
                                                       new CANSparkMax(IDMap.INTAKE_LOWER_BAR, MotorType.kBrushless),
                                                       new DigitalInput(IDMap.INTAKE_LEFT_SWITCH),
-                                                      new DigitalInput(IDMap.INTAKE_RIGHT_SWITCH));
+                                                      new DigitalInput(IDMap.INTAKE_RIGHT_SWITCH),
+                                                      1); //TODO: Calculate voltage multiplier value
     return intakeInstance;
   }
 
   private CANSparkMax leftArm, rightArm, topIntakeBar, lowerIntakeBar;
   private DigitalInput leftLimitSwitch, rightLimitSwitch;
+  private double multiplier;
 
   public Intake(
               CANSparkMax leftArm,
@@ -35,7 +37,8 @@ public class Intake extends SubsystemBase {
               CANSparkMax topIntakeBar,
               CANSparkMax lowerIntakeBar,
               DigitalInput leftLimitSwitch,
-              DigitalInput rightLimitSwitch
+              DigitalInput rightLimitSwitch,
+              double multiplier
               ) {
         this.leftArm = leftArm;
         this.rightArm = rightArm;
@@ -43,6 +46,24 @@ public class Intake extends SubsystemBase {
         this.lowerIntakeBar = lowerIntakeBar;
         this.leftLimitSwitch = leftLimitSwitch;
         this.rightLimitSwitch = rightLimitSwitch;
+        this.multiplier = multiplier;
+        }
+
+        public void setBoundArm (double speed) {
+
+          if (leftLimitSwitch.get() || rightLimitSwitch.get()) {
+            stop();
+          }
+
+          else {
+            leftArm.setVoltage(speed * multiplier);
+            rightArm.setVoltage(speed*multiplier);
+          }
+        }
+
+        public void stop() {
+          leftArm.setVoltage(0);
+          rightArm.setVoltage(0);
         }
 
   @Override
