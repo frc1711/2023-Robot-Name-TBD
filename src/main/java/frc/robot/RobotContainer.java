@@ -4,20 +4,18 @@
 
 package frc.robot;
 
-import frc.robot.IDMap.OperatorConstants;
-import frc.robot.commands.AprilTags;
-import frc.robot.commands.SwerveTeleop;
-import frc.robot.subsystems.Swerve;
-import frc.robot.subsystems.Vision;
+import frc.robot.commands.DriveCommand;
+import frc.robot.commands.auton.BalanceCommand;
+import frc.robot.subsystems.swerve.Swerve;
+import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 
 public class RobotContainer {
 
-  private final Vision vision = Vision.getInstance();
   private final Swerve swerveDrive = Swerve.getInstance();
 
-  private final CommandXboxController driverController =
-      new CommandXboxController(OperatorConstants.kDriverControllerPort);
+  private final XboxController driverController =
+      new XboxController(0);
 
   public RobotContainer() {
     configureBindings();
@@ -25,15 +23,10 @@ public class RobotContainer {
 
 
   private void configureBindings() {
-
-    new Trigger(swerveDrive::canStartTeleop)
-        .onTrue(new SwerveTeleop(swerveDrive, 
-            () -> driverController.getLeftX(), 
-            () -> driverController.getLeftY(), 
-            () -> driverController.getRightX()));
+      new DriveCommand(swerveDrive, null, () -> driverController.getLeftX(), () -> driverController.getLeftY(), () -> driverController.getRightX());
   }
 
   public Command getAutonomousCommand() {
-    return new AprilTags(swerveDrive, vision);
+    return new BalanceCommand(null);
   }
 }
