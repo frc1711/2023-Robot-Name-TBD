@@ -2,6 +2,8 @@ package frc.robot.limelight;
 
 import java.util.Optional;
 
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -28,8 +30,8 @@ public class Limelight {
         ENTRY_JSON =    TABLE.getEntry("json"),                 // Full JSON dump of targeting results
         ENTRY_TCLASS =  TABLE.getEntry("tclass"),               // Class ID of primary neural detector result or neural classifier result
         ENTRY_TC =      TABLE.getEntry("tc"),                   // Get the average HSV color underneath the crosshair region as a NumberArray
-        ENTRY_TPOSE =   TABLE.getEntry("targetpose_robotspace"),// Get the pose of the target relative to the robot in an array of 6 ints
-        ENTRY_RPOSE =   TABLE.getEntry("botpose"),
+        ENTRY_TPOSE =   TABLE.getEntry("targetpose_robotspace"),// Get the pose of the target relative to the robot in an array of 6 doubles
+        ENTRY_RPOSE =   TABLE.getEntry("botpose"),              // The robot pose in fieldspace
         ENTRY_TID =     TABLE.getEntry("tid");                  // Get the ID of the tag identified (Only effective for AprilTags)
     
     // Basic target recognition
@@ -51,24 +53,35 @@ public class Limelight {
                 ENTRY_THOR.getDouble(0),
                 ENTRY_TVERT.getDouble(0),
                 (int)ENTRY_TCLASS.getInteger(-1),
-                ENTRY_TC.getDoubleArray(new double[0])
+                ENTRY_TC.getDoubleArray(new double[3])
             ));
         }
     }
-
+    
     public static boolean hasAprilTag() {
         return ENTRY_TID.getDouble(0) != 0;
     }
+    
+    /**
+     * Gets a {@code Pose3d} from a Translation(x, y, z), Rotation(roll, pitch, yaw) array
+     */
+    private static Pose3d getPoseFromArray (double[] array) {
+        if (array.length != 6) return new Pose3d();
+        return new Pose3d(
+            array[0], array[1], array[2],                   // x, y, z
+            new Rotation3d(array[3], array[4], array[5])    // roll, pitch, yaw
+        );
+    }
+    
     public static Optional<AprilTagData> getAprilTag () {
-
         if (hasAprilTag()) {
             return Optional.of(new AprilTagData(
-                ENTRY_TID.getDouble(0), 
-                ENTRY_TX.getDouble(0), 
-                ENTRY_TY.getDouble(0), 
-                ENTRY_TPOSE.getDoubleArray(new double[0]),
-                ENTRY_RPOSE.getDoubleArray(new double[0])
-                ));
+                ENTRY_TID.getDouble(0),
+                ENTRY_TX.getDouble(0),
+                ENTRY_TY.getDouble(0),
+                getPoseFromArray(ENTRY_TPOSE.getDoubleArray(new double[0])),
+                getPoseFromArray(ENTRY_RPOSE.getDoubleArray(new double[0]))
+            ));
         } else {
             return Optional.empty();
         }
@@ -90,9 +103,10 @@ public class Limelight {
         double targetID,
         double verticalOffset,
         double horizontalOffset,
-        double[] targetPose,
-        double[] robotPose
+        Pose3d targetPose,
+        Pose3d robotPose
     ) { }
+    
     // Misc. data
     
     public static double getPipelineLatency () {
