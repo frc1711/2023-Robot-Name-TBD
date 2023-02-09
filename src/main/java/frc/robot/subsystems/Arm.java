@@ -4,12 +4,17 @@
 
 package frc.robot.subsystems;
 
+import java.util.Optional;
+
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
+import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.IDMap;
+import frc.robot.util.NumericDebouncer;
 
 public class Arm extends SubsystemBase {
   
@@ -27,6 +32,7 @@ public class Arm extends SubsystemBase {
   private CANSparkMax arm, claw;
   private DigitalInput limitSwitch;
   private double multiplier;
+  private NumericDebouncer clawDebouncer = new NumericDebouncer(new Debouncer(multiplier, DebounceType.kRising));
 
   public Arm(CANSparkMax arm, CANSparkMax claw, DigitalInput limitSwitch) {
     this.arm = arm;
@@ -45,6 +51,12 @@ public class Arm extends SubsystemBase {
   }
 
   public void setClawSpeed (double input) {
+    if (clawDebouncer.calculate(Optional.of(claw.getOutputCurrent())).get() < 5.0) claw.setVoltage(input * multiplier);
+    else stopClaw();
+  }
+
+  public void stopClaw() {
+    claw.setVoltage(0);
   }
   @Override
   public void periodic() {
