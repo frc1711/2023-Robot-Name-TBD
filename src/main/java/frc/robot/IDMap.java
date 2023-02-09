@@ -30,6 +30,10 @@ public final class IDMap {
         INTAKE_LEFT_SWITCH = 0,
         INTAKE_RIGHT_SWITCH = 0,
         
-        CONVEYOR = 0;
+        CONVEYOR = 0,
+        
+        ARM = 0,
+        CLAW = 0,
+        ARM_LIMIT_SWITCH = 0;
     
 }
