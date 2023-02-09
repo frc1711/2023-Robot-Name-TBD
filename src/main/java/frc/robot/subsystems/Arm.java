@@ -45,7 +45,6 @@ public class Arm extends SubsystemBase {
   }
 
   public void setClawSpeed (double input) {
-    
   }
   @Override
   public void periodic() {
