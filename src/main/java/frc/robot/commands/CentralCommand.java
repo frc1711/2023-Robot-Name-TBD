@@ -31,6 +31,7 @@ public class CentralCommand extends CommandBase {
   this.reverseMode = reverseMode;
   this.safetyBrake = safetyBrake;
   this.slowMode = slowMode;
+  addRequirements(arm, conveyor, intake);
   }
 
   @Override
