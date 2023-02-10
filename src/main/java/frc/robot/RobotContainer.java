@@ -11,7 +11,6 @@ import frc.robot.subsystems.Arm;
 import frc.robot.subsystems.Conveyor;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.swerve.Swerve;
-import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 
@@ -34,7 +33,7 @@ public class RobotContainer {
 
   private void configureBindings() {
       new DriveCommand(swerveDrive, null, () -> driverController.getLeftX(), () -> driverController.getLeftY(), () -> driverController.getRightX());
-      new CentralCommand(arm, conveyor, intake, null, null, null, null, () -> secondaryController.getBButton(), () -> secondaryController.getLeftStickButton(), () -> secondaryController.getAButton(), );
+      new CentralCommand(arm, conveyor, intake, () -> secondaryController.getStartButton(), () -> secondaryController.getXButton(), () -> secondaryController.getLeftBumper(), () -> secondaryController.getRightBumper(), () -> secondaryController.getRightTriggerAxis() > .14, () -> secondaryController.getLeftTriggerAxis() > .14, () -> secondaryController.getAButton(), () -> secondaryController.getYButton(), () -> secondaryController.getBButton());
   }
 
   public Command getAutonomousCommand() {
