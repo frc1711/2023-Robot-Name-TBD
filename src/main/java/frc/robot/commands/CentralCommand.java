@@ -5,7 +5,6 @@
 package frc.robot.commands;
 
 import java.util.function.BooleanSupplier;
-import java.util.function.DoubleSupplier;
 
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.subsystems.Arm;
@@ -17,15 +16,9 @@ public class CentralCommand extends CommandBase {
   private Arm arm;
   private Conveyor conveyor;
   private Intake intake;
-  private DoubleSupplier armController, intakeController, topBarController, lowerBarController;
-  private BooleanSupplier operateClaw, operateConveyor, reverseMode, safetyBrake, slowMode;
+  private BooleanSupplier armController, intakeController, topBarController, lowerBarController, operateClaw, operateConveyor, reverseMode, safetyBrake, slowMode;
 
-  private InputCurve 
-      ARM_CURVE = InputCurve.THREE_HALVES_CURVE.withDeadband(.014),
-      INTAKE_CURVE = InputCurve.THREE_HALVES_CURVE.withDeadband(0.14);
-      
-
-  public CentralCommand(Arm arm, Conveyor conveyor, Intake intake, DoubleSupplier armController, DoubleSupplier intakeController, DoubleSupplier topBarController, DoubleSupplier lowerBarController, BooleanSupplier operateClaw, BooleanSupplier operateConveyor, BooleanSupplier reverseMode, BooleanSupplier safetyBrake, BooleanSupplier slowMode) {
+  public CentralCommand(Arm arm, Conveyor conveyor, Intake intake, BooleanSupplier armController, BooleanSupplier intakeController, BooleanSupplier topBarController, BooleanSupplier lowerBarController, BooleanSupplier operateClaw, BooleanSupplier operateConveyor, BooleanSupplier reverseMode, BooleanSupplier safetyBrake, BooleanSupplier slowMode) {
   this.arm = arm;
   this.conveyor = conveyor;
   this.intake = intake;
@@ -49,30 +42,30 @@ public class CentralCommand extends CommandBase {
 
   @Override
   public void execute() {
-    int reverseMultiplier = reverseMode.getAsBoolean() ? -1 : 1;
-    double slowModeMultiplier = slowMode.getAsBoolean() ? .5 : 1;
+    int r = reverseMode.getAsBoolean() ? -1 : 1;
+    double s = slowMode.getAsBoolean() ? .5 : 1;
 
     if (safetyBrake.getAsBoolean()) {
       arm.stopAll();
       conveyor.stop();
       intake.stopAll();
     }
-    else if (operateClaw.getAsBoolean()) {
-      arm.operateClaw(.5 * reverseMultiplier * slowModeMultiplier);
-    }
-    else if (operateConveyor.getAsBoolean()) {
-      conveyor.set(.5 * reverseMultiplier * slowModeMultiplier);
-    }
     else {
-      arm.setArmSpeed(ARM_CURVE.getValue(armController.getAsDouble() * reverseMultiplier * slowModeMultiplier));
-      intake.operateArmBound(INTAKE_CURVE.getValue(intakeController.getAsDouble() * reverseMultiplier * slowModeMultiplier));
-      intake.setLowerBarSpeed(INTAKE_CURVE.getValue(lowerBarController.getAsDouble() * reverseMultiplier * slowModeMultiplier));
-      intake.setTopBarSpeed(INTAKE_CURVE.getValue(topBarController.getAsDouble() * reverseMultiplier * slowModeMultiplier));
+      arm.setArmSpeed(armController.getAsBoolean() ? r * s : 0);
+      arm.operateClaw(operateClaw.getAsBoolean() ? r * s : 0);
+      conveyor.set(operateConveyor.getAsBoolean() ? r * s : 0);
+      intake.setLowerBarSpeed(lowerBarController.getAsBoolean() ? r * s : 0);
+      intake.setTopBarSpeed(topBarController.getAsBoolean() ? r * s : 0);
+      intake.operateArmBound(intakeController.getAsBoolean() ? r * s : 0);
     }
   }
 
   @Override
-  public void end(boolean interrupted) {}
+  public void end(boolean interrupted) {
+    arm.stopAll();
+    conveyor.stop();
+    intake.stopAll();
+  }
 
   @Override
   public boolean isFinished() {
