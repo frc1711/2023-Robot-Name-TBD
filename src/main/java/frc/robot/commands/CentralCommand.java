@@ -47,23 +47,18 @@ public class CentralCommand extends CommandBase {
     intake.stopAll();
   }
 
-  private double reverseMultiplier = 1;
-  private double slowModeMultiplier = 1;
   @Override
   public void execute() {
+    int reverseMultiplier = reverseMode.getAsBoolean() ? -1 : 1;
+    double slowModeMultiplier = slowMode.getAsBoolean() ? .5 : 1;
+
     if (safetyBrake.getAsBoolean()) {
       arm.stopAll();
       conveyor.stop();
       intake.stopAll();
     }
-    else if (reverseMode.getAsBoolean()) {
-      reverseMultiplier = -1;
-    }
-    else if (slowMode.getAsBoolean()) {
-      slowModeMultiplier = .5;
-    }
     else if (operateClaw.getAsBoolean()) {
-      arm.operateClaw(.5 * reverseMultiplier);
+      arm.operateClaw(.5 * reverseMultiplier * slowModeMultiplier);
     }
     else if (operateConveyor.getAsBoolean()) {
       conveyor.set(.5 * reverseMultiplier * slowModeMultiplier);
