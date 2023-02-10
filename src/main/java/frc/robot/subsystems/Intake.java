@@ -54,7 +54,7 @@ public class Intake extends SubsystemBase {
           rightArm.setVoltage(input * multiplier);
         }
 
-        public void raiseArmBound (double input) {
+        public void operateArmBound (double input) {
 
           if (leftLimitSwitch.get() || rightLimitSwitch.get()) {
             stopArm();
@@ -85,6 +85,12 @@ public class Intake extends SubsystemBase {
         
         public void setLowerBarSpeed (double input) {
           lowerBar.setVoltage(input * multiplier);
+        }
+
+        public void stopAll () {
+          stopArm();
+          stopLowerBar();
+          stopTopBar();
         }
         
   @Override

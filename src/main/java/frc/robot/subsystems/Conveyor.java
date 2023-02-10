@@ -31,6 +31,10 @@ public class Conveyor extends SubsystemBase {
     conveyor.setVoltage(input * multiplier);
   }
 
+  public void stop () {
+    conveyor.setVoltage(0);
+  }
+
   @Override
   public void periodic() {
     // This method will be called once per scheduler run

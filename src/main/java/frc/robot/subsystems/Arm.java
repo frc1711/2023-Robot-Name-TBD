@@ -50,13 +50,18 @@ public class Arm extends SubsystemBase {
     arm.setVoltage(0);
   }
 
-  public void setClawSpeed (double input) {
+  public void operateClaw (double input) {
     if (clawDebouncer.calculate(Optional.of(claw.getOutputCurrent())).get() < 5.0) claw.setVoltage(input * multiplier);
     else stopClaw();
   }
 
   public void stopClaw() {
     claw.setVoltage(0);
+  }
+
+  public void stopAll() {
+    stop();
+    stopClaw();
   }
   @Override
   public void periodic() {
