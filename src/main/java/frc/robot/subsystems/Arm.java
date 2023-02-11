@@ -24,8 +24,7 @@ public class Arm extends SubsystemBase {
     if (armInstance == null) armInstance = new Arm(
                                     new CANSparkMax(IDMap.ARM, MotorType.kBrushless), 
                                     new CANSparkMax(IDMap.CLAW, MotorType.kBrushless), 
-                                    new DigitalInput(IDMap.ARM_LIMIT_SWITCH),
-                                    new DigitalInput(IDMap.CLAW_LIMIT_SWITCH)
+                                    new DigitalInput(IDMap.ARM_LIMIT_SWITCH)
                                     );
     return armInstance;
   }
@@ -33,12 +32,11 @@ public class Arm extends SubsystemBase {
   private CANSparkMax arm, claw;
   private DigitalInput armLimitSwitch, clawLimitSwitch;
   private double multiplier = 12;
-  private NumericDebouncer clawDebouncer = new NumericDebouncer(new Debouncer(multiplier, DebounceType.kRising));
+  private Debouncer clawDebouncer = new Debouncer(.2, DebounceType.kRising);
 
-  public Arm(CANSparkMax arm, CANSparkMax claw, DigitalInput armLimitSwitch, DigitalInput clawLimitSwitch) {
+  public Arm(CANSparkMax arm, CANSparkMax claw, DigitalInput armLimitSwitch) {
     this.arm = arm;
     this.claw = claw;
-    this.clawLimitSwitch = clawLimitSwitch;
     this.armLimitSwitch = armLimitSwitch;
   }
 
@@ -53,14 +51,20 @@ public class Arm extends SubsystemBase {
     arm.setVoltage(0);
   }
 
-  public void operateClaw (double input) {
-    double outputCurrent;
-    if (claw.getOutputCurrent() != 0) {
-      outputCurrent = clawDebouncer.calculate(Optional.of(claw.getOutputCurrent())).get();
+  private static final double HOMING_OUTPUT_CURRENT = 5, CLAW_HOMING_SPEED = 0.1;
+
+  public boolean runClawHomingSequence () {
+    if (claw.getOutputCurrent() > HOMING_OUTPUT_CURRENT) {
+      stopClaw();
+      return true;
+    } else {
+      claw.setVoltage(CLAW_HOMING_SPEED);
+      return false;
     }
-    else outputCurrent = clawDebouncer.calculate(Optional.empty()).get();
-    if (outputCurrent >= 8) stopClaw();
-    else claw.setVoltage(input);
+  }
+
+  public void operateClaw (double input) {
+    claw.setVoltage(input * multiplier);
   }
 
   public void stopClaw() {
