@@ -32,8 +32,8 @@ public class DriveCommand extends CommandBase {
         addRequirements(swerve);
         
         // Add functionality which isn't button-bound to the shuffleboard
-        RobotContainer.putSendable("Zero Swerve Modules", new InstantCommand(() -> swerve.zeroModules(), swerve));
-        RobotContainer.putSendable("Zero Gyro", new InstantCommand(() -> swerve.zeroGyro(), swerve));
+        RobotContainer.putConfigCommand("Zero Swerve Modules", new InstantCommand(() -> swerve.zeroModules(), swerve), true);
+        RobotContainer.putConfigCommand("Zero Gyro", new InstantCommand(() -> swerve.zeroGyro(), swerve), true);
     }
     
     @Override

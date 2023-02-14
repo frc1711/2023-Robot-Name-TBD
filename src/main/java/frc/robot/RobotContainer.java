@@ -12,6 +12,7 @@ import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandBase;
 
 public class RobotContainer {
     
@@ -27,12 +28,17 @@ public class RobotContainer {
         driveController::getRightX);
     
     public RobotContainer () {
-        putSendable("Swerve Subsystem", swerveSubsystem);
+        putConfigSendable("Swerve Subsystem", swerveSubsystem);
         swerveSubsystem.setDefaultCommand(driveCommand);
     }
     
-    public static void putSendable (String title, Sendable sendable) {
-        Shuffleboard.getTab("Testing").add(title, sendable);
+    public static void putConfigSendable (String title, Sendable sendable) {
+        // TODO: A temporary solution for adding sendables to the shuffleboard
+        Shuffleboard.getTab("Config Board").add(title, sendable);
+    }
+    
+    public static void putConfigCommand (String name, CommandBase command, boolean canRunWhenDisabled) {
+        putConfigSendable(name, command.withName(name).ignoringDisable(true));
     }
     
     public Command getAutonomousCommand () {
