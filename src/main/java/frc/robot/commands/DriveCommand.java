@@ -6,8 +6,6 @@ import java.util.function.DoubleSupplier;
 import claw.CLAWLogger;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.CommandBase;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
-import frc.robot.RobotContainer;
 import frc.robot.commands.InputCurve.Input2D;
 import frc.robot.subsystems.swerve.Swerve;
 
@@ -30,10 +28,6 @@ public class DriveCommand extends CommandBase {
         this.strafeYAxis = strafeYAxis;
         this.rotateAxis = rotateAxis;
         addRequirements(swerve);
-        
-        // Add functionality which isn't button-bound to the shuffleboard
-        RobotContainer.putConfigCommand("Zero Swerve Modules", new InstantCommand(() -> swerve.zeroModules(), swerve), true);
-        RobotContainer.putConfigCommand("Zero Gyro", new InstantCommand(() -> swerve.zeroGyro(), swerve), true);
     }
     
     @Override

@@ -4,13 +4,14 @@ import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
-import claw.CLAWLogger;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.util.sendable.Sendable;
+import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.RobotController;
 
-class SwerveModule {
+class SwerveModule implements Sendable {
     
     // TODO: Calculate this value
     private static final double
@@ -29,10 +30,11 @@ class SwerveModule {
         return motor;
     }
     
-    private final CLAWLogger log;
     private final CANSparkMax driveMotor, steerMotor;
     private final ResettableEncoder steerEncoder;
-    private double lastDriveVoltage = 0;
+    
+    private double desiredRotation = 0;
+    private double desiredDriveSpeed = 0;
     
     /**
      * 1 unit input for this PID controller is a full 360 deg rotation.
@@ -40,14 +42,13 @@ class SwerveModule {
      */
     private final RotationalPID steerPID;
     
-    public SwerveModule (String modName, int driveSparkId, int steerSparkId, int steerCANCoderId) {
-        log = CLAWLogger.getLogger("subsystems.swerve."+modName);
-        steerPID = new RotationalPID("subsystems.swerve."+modName+".pid", 6/90., 0, 0, 6);
+    public SwerveModule (int driveSparkId, int steerSparkId, int steerCANCoderId) {
+        steerPID = new RotationalPID(6/90., 0, 0, 6);
         
         driveMotor = initializeMotor(driveSparkId);
         steerMotor = initializeMotor(steerSparkId);
         
-        steerEncoder = new ResettableEncoder("subsystems.swerve."+modName+".encoder", steerCANCoderId);
+        steerEncoder = new ResettableEncoder(steerCANCoderId);
         steerEncoder.setInverted(true);
     }
     
@@ -58,13 +59,9 @@ class SwerveModule {
      */
     public void update (SwerveModuleState desiredState) {
         SwerveModuleState optimizedDesiredState = SwerveModuleState.optimize(desiredState, getRotation());
-        
-        log.sublog("drive.Desired").out(desiredState.speedMetersPerSecond+" m/s");
         updateDriveMotor(optimizedDesiredState.speedMetersPerSecond);
         
         if (desiredState.speedMetersPerSecond != 0) {
-            log.sublog("steer.Rotation").out(round(getRotation().getDegrees()) + " deg");
-            log.sublog("steer.Desired").out(round(desiredState.angle.getDegrees()) + " deg");
             updateSteerMotor(optimizedDesiredState.angle);
         } else {
             steerMotor.setVoltage(0);
@@ -79,20 +76,15 @@ class SwerveModule {
     }
     
     private void updateDriveMotor (double desiredSpeedMetersPerSec) {
+        desiredDriveSpeed = desiredSpeedMetersPerSec;
+        
         double voltsOutput = DRIVE_FEEDFORWARD.calculate(METERS_PER_SEC_TO_DRIVE_VOLTS * desiredSpeedMetersPerSec);
-        lastDriveVoltage = voltsOutput;
         driveMotor.setVoltage(voltsOutput);
-        log.sublog("drive.Voltage").out(voltsOutput+" V");
-    }
-    
-    private double round (double value) {
-        return Math.round(value * 100) / 100.;
     }
     
     private void updateSteerMotor (Rotation2d desiredRotation) {
+        this.desiredRotation = desiredRotation.getDegrees();
         double voltsOutput = STEER_FEEDFORWARD.calculate(steerPID.calculate(getRotation(), desiredRotation));
-        
-        log.sublog("steer.Voltage").out(voltsOutput + " V");
         steerMotor.setVoltage(voltsOutput);
     }
     
@@ -100,7 +92,6 @@ class SwerveModule {
      * Stop all motor controllers assigned to this {@link SwerveModule}.
      */
     public void stop () {
-        lastDriveVoltage = 0;
         driveMotor.stopMotor();
         steerMotor.stopMotor();
     }
@@ -112,12 +103,15 @@ class SwerveModule {
         steerEncoder.zeroRotation();
     }
     
-    public double getDriveVoltage () {
-        return lastDriveVoltage;
-    }
-    
     public Rotation2d getRotation () {
         return steerEncoder.getRotation();
+    }
+    
+    @Override
+    public void initSendable (SendableBuilder builder) {
+        builder.addDoubleProperty("desiredRotation", () -> desiredRotation, null);
+        builder.addDoubleProperty("desiredDriveSpeed", () -> desiredDriveSpeed, null);
+        builder.addDoubleProperty("currentRotation", () -> steerEncoder.getRotation().getDegrees(), null);
     }
     
 }

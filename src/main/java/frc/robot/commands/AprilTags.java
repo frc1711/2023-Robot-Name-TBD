@@ -24,7 +24,7 @@ public class AprilTags extends CommandBase {
 
   private Swerve swerveDrive;
   private Vision vision;
-  private RotationalPID rotationPID = new RotationalPID("LimelightRotationPID", .16, 0, 0, MAX_OFFSET_DEGREES);
+  private RotationalPID rotationPID = new RotationalPID(.16, 0, 0, MAX_OFFSET_DEGREES);
   private PIDController distancePID = new PIDController(1, 0, 0);
   private NumericDebouncer rotationMeasurement = new NumericDebouncer (new Debouncer(0.2, DebounceType.kFalling));
   private NumericDebouncer distanceMeasurement = new NumericDebouncer(new Debouncer(0.2, DebounceType.kFalling));
