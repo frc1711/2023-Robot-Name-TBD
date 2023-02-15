@@ -33,8 +33,11 @@ class SwerveModule implements Sendable {
     private final CANSparkMax driveMotor, steerMotor;
     private final ResettableEncoder steerEncoder;
     
-    private double desiredRotation = 0;
-    private double desiredDriveSpeed = 0;
+    private double
+        DS_steerOutputVoltage = 0,
+        DS_driveOutputVoltage = 0,
+        DS_desiredRotation = 0,
+        DS_desiredDriveSpeed = 0;
     
     /**
      * 1 unit input for this PID controller is a full 360 deg rotation.
@@ -76,15 +79,20 @@ class SwerveModule implements Sendable {
     }
     
     private void updateDriveMotor (double desiredSpeedMetersPerSec) {
-        desiredDriveSpeed = desiredSpeedMetersPerSec;
-        
+        DS_desiredDriveSpeed = desiredSpeedMetersPerSec;
+
         double voltsOutput = DRIVE_FEEDFORWARD.calculate(METERS_PER_SEC_TO_DRIVE_VOLTS * desiredSpeedMetersPerSec);
+        DS_driveOutputVoltage = voltsOutput;
+
         driveMotor.setVoltage(voltsOutput);
     }
     
     private void updateSteerMotor (Rotation2d desiredRotation) {
-        this.desiredRotation = desiredRotation.getDegrees();
+        DS_desiredRotation = desiredRotation.getDegrees();
+
         double voltsOutput = STEER_FEEDFORWARD.calculate(steerPID.calculate(getRotation(), desiredRotation));
+        DS_steerOutputVoltage = voltsOutput;
+
         steerMotor.setVoltage(voltsOutput);
     }
     
@@ -93,7 +101,10 @@ class SwerveModule implements Sendable {
      */
     public void stop () {
         driveMotor.stopMotor();
+        DS_desiredDriveSpeed = 0;
+        DS_driveOutputVoltage = 0;
         steerMotor.stopMotor();
+        DS_steerOutputVoltage = 0;
     }
     
     /**
@@ -109,8 +120,8 @@ class SwerveModule implements Sendable {
     
     @Override
     public void initSendable (SendableBuilder builder) {
-        builder.addDoubleProperty("desiredRotation", () -> desiredRotation, null);
-        builder.addDoubleProperty("desiredDriveSpeed", () -> desiredDriveSpeed, null);
+        builder.addDoubleProperty("desiredRotation", () -> DS_desiredRotation, null);
+        builder.addDoubleProperty("desiredDriveSpeed", () -> DS_desiredDriveSpeed, null);
         builder.addDoubleProperty("currentRotation", () -> steerEncoder.getRotation().getDegrees(), null);
     }
     
