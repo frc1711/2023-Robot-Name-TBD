@@ -60,8 +60,8 @@ public class Swerve extends SubsystemBase {
     
     public Swerve () {
         // Add configuration buttons to the shuffleboard
-        RobotContainer.putConfigCommand("Zero Swerve Modules", new InstantCommand(() -> this.zeroModules(), this), true);
-        RobotContainer.putConfigCommand("Zero Gyro", new InstantCommand(() -> this.zeroGyro(), this), true);
+        RobotContainer.putConfigCommand("Zero Swerve Modules", new InstantCommand(() -> this.zeroModules(), this).ignoringDisable(true), true);
+        RobotContainer.putConfigCommand("Zero Gyro", new InstantCommand(() -> this.zeroGyro(), this).ignoringDisable(true), true);
         
         // Add modules to the shuffleboard
         RobotContainer.putConfigSendable("fl-module", flModule);

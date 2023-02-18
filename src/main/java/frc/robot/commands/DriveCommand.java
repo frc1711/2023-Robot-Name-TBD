@@ -3,15 +3,14 @@ package frc.robot.commands;
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 
-import claw.CLAWLogger;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj2.command.CommandBase;
+import frc.robot.RobotContainer;
 import frc.robot.commands.InputCurve.Input2D;
 import frc.robot.subsystems.swerve.Swerve;
 
 public class DriveCommand extends CommandBase {
-    
-    private static final CLAWLogger LOG = CLAWLogger.getLogger("commands.drive");
     
     private static final InputCurve
         ROTATE_CURVE = InputCurve.THREE_HALVES_CURVE.withDeadband(0.14),
@@ -21,6 +20,8 @@ public class DriveCommand extends CommandBase {
     private final BooleanSupplier xModeInput;
     private final DoubleSupplier strafeXAxis, strafeYAxis, rotateAxis;
     
+    private double DS_strafeX, DS_strafeY, DS_rotate;
+    
     public DriveCommand (Swerve swerve, BooleanSupplier xModeInput, DoubleSupplier strafeXAxis, DoubleSupplier strafeYAxis, DoubleSupplier rotateAxis) {
         this.swerve = swerve;
         this.xModeInput = xModeInput;
@@ -28,6 +29,8 @@ public class DriveCommand extends CommandBase {
         this.strafeYAxis = strafeYAxis;
         this.rotateAxis = rotateAxis;
         addRequirements(swerve);
+        
+        RobotContainer.putConfigSendable("DriveCommand", this);
     }
     
     @Override
@@ -50,13 +53,9 @@ public class DriveCommand extends CommandBase {
         Input2D strafeSpeeds = InputCurve.apply(STRAFE_CURVE, strafeInputRaw).scale(5);
         double rotateSpeed = InputCurve.apply(ROTATE_CURVE, rotateInputRaw) * 6;
         
-        LOG.sublog("input").sublog("strafe").sublog("x").out(strafeInputRaw.x()+"");
-        LOG.sublog("input").sublog("strafe").sublog("y").out(strafeInputRaw.y()+"");
-        LOG.sublog("input").sublog("rotate").out(rotateInputRaw+"");
-        
-        LOG.sublog("inputAdj").sublog("strafe").sublog("x").out(strafeSpeeds.x()+"");
-        LOG.sublog("inputAdj").sublog("strafe").sublog("y").out(strafeSpeeds.y()+"");
-        LOG.sublog("inputAdj").sublog("rotate").out(rotateSpeed+"");
+        DS_strafeX = strafeInputRaw.x();
+        DS_strafeY = strafeInputRaw.y();
+        DS_rotate = rotateInputRaw;
         
         // Robot orientation and ChassisSpeeds is based on the idea that +x is the front of the robot,
         // +y is the left side of the robot, etc.
@@ -67,6 +66,13 @@ public class DriveCommand extends CommandBase {
     @Override
     public void end (boolean interrupted) {
         swerve.stop();
+    }
+    
+    @Override
+    public void initSendable (SendableBuilder builder) {
+        builder.addDoubleProperty("strafeX", () -> DS_strafeX, null);
+        builder.addDoubleProperty("strafeY", () -> DS_strafeY, null);
+        builder.addDoubleProperty("rotate", () -> DS_rotate, null);
     }
     
 }
