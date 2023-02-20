@@ -16,7 +16,26 @@ import frc.robot.IDMap;
 
 public class Arm extends SubsystemBase {
     
-    private static final double HOMING_OUTPUT_CURRENT = 5, CLAW_HOMING_SPEED = 0.1;
+    /**
+     * An offset in the claw's relative encoder's reading from the homing spot (fully collapsed) to the maximum
+     * extension of the claw (fully released). This offset helps to prevent the claw from extending too far and
+     * breaking itself.
+     */
+    private static final double CLAW_MAX_REACH_OFFSET = 30;
+    
+    /**
+     * An offset in the claw's relative encoder's reading from the homing spot (fully collapsed) to the minimum
+     * extension of the claw (almost fully grabbing). This offset helps to prevent the claw from contracting too
+     * much and breaking itself.
+     */
+    private static final double CLAW_MIN_REACH_OFFSET = 2;
+    
+    // TODO: Add javadocs
+    private static final double GRAB_OUTPUT_CURRENT = 5;
+    
+    private static final double
+        CLAW_MOVE_VOLTAGE = 0.3,
+        CLAW_HOMING_VOLTAGE = 0.1;
     
     private static Arm armInstance;
     
@@ -36,6 +55,7 @@ public class Arm extends SubsystemBase {
     private final RelativeEncoder clawEncoder;
     
     private final Debouncer clawGrabDebouncer = new Debouncer(.2, DebounceType.kRising);
+    private double clawEncoderOffset = 0;
     
     public Arm(CANSparkMax armMotor, CANSparkMax clawMotor, DigitalInput armLimitSwitch) {
         this.armMotor = armMotor;
@@ -45,38 +65,62 @@ public class Arm extends SubsystemBase {
     }
     
     public void setArmSpeed(double input) {
+        // TODO: Find a decent speed multiplier
         if (armLimitSwitch.get())
             stopArm();
         else
-            arm.setVoltage(input * multiplier);
+            armMotor.setVoltage(0);
     }
     
     public void stopArm() {
-        arm.setVoltage(0);
+        armMotor.setVoltage(0);
     }
     
     public boolean runClawHomingSequence () {
-        if (claw.getOutputCurrent() > HOMING_OUTPUT_CURRENT) {
-            stopClaw();
-            
+        if (clawMotor.getOutputCurrent() > GRAB_OUTPUT_CURRENT) {
+            clawEncoderOffset = clawEncoder.getPosition();
+            clawMotor.setVoltage(0);
             return true;
         } else {
-            claw.setVoltage(CLAW_HOMING_SPEED);
+            clawMotor.setVoltage(CLAW_HOMING_VOLTAGE);
             return false;
         }
     }
     
-    public void stopClaw() {
-        claw.setVoltage(0);
+    private boolean clawCanContract () {
+        return clawEncoder.getPosition() - clawEncoderOffset > CLAW_MIN_REACH_OFFSET;
+    }
+    
+    private boolean clawCanExtend () {
+        return clawEncoder.getPosition() - clawEncoderOffset < CLAW_MAX_REACH_OFFSET;
+    }
+    
+    public void operateClaw (ClawMovement move) {
+        boolean isHoldingObject = clawGrabDebouncer.calculate(clawMotor.getOutputCurrent() > GRAB_OUTPUT_CURRENT);
+        switch (move) {
+            case NONE:
+                clawMotor.stopMotor();
+                break;
+            case GRAB:
+                if (isHoldingObject || !clawCanContract()) clawMotor.stopMotor();
+                else clawMotor.setVoltage(CLAW_MOVE_VOLTAGE);
+                break;
+            case RELEASE:
+                if (!clawCanExtend()) clawMotor.stopMotor();
+                else clawMotor.setVoltage(-CLAW_MOVE_VOLTAGE);
+                break;
+        }
+    }
+    
+    public enum ClawMovement {
+        NONE,
+        GRAB,
+        RELEASE;
     }
     
     public void stop() {
         stopArm();
-        stopClaw();
+        operateClaw(ClawMovement.NONE);
     }
     
-    @Override
-    public void periodic() {
-        
-    }
 }
