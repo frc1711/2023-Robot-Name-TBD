@@ -2,7 +2,6 @@ package frc.robot.subsystems.swerve;
 
 import com.ctre.phoenix.sensors.CANCoder;
 
-import claw.CLAWLogger;
 import edu.wpi.first.math.geometry.Rotation2d;
 
 /**
@@ -12,13 +11,11 @@ public class ResettableEncoder {
     
     private static final double OFFSET_PARAM_TO_ROTATION = 0.01;
     
-    private final CLAWLogger log;
     private final CANCoder encoder;
     private Rotation2d offset;
     private boolean inverted;
     
-    public ResettableEncoder (String name, int canId) {
-        log = CLAWLogger.getLogger(name);
+    public ResettableEncoder (int canId) {
         encoder = new CANCoder(canId);
         offset = getOffsetConfig();
     }
@@ -51,7 +48,6 @@ public class ResettableEncoder {
     }
     
     private void setOffsetConfig (Rotation2d newOffset) {
-        log.out("Resseting offset to " + newOffset.getDegrees() + " deg");
         encoder.configSetCustomParam((int)(newOffset.getDegrees() / OFFSET_PARAM_TO_ROTATION), 0);
     }
     

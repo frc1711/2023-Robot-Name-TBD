@@ -11,32 +11,42 @@ import frc.robot.subsystems.Arm;
 import frc.robot.subsystems.Conveyor;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.swerve.Swerve;
+import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandBase;
 
 public class RobotContainer {
-
-  private final Swerve swerveDrive = Swerve.getInstance();
-  private final Arm arm = Arm.getInstance();
-  private final Intake intake = Intake.getInstance();
-  private final Conveyor conveyor = Conveyor.getInstance();
-
-  private final XboxController driverController =
-      new XboxController(0);
-  private final XboxController secondaryController = 
-      new XboxController(1);
-
-  public RobotContainer() {
-    configureBindings();
-  }
-
-
-  private void configureBindings() {
-      new DriveCommand(swerveDrive, null, () -> driverController.getLeftX(), () -> driverController.getLeftY(), () -> driverController.getRightX());
-      new CentralCommand(arm, conveyor, intake, () -> secondaryController.getStartButton(), () -> secondaryController.getXButton(), () -> secondaryController.getLeftBumper(), () -> secondaryController.getRightBumper(), () -> secondaryController.getRightTriggerAxis() > .14, () -> secondaryController.getLeftTriggerAxis() > .14, () -> secondaryController.getAButton(), () -> secondaryController.getYButton(), () -> secondaryController.getBButton());
-  }
-
-  public Command getAutonomousCommand() {
-    return new BalanceCommand(swerveDrive);
-  }
+    
+    private final XboxController driveController = new XboxController(0);
+    
+    private final Swerve swerveSubsystem = new Swerve();
+    
+    private final DriveCommand driveCommand = new DriveCommand(
+        swerveSubsystem,
+        driveController::getStartButton,
+        driveController::getLeftX,
+        driveController::getLeftY,
+        driveController::getRightX);
+    
+    public RobotContainer () {
+        putConfigSendable("Swerve Subsystem", swerveSubsystem);
+        swerveSubsystem.setDefaultCommand(driveCommand);
+    }
+    
+    public static void putConfigSendable (String title, Sendable sendable) {
+        // TODO: A temporary solution for adding sendables to the shuffleboard
+        Shuffleboard.getTab("Config Board").add(title, sendable);
+    }
+    
+    public static void putConfigCommand (String name, CommandBase command, boolean canRunWhenDisabled) {
+        putConfigSendable(name, command.withName(name).ignoringDisable(true));
+    }
+    
+    public Command getAutonomousCommand () {
+        // This can return null to not run a command
+        return new BalanceCommand(swerveSubsystem);
+    }
+    
 }

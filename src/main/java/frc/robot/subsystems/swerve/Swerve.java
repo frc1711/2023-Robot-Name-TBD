@@ -10,8 +10,10 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.IDMap;
+import frc.robot.RobotContainer;
 
 public class Swerve extends SubsystemBase {
     
@@ -33,22 +35,18 @@ public class Swerve extends SubsystemBase {
     
     private final SwerveModule
         flModule = new SwerveModule(
-            "frontLeft",
             IDMap.FRONT_LEFT_MODULE_DRIVE_SPARK_ID,
             IDMap.FRONT_LEFT_MODULE_STEER_SPARK_ID,
             IDMap.FRONT_LEFT_MODULE_STEER_CANCODER_ID),
         frModule = new SwerveModule(
-            "frontRight",
             IDMap.FRONT_RIGHT_MODULE_DRIVE_SPARK_ID,
             IDMap.FRONT_RIGHT_MODULE_STEER_SPARK_ID,
             IDMap.FRONT_RIGHT_MODULE_STEER_CANCODER_ID),
         rlModule = new SwerveModule(
-            "rearLeft",
             IDMap.REAR_LEFT_MODULE_DRIVE_SPARK_ID,
             IDMap.REAR_LEFT_MODULE_STEER_SPARK_ID,
             IDMap.REAR_LEFT_MODULE_STEER_CANCODER_ID),
         rrModule = new SwerveModule(
-            "rearRight",
             IDMap.REAR_RIGHT_MODULE_DRIVE_SPARK_ID,
             IDMap.REAR_RIGHT_MODULE_STEER_SPARK_ID,
             IDMap.REAR_RIGHT_MODULE_STEER_CANCODER_ID);
@@ -59,6 +57,18 @@ public class Swerve extends SubsystemBase {
         REAR_LEFT_MODULE_TRANSLATION,
         REAR_RIGHT_MODULE_TRANSLATION
     );
+    
+    public Swerve () {
+        // Add configuration buttons to the shuffleboard
+        RobotContainer.putConfigCommand("Zero Swerve Modules", new InstantCommand(() -> this.zeroModules(), this).ignoringDisable(true), true);
+        RobotContainer.putConfigCommand("Zero Gyro", new InstantCommand(() -> this.zeroGyro(), this).ignoringDisable(true), true);
+        
+        // Add modules to the shuffleboard
+        RobotContainer.putConfigSendable("fl-module", flModule);
+        RobotContainer.putConfigSendable("fr-module", frModule);
+        RobotContainer.putConfigSendable("rl-module", rlModule);
+        RobotContainer.putConfigSendable("rr-module", rrModule);
+    }
     
     /**
      * Update all the swerve drive motor controllers to try to match the given robot-relative {@link ChassisSpeeds}.
