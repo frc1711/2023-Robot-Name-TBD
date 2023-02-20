@@ -21,6 +21,19 @@ public final class IDMap {
         
         REAR_RIGHT_MODULE_DRIVE_SPARK_ID        = 7,
         REAR_RIGHT_MODULE_STEER_SPARK_ID        = 8,
-        REAR_RIGHT_MODULE_STEER_CANCODER_ID     = 12;
+        REAR_RIGHT_MODULE_STEER_CANCODER_ID     = 12,
+        
+        INTAKE_LEFT_ARM = 0, //TODO: Get IDs for these
+        INTAKE_RIGHT_ARM = 0,
+        INTAKE_TOP_BAR = 0,
+        INTAKE_LOWER_BAR = 0,
+        INTAKE_LEFT_SWITCH = 0,
+        INTAKE_RIGHT_SWITCH = 0,
+        
+        CONVEYOR = 0,
+        
+        ARM = 0,
+        CLAW = 0,
+        ARM_LIMIT_SWITCH = 0;
     
 }
