@@ -74,7 +74,7 @@ public class CentralCommand extends CommandBase {
         } else {
             arm.setArmSpeed(armController.getAsBoolean() ? r * s : 0);
             arm.operateClaw(ClawMovement.NONE);
-            conveyor.set(operateConveyor.getAsBoolean() ? r * s : 0);
+            conveyor.setSpeed(operateConveyor.getAsBoolean() ? r * s : 0);
             intake.setLowerBarSpeed(lowerBarController.getAsBoolean() ? r * s : 0);
             intake.setTopBarSpeed(topBarController.getAsBoolean() ? r * s : 0);
             intake.operateArmBound(intakeController.getAsBoolean() ? r * s : 0);
