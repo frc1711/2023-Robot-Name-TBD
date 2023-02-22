@@ -19,10 +19,18 @@ public class Conveyor {
 		id -> {
 			CANSparkMax motor = new CANSparkMax(id, MotorType.kBrushless);
 			motor.setIdleMode(IdleMode.kBrake);
+			return motor;
 		},
-		motor -> motor.stopMotor()
-		);
+		motor -> {
+			motor.stopMotor();
+			motor.close();
+		}
+	);
 
-	private Conveyor () {	}
+	private Conveyor () {}
+
+	public void setSpeed(double input) {
+		conveyorMotor.get().setVoltage(input);
+	}
 
 }
