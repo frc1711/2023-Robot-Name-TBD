@@ -1,1 +1,0 @@
-Be sure to update CLAW.jar each time new CLAW files are committed, see CLAW repo for info on doing so
