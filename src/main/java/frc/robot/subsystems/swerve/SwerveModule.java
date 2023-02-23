@@ -55,7 +55,6 @@ class SwerveModule implements Sendable {
         steerMotor = initializeMotor(steerSparkId);
         
         steerEncoder = new ResettableEncoder(steerCANCoderId);
-        steerEncoder.setInverted(true);
     }
     
     /**
@@ -82,7 +81,7 @@ class SwerveModule implements Sendable {
         updateSteerMotor(optimizedState.angle);
     }
     
-    private void updateDriveMotor (double desiredSpeedMetersPerSec) {
+    public void updateDriveMotor (double desiredSpeedMetersPerSec) {
         DS_desiredDriveSpeed = desiredSpeedMetersPerSec;
 
         double voltsOutput = DRIVE_FEEDFORWARD.calculate(METERS_PER_SEC_TO_DRIVE_VOLTS * desiredSpeedMetersPerSec);
@@ -91,13 +90,15 @@ class SwerveModule implements Sendable {
         driveMotor.setVoltage(DS_driveEnabled ? voltsOutput : 0);
     }
     
-    private void updateSteerMotor (Rotation2d desiredRotation) {
+    public void updateSteerMotor (double voltage) {
+        DS_steerOutputVoltage = voltage;
+        steerMotor.setVoltage(DS_driveEnabled ? voltage : 0);
+    }
+    
+    public void updateSteerMotor (Rotation2d desiredRotation) {
         DS_desiredRotation = desiredRotation.getDegrees();
-
         double voltsOutput = STEER_FEEDFORWARD.calculate(steerPID.calculate(getRotation(), desiredRotation));
-        DS_steerOutputVoltage = voltsOutput;
-
-        steerMotor.setVoltage(DS_driveEnabled ? voltsOutput : 0);
+        updateSteerMotor(voltsOutput);
     }
     
     /**

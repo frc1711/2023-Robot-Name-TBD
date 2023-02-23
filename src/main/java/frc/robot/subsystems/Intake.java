@@ -11,10 +11,8 @@ import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 import claw.hardware.Device;
 import claw.hardware.Device.DeviceInitializer;
 import edu.wpi.first.util.sendable.SendableBuilder;
-import edu.wpi.first.wpilibj.CAN;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.IDMap;
 import frc.robot.RobotContainer;
 
 public class Intake extends SubsystemBase {
