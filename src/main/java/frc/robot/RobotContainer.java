@@ -31,6 +31,7 @@ public class RobotContainer {
         driveController::getRightX);
     
     public RobotContainer () {
+        Intake.getInstance();
         putConfigSendable("Swerve Subsystem", swerveSubsystem);
         swerveSubsystem.setDefaultCommand(driveCommand);
     }

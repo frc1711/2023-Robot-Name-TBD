@@ -5,92 +5,117 @@
 package frc.robot.subsystems;
 
 import com.revrobotics.CANSparkMax;
+import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
+import claw.hardware.Device;
+import claw.hardware.Device.DeviceInitializer;
+import edu.wpi.first.util.sendable.SendableBuilder;
+import edu.wpi.first.wpilibj.CAN;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.IDMap;
+import frc.robot.RobotContainer;
 
 public class Intake extends SubsystemBase {
+    
+    private static final double
+        ENGAGE_VOLTAGE = 1,
+        DISENGAGE_VOLTAGE = -4;
     
     private static Intake intakeInstance;
     
     public static Intake getInstance() {
-        if (intakeInstance == null) {
-            intakeInstance = new Intake(
-                new CANSparkMax(IDMap.INTAKE_LEFT_ARM, MotorType.kBrushless),
-                new CANSparkMax(IDMap.INTAKE_RIGHT_ARM, MotorType.kBrushless), 
-                new CANSparkMax(IDMap.INTAKE_TOP_BAR, MotorType.kBrushless), 
-                new CANSparkMax(IDMap.INTAKE_LOWER_BAR, MotorType.kBrushless),
-                new DigitalInput(IDMap.INTAKE_LEFT_SWITCH),
-                new DigitalInput(IDMap.INTAKE_RIGHT_SWITCH),
-                1
-            ); //TODO: Calculate voltage multiplier value
-        }
+        if (intakeInstance == null)
+            intakeInstance = new Intake();
         return intakeInstance;
     }
     
-    private final CANSparkMax leftArm, rightArm, topBar, lowerBar;
-    private final DigitalInput leftLimitSwitch, rightLimitSwitch;
-    private double multiplier; // TODO: Calculate this value or change the way speed is set
-    
-    public Intake(
-            CANSparkMax leftArm,
-            CANSparkMax rightArm,
-            CANSparkMax topBar,
-            CANSparkMax lowerBar,
-            DigitalInput leftLimitSwitch,
-            DigitalInput rightLimitSwitch,
-            double multiplier
-            ) {
-        this.leftArm = leftArm;
-        this.rightArm = rightArm;
-        this.topBar = topBar;
-        this.lowerBar = lowerBar;
-        this.leftLimitSwitch = leftLimitSwitch;
-        this.rightLimitSwitch = rightLimitSwitch;
-        this.multiplier = multiplier;
+    private static DeviceInitializer<CANSparkMax> getSparkMaxInitializer (IdleMode idleMode) {
+        return (id) -> {
+            CANSparkMax motor = new CANSparkMax(id, MotorType.kBrushless);
+            motor.clearFaults();
+            motor.setIdleMode(idleMode);
+            return motor;
+        };
     }
     
-    public void raiseArmUnbound (double input) {
-        leftArm.setVoltage(input * multiplier);
-        rightArm.setVoltage(input * multiplier);
+    private static void finalizeSparkMax (CANSparkMax motor) {
+        motor.stopMotor();
+        motor.close();
     }
     
-    public void operateArmBound (double input) {
-        if (leftLimitSwitch.get() || rightLimitSwitch.get()) {
-            stopArm();
-        } else {
-            leftArm.setVoltage(input * multiplier);
-            rightArm.setVoltage(input * multiplier);
+    private final Device<CANSparkMax>
+        topRoller = new Device<>(
+            "CAN.MOTOR_CONTROLLER.INTAKE.TOP_ROLLER",
+            getSparkMaxInitializer(IdleMode.kCoast),
+            Intake::finalizeSparkMax
+        ),
+        bottomRoller = new Device<>(
+            "CAN.MOTOR_CONTROLLER.INTAKE.BOTTOM_ROLLER",
+            getSparkMaxInitializer(IdleMode.kCoast),
+            Intake::finalizeSparkMax
+        ),
+        leftEngage = new Device<>(
+            "CAN.MOTOR_CONTROLLER.INTAKE.LEFT_ENGAGE",
+            getSparkMaxInitializer(IdleMode.kBrake),
+            Intake::finalizeSparkMax
+        ),
+        rightEngage = new Device<>(
+            "CAN.MOTOR_CONTROLLER.INTAKE.RIGHT_ENGAGE",
+            getSparkMaxInitializer(IdleMode.kBrake),
+            Intake::finalizeSparkMax
+        );
+    
+    private final Device<DigitalInput>
+        lowerLimitSwitch = new Device<>(
+            "DIO.LIMIT_SWITCH.INTAKE.LOWER_LIMIT",
+            DigitalInput::new,
+            DigitalInput::close
+        ),
+        upperLimitSwitch = new Device<>(
+            "DIO.LIMIT_SWITCH.INTAKE.UPPER_LIMIT",
+            DigitalInput::new,
+            DigitalInput::close
+        );
+    
+    private boolean isFullyEngaged = false;
+    
+    public Intake () {
+        RobotContainer.putConfigSendable("IntakeSubsystem", this);
+    }
+    
+    public enum IntakeEngagement {
+        ENGAGE,
+        DISENGAGE;
+    }
+    
+    public void setIntakeEngagement (IntakeEngagement engagement) {
+        if (engagement == IntakeEngagement.DISENGAGE) {
+            isFullyEngaged = false;
+        } else if (lowerLimitSwitch.get().get()) {
+            isFullyEngaged = true;
         }
+        
+        double engageSpeed = 0;
+        
+        if (engagement == IntakeEngagement.ENGAGE) {
+            if (!lowerLimitSwitch.get().get()) {
+                engageSpeed = ENGAGE_VOLTAGE;
+            }
+        } else {
+            if (!upperLimitSwitch.get().get()) {
+                engageSpeed = DISENGAGE_VOLTAGE;
+            }
+        }
+        
+        leftEngage.get().setVoltage(engageSpeed);
+        rightEngage.get().setVoltage(engageSpeed);
     }
     
-    public void stopArm() {
-        leftArm.setVoltage(0);
-        rightArm.setVoltage(0);
-    }
-    
-    public void stopTopBar () {
-        topBar.setVoltage(0);
-    }
-    
-    public void stopLowerBar () {
-        lowerBar.setVoltage(0);
-    }
-    
-    public void setTopBarSpeed (double input) {
-        topBar.setVoltage(input * multiplier);
-    }
-    
-    public void setLowerBarSpeed (double input) {
-        lowerBar.setVoltage(input * multiplier);
-    }
-    
-    public void stopAll () {
-        stopArm();
-        stopLowerBar();
-        stopTopBar();
+    public void initSendable (SendableBuilder builder) {
+        builder.addBooleanProperty("lower-limit", () -> lowerLimitSwitch.get().get(), null);
+        builder.addBooleanProperty("upper-limit", () -> upperLimitSwitch.get().get(), null);
     }
     
 }
