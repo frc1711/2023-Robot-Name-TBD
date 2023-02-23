@@ -55,7 +55,6 @@ class SwerveModule implements Sendable {
         steerMotor = initializeMotor(steerSparkId);
         
         steerEncoder = new ResettableEncoder(steerCANCoderId);
-        steerEncoder.setInverted(true);
     }
     
     /**
