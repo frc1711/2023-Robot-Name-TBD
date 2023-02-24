@@ -10,6 +10,7 @@ import frc.robot.commands.TeleopIntake;
 import frc.robot.commands.auton.BalanceCommand;
 // import frc.robot.subsystems.Arm;
 import frc.robot.subsystems.Conveyor;
+import frc.robot.subsystems.Intake;
 // import frc.robot.subsystems.Intake;
 // import frc.robot.subsystems.swerve.Swerve;
 import edu.wpi.first.util.sendable.Sendable;
@@ -24,6 +25,7 @@ public class RobotContainer {
     
     // private final Swerve swerveSubsystem = new Swerve();
     private final Conveyor conveyorSubsystem = Conveyor.getInstance();
+    private final Intake intakeSubsystem = Intake.getInstance();
     
     // private final DriveCommand driveCommand = new DriveCommand(
     //     swerveSubsystem,
@@ -34,6 +36,7 @@ public class RobotContainer {
     
     private final TeleopIntake intakeCommand = new TeleopIntake(
         conveyorSubsystem,
+        intakeSubsystem,
         () -> driveController.getRightBumper(), 
         () -> driveController.getBButton()
         );

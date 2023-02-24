@@ -19,10 +19,10 @@ public class Intake extends SubsystemBase {
     public static Intake getInstance() {
         if (intakeInstance == null) {
             intakeInstance = new Intake(
-                initializeMotor("LEFT_ARM_RELEASE"),
-                initializeMotor("RIGHT_ARM_RELEASE"),
-                initializeMotor("UPPER_INTAKE"),
-                initializeMotor("LOWER_INTAKE"),
+                initializeMotor("LEFT_ARM_RELEASE", IdleMode.kBrake),
+                initializeMotor("RIGHT_ARM_RELEASE", IdleMode.kBrake),
+                initializeMotor("UPPER_INTAKE", IdleMode.kCoast),
+                initializeMotor("LOWER_INTAKE", IdleMode.kCoast),
                 initializeDIO("UPPER_INTAKE_LIMIT_SWITCH"),
                 initializeDIO("LOWER_INTAKE_LIMIT_SWTICH")
             );
@@ -38,12 +38,12 @@ public class Intake extends SubsystemBase {
         );
     }
 
-    private static Device<CANSparkMax> initializeMotor (String partName) {
+    private static Device<CANSparkMax> initializeMotor (String partName, IdleMode idleMode) {
         return new Device<>(
-            "CAN.MOTOR.CONTROLLER.INTAKE." + partName, 
+            "CAN.MOTOR_CONTROLLER.INTAKE." + partName, 
             id -> {
                 CANSparkMax motor = new CANSparkMax (id, MotorType.kBrushless);
-                motor.setIdleMode(IdleMode.kBrake);
+                motor.setIdleMode(idleMode);
                 return motor;
             }, 
             motor -> {
@@ -75,21 +75,7 @@ public class Intake extends SubsystemBase {
         leftArm.get().setVoltage(input);
         rightArm.get().setVoltage(input);
     }
-    
-    public void operateArmBound (double input) {
-        if (leftLimitSwitch.get().get() || rightLimitSwitch.get().get()) {
-            stopArm();
-        } else {
-            leftArm.get().setVoltage(input);
-            rightArm.get().setVoltage(input);
-        }
-    }
-    
-    public void stopArm() {
-        leftArm.get().setVoltage(0);
-        rightArm.get().setVoltage(0);
-    }
-    
+  
     public void stopTopBar () {
         topBar.get().setVoltage(0);
     }
@@ -106,8 +92,7 @@ public class Intake extends SubsystemBase {
         lowerBar.get().setVoltage(input);
     }
     
-    public void stopAll () {
-        stopArm();
+    public void stop () {
         stopLowerBar();
         stopTopBar();
     }
