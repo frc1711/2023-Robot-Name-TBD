@@ -57,7 +57,7 @@ public class DriveCommand extends CommandBase {
         // Robot orientation and ChassisSpeeds is based on the idea that +x is the front of the robot,
         // +y is the left side of the robot, etc.
         // Axes, of course, do not work like this
-        swerve.moveRobotRelative(new ChassisSpeeds(-strafeSpeeds.y(), -strafeSpeeds.x(), rotateSpeed));
+        swerve.moveRobotRelative(new ChassisSpeeds(-strafeSpeeds.y(), -strafeSpeeds.x(), -rotateSpeed));
     }
     
     @Override
