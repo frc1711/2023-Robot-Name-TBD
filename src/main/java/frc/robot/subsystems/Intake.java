@@ -8,12 +8,9 @@ import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
-<<<<<<< HEAD
 import claw.hardware.Device;
-=======
 import claw.hardware.LimitSwitchDevice;
 import claw.hardware.LimitSwitchDevice.NormalState;
->>>>>>> main
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
@@ -35,12 +32,8 @@ public class Intake extends SubsystemBase {
         return intakeInstance;
     }
 
-    private static Device<DigitalInput> initializeDIO (String partName) {
-        return new Device<> (
-            "PWM.LIMIT_SWITCH.INTAKE." + partName,
-            id -> new DigitalInput(id),
-            null
-        );
+    private static LimitSwitchDevice initializeDIO (String partName) {
+        return new LimitSwitchDevice("PWM.LIMIT_SWITCH.INTAKE."+partName, NormalState.NORMALLY_OPEN );
     }
 
     private static Device<CANSparkMax> initializeMotor (String partName, IdleMode idleMode) {
@@ -57,30 +50,37 @@ public class Intake extends SubsystemBase {
         });
     }
     
-    private final Device<CANSparkMax> leftArm, rightArm, topBar, lowerBar;
-    private final Device<DigitalInput> leftLimitSwitch, rightLimitSwitch;
+    private final Device<CANSparkMax> leftDeployMotor, rightDeployMotor, topBar, lowerBar;
+    private final Device<DigitalInput> upperLimitSwitch, lowerLimitSwitch;
     
     public Intake(
-            Device<CANSparkMax> leftArm,
-            Device<CANSparkMax> rightArm,
+            Device<CANSparkMax> leftDeployMotor,
+            Device<CANSparkMax> rightDeployMotor,
             Device<CANSparkMax> topBar,
             Device<CANSparkMax> lowerBar,
-            Device<DigitalInput> leftLimitSwitch,
-            Device<DigitalInput> rightLimitSwitch
+            Device<DigitalInput> upperLimitSwitch,
+            Device<DigitalInput> lowerLimitSwitch
             ) {
-        this.leftArm = leftArm;
-        this.rightArm = rightArm;
+        this.leftDeployMotor = leftDeployMotor;
+        this.rightDeployMotor = rightDeployMotor;
         this.topBar = topBar;
         this.lowerBar = lowerBar;
-        this.leftLimitSwitch = leftLimitSwitch;
-        this.rightLimitSwitch = rightLimitSwitch;
+        this.upperLimitSwitch = upperLimitSwitch;
+        this.lowerLimitSwitch = lowerLimitSwitch;
+    }
+
+    /**
+     * Use this method to deploy or retract the intake. 
+     */
+    public void operateIntake () {
+        double intakeDirection;
+        if (upperLimitSwitch.get().get()) intakeDirection = 1;
+        else if (lowerLimitSwitch.get().get()) intakeDirection = -1;
+        else intakeDirection = 0;
+        leftDeployMotor.get().setVoltage((12*.2) * intakeDirection);
+        rightDeployMotor.get().setVoltage((12*.2) * intakeDirection);
     }
     
-    public void raiseArmUnbound (double input) {
-        leftArm.get().setVoltage(input);
-        rightArm.get().setVoltage(input);
-    }
-  
     public void stopTopBar () {
         topBar.get().setVoltage(0);
     }
