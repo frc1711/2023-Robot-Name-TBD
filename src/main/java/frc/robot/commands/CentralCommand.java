@@ -59,7 +59,7 @@ public class CentralCommand extends CommandBase {
     public void initialize() {
         arm.stop();
         conveyor.stop();
-        intake.stopAll();
+        intake.stop();
     }
     
     @Override
@@ -70,14 +70,13 @@ public class CentralCommand extends CommandBase {
         if (safetyBrake.getAsBoolean()) {
             arm.stop();
             conveyor.stop();
-            intake.stopAll();
+            intake.stop();
         } else {
             arm.setArmSpeed(armController.getAsBoolean() ? r * s : 0);
             arm.operateClaw(ClawMovement.NONE);
-            conveyor.set(operateConveyor.getAsBoolean() ? r * s : 0);
+            conveyor.setSpeed(operateConveyor.getAsBoolean() ? r * s : 0);
             intake.setLowerBarSpeed(lowerBarController.getAsBoolean() ? r * s : 0);
             intake.setTopBarSpeed(topBarController.getAsBoolean() ? r * s : 0);
-            intake.operateArmBound(intakeController.getAsBoolean() ? r * s : 0);
         }
     }
     
@@ -85,7 +84,7 @@ public class CentralCommand extends CommandBase {
     public void end(boolean interrupted) {
         arm.stop();
         conveyor.stop();
-        intake.stopAll();
+        intake.stop();
     }
     
     @Override

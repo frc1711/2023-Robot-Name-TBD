@@ -5,13 +5,17 @@
 package frc.robot.subsystems;
 
 import com.revrobotics.CANSparkMax;
+import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
+<<<<<<< HEAD
+import claw.hardware.Device;
+=======
 import claw.hardware.LimitSwitchDevice;
 import claw.hardware.LimitSwitchDevice.NormalState;
+>>>>>>> main
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.IDMap;
 
 public class Intake extends SubsystemBase {
     
@@ -20,30 +24,49 @@ public class Intake extends SubsystemBase {
     public static Intake getInstance() {
         if (intakeInstance == null) {
             intakeInstance = new Intake(
-                new CANSparkMax(IDMap.INTAKE_LEFT_ARM, MotorType.kBrushless),
-                new CANSparkMax(IDMap.INTAKE_RIGHT_ARM, MotorType.kBrushless), 
-                new CANSparkMax(IDMap.INTAKE_TOP_BAR, MotorType.kBrushless), 
-                new CANSparkMax(IDMap.INTAKE_LOWER_BAR, MotorType.kBrushless),
-                new DigitalInput(IDMap.INTAKE_LEFT_SWITCH),
-                new DigitalInput(IDMap.INTAKE_RIGHT_SWITCH),
-                1
-            ); //TODO: Calculate voltage multiplier value
+                initializeMotor("LEFT_ARM_RELEASE", IdleMode.kBrake),
+                initializeMotor("RIGHT_ARM_RELEASE", IdleMode.kBrake),
+                initializeMotor("UPPER_INTAKE", IdleMode.kCoast),
+                initializeMotor("LOWER_INTAKE", IdleMode.kCoast),
+                initializeDIO("UPPER_INTAKE_LIMIT_SWITCH"),
+                initializeDIO("LOWER_INTAKE_LIMIT_SWTICH")
+            );
         }
         return intakeInstance;
     }
+
+    private static Device<DigitalInput> initializeDIO (String partName) {
+        return new Device<> (
+            "PWM.LIMIT_SWITCH.INTAKE." + partName,
+            id -> new DigitalInput(id),
+            null
+        );
+    }
+
+    private static Device<CANSparkMax> initializeMotor (String partName, IdleMode idleMode) {
+        return new Device<>(
+            "CAN.MOTOR_CONTROLLER.INTAKE." + partName, 
+            id -> {
+                CANSparkMax motor = new CANSparkMax (id, MotorType.kBrushless);
+                motor.setIdleMode(idleMode);
+                return motor;
+            }, 
+            motor -> {
+                motor.stopMotor();
+                motor.close();
+        });
+    }
     
-    private final CANSparkMax leftArm, rightArm, topBar, lowerBar;
-    private final DigitalInput leftLimitSwitch, rightLimitSwitch;
-    private double multiplier; // TODO: Calculate this value or change the way speed is set
+    private final Device<CANSparkMax> leftArm, rightArm, topBar, lowerBar;
+    private final Device<DigitalInput> leftLimitSwitch, rightLimitSwitch;
     
     public Intake(
-            CANSparkMax leftArm,
-            CANSparkMax rightArm,
-            CANSparkMax topBar,
-            CANSparkMax lowerBar,
-            DigitalInput leftLimitSwitch,
-            DigitalInput rightLimitSwitch,
-            double multiplier
+            Device<CANSparkMax> leftArm,
+            Device<CANSparkMax> rightArm,
+            Device<CANSparkMax> topBar,
+            Device<CANSparkMax> lowerBar,
+            Device<DigitalInput> leftLimitSwitch,
+            Device<DigitalInput> rightLimitSwitch
             ) {
         this.leftArm = leftArm;
         this.rightArm = rightArm;
@@ -51,46 +74,30 @@ public class Intake extends SubsystemBase {
         this.lowerBar = lowerBar;
         this.leftLimitSwitch = leftLimitSwitch;
         this.rightLimitSwitch = rightLimitSwitch;
-        this.multiplier = multiplier;
     }
     
     public void raiseArmUnbound (double input) {
-        leftArm.setVoltage(input * multiplier);
-        rightArm.setVoltage(input * multiplier);
+        leftArm.get().setVoltage(input);
+        rightArm.get().setVoltage(input);
     }
-    
-    public void operateArmBound (double input) {
-        if (leftLimitSwitch.get() || rightLimitSwitch.get()) {
-            stopArm();
-        } else {
-            leftArm.setVoltage(input * multiplier);
-            rightArm.setVoltage(input * multiplier);
-        }
-    }
-    
-    public void stopArm() {
-        leftArm.setVoltage(0);
-        rightArm.setVoltage(0);
-    }
-    
+  
     public void stopTopBar () {
-        topBar.setVoltage(0);
+        topBar.get().setVoltage(0);
     }
     
     public void stopLowerBar () {
-        lowerBar.setVoltage(0);
+        lowerBar.get().setVoltage(0);
     }
     
     public void setTopBarSpeed (double input) {
-        topBar.setVoltage(input * multiplier);
+        topBar.get().setVoltage(input);
     }
     
     public void setLowerBarSpeed (double input) {
-        lowerBar.setVoltage(input * multiplier);
+        lowerBar.get().setVoltage(input);
     }
     
-    public void stopAll () {
-        stopArm();
+    public void stop () {
         stopLowerBar();
         stopTopBar();
     }

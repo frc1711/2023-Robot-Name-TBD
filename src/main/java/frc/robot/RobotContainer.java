@@ -4,13 +4,15 @@
 
 package frc.robot;
 
-import frc.robot.commands.CentralCommand;
-import frc.robot.commands.DriveCommand;
+// import frc.robot.commands.CentralCommand;
+// import frc.robot.commands.DriveCommand;
+import frc.robot.commands.TeleopIntake;
 import frc.robot.commands.auton.BalanceCommand;
-import frc.robot.subsystems.Arm;
+// import frc.robot.subsystems.Arm;
 import frc.robot.subsystems.Conveyor;
 import frc.robot.subsystems.Intake;
-import frc.robot.subsystems.swerve.Swerve;
+// import frc.robot.subsystems.Intake;
+// import frc.robot.subsystems.swerve.Swerve;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
@@ -21,18 +23,28 @@ public class RobotContainer {
     
     private final XboxController driveController = new XboxController(0);
     
-    private final Swerve swerveSubsystem = new Swerve();
+    // private final Swerve swerveSubsystem = new Swerve();
+    private final Conveyor conveyorSubsystem = Conveyor.getInstance();
+    private final Intake intakeSubsystem = Intake.getInstance();
     
-    private final DriveCommand driveCommand = new DriveCommand(
-        swerveSubsystem,
-        driveController::getStartButton,
-        driveController::getLeftX,
-        driveController::getLeftY,
-        driveController::getRightX);
+    // private final DriveCommand driveCommand = new DriveCommand(
+    //     swerveSubsystem,
+    //     driveController::getStartButton,
+    //     driveController::getLeftX,
+    //     driveController::getLeftY,
+    //     driveController::getRightX);
     
+    private final TeleopIntake intakeCommand = new TeleopIntake(
+        conveyorSubsystem,
+        intakeSubsystem,
+        () -> driveController.getRightBumper(), 
+        () -> driveController.getBButton()
+        );
+
     public RobotContainer () {
-        putConfigSendable("Swerve Subsystem", swerveSubsystem);
-        swerveSubsystem.setDefaultCommand(driveCommand);
+        conveyorSubsystem.setDefaultCommand(intakeCommand);
+        // putConfigSendable("Swerve Subsystem", swerveSubsystem);
+        // swerveSubsystem.setDefaultCommand(driveCommand);
     }
     
     public static void putConfigSendable (String title, Sendable sendable) {
@@ -46,7 +58,7 @@ public class RobotContainer {
     
     public Command getAutonomousCommand () {
         // This can return null to not run a command
-        return new BalanceCommand(swerveSubsystem);
+        return new BalanceCommand(null);
     }
     
 }
