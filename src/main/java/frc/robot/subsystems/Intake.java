@@ -13,6 +13,9 @@ import claw.hardware.Device;
 import claw.hardware.LimitSwitchDevice;
 import claw.hardware.Device.DeviceInitializer;
 import claw.hardware.LimitSwitchDevice.NormalState;
+import claw.math.Transform;
+import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -20,10 +23,6 @@ import frc.robot.LiveCommandTester;
 import frc.robot.RobotContainer;
 
 public class Intake extends SubsystemBase {
-    
-    private static final double
-        ENGAGE_VOLTAGE = 1.2,
-        DISENGAGE_VOLTAGE = -1.5;
     
     private static final double INTAKE_FORWARD_SPEED = 3;
     
@@ -75,67 +74,15 @@ public class Intake extends SubsystemBase {
         lowerLimitSwitch = new LimitSwitchDevice("DIO.LIMIT_SWITCH.INTAKE.LOWER_LIMIT", NormalState.NORMALLY_CLOSED),
         upperLimitSwitch = new LimitSwitchDevice("DIO.LIMIT_SWITCH.INTAKE.UPPER_LIMIT", NormalState.NORMALLY_CLOSED);
     
-    private boolean isFullyEngaged = false;
-    
     public Intake () {
-        RobotContainer.putConfigSendable("IntakeSubsystem", this);
-        
-        XboxController controller = new XboxController(0);
-        LiveCommandTester<XboxController> tester = new LiveCommandTester<>(
-            () -> controller,
-            c -> {
-                if (c.getAButton()) {
-                    setIntakeEngagement(IntakeEngagement.ENGAGE);
-                } else setIntakeEngagement(IntakeEngagement.DISENGAGE);
-            },
-            this::stop,
-            this
-        );
-        
-        CLAWRobot.getExtensibleCommandInterpreter().addCommandProcessor(tester.toCommandProcessor("intaketest"));
-        
         RobotContainer.putConfigSendable("Intake Subsystem", this);
     }
     
-    public enum IntakeEngagement {
-        ENGAGE,
-        DISENGAGE,
-        PASSIVE;
-    }
-    
-    public void setIntakeEngagement (IntakeEngagement engagement) {
-        if (engagement == IntakeEngagement.DISENGAGE) {
-            isFullyEngaged = false;
-        } else if (isLowerPressed()) {
-            isFullyEngaged = true;
-        }
-        
-        double engageSpeed = 0;
-        
-        if (engagement == IntakeEngagement.ENGAGE) {
-            if (!isLowerPressed()) {
-                engageSpeed = ENGAGE_VOLTAGE;
-            }
-        } else if (engagement == IntakeEngagement.DISENGAGE) {
-            if (!isUpperPressed()) {
-                engageSpeed = DISENGAGE_VOLTAGE;
-            }
-        }
-        
-        leftEngage.get().setVoltage(engageSpeed);
-        rightEngage.get().setVoltage(-engageSpeed);
-    }
-    
-    public void initSendable (SendableBuilder builder) {
-        builder.addBooleanProperty("lower-limit", this::isLowerPressed, null);
-        builder.addBooleanProperty("upper-limit", this::isUpperPressed, null);
-    }
-    
-    private boolean isLowerPressed () {
+    public boolean isLowerPressed () {
         return !lowerLimitSwitch.isPressed();
     }
     
-    private boolean isUpperPressed () {
+    public boolean isUpperPressed () {
         return !upperLimitSwitch.isPressed();
     }
     
@@ -156,9 +103,28 @@ public class Intake extends SubsystemBase {
         bottomRoller.get().setVoltage(speed);
     }
     
+    public double getEngagementVelocity () {
+        return leftEngage.get().getEncoder().getVelocity() - rightEngage.get().getEncoder().getVelocity();
+    }
+    
+    public void setEngagementVoltage (double voltage) {
+        leftEngage.get().setVoltage(voltage);
+        rightEngage.get().setVoltage(-voltage);
+    }
+    
+    public void stopEngagementMotors () {
+        leftEngage.get().stopMotor();
+        rightEngage.get().stopMotor();
+    }
+    
     public void stop () {
-        setIntakeEngagement(IntakeEngagement.PASSIVE);
+        stopEngagementMotors();
         setIntakeMode(IntakeMode.STOP);
+    }
+    
+    public void initSendable (SendableBuilder builder) {
+        builder.addBooleanProperty("lower-limit", this::isLowerPressed, null);
+        builder.addBooleanProperty("upper-limit", this::isUpperPressed, null);
     }
     
 }

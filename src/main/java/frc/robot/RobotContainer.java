@@ -5,7 +5,9 @@
 package frc.robot;
 
 import frc.robot.commands.DriveCommand;
+import frc.robot.commands.IntakeEngagementCommand;
 import frc.robot.commands.TeleopIntake;
+import frc.robot.commands.IntakeEngagementCommand.IntakeEngagement;
 import frc.robot.commands.auton.BalanceCommand;
 import frc.robot.subsystems.Conveyor;
 import frc.robot.subsystems.Intake;
@@ -18,7 +20,9 @@ import edu.wpi.first.wpilibj2.command.CommandBase;
 
 public class RobotContainer {
     
-    private final XboxController driveController = new XboxController(0);
+    private final XboxController
+        driveController = new XboxController(0),
+        systemController = new XboxController(1);
     
     private final Swerve swerveSubsystem = new Swerve();
     private final Conveyor conveyorSubsystem = Conveyor.getInstance();
@@ -34,8 +38,7 @@ public class RobotContainer {
     private final TeleopIntake intakeCommand = new TeleopIntake(
         conveyorSubsystem,
         intakeSubsystem,
-        () -> driveController.getRightBumper(), 
-        () -> driveController.getBButton()
+        () -> -systemController.getLeftY()
     );
 
     public RobotContainer () {
