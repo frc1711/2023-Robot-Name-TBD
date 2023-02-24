@@ -8,12 +8,7 @@ import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
-<<<<<<< HEAD
 import claw.hardware.Device;
-=======
-import claw.hardware.LimitSwitchDevice;
-import claw.hardware.LimitSwitchDevice.NormalState;
->>>>>>> main
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
