@@ -116,4 +116,25 @@ public class Intake extends SubsystemBase {
         builder.addBooleanProperty("upper-limit", () -> upperLimitSwitch.get().get(), null);
     }
     
+    public void stopLowerBar () {
+        setLowerBarSpeed(0);
+    }
+    
+    public void stopTopBar () {
+        setTopBarSpeed(0);
+    }
+    
+    public void setTopBarSpeed (double input) {
+        topRoller.get().setVoltage(input);
+    }
+    
+    public void setLowerBarSpeed (double input) {
+        bottomRoller.get().setVoltage(input);
+    }
+    
+    public void stop () {
+        stopLowerBar();
+        stopTopBar();
+    }
+    
 }

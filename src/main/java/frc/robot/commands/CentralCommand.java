@@ -59,6 +59,7 @@ public class CentralCommand extends CommandBase {
     public void initialize() {
         arm.stop();
         conveyor.stop();
+        intake.stop();
     }
     
     @Override
@@ -72,7 +73,6 @@ public class CentralCommand extends CommandBase {
         } else {
             arm.setArmSpeed(armController.getAsBoolean() ? r * s : 0);
             arm.operateClaw(ClawMovement.NONE);
-            conveyor.set(operateConveyor.getAsBoolean() ? r * s : 0);
         }
     }
     
@@ -80,6 +80,7 @@ public class CentralCommand extends CommandBase {
     public void end(boolean interrupted) {
         arm.stop();
         conveyor.stop();
+        intake.stop();
     }
     
     @Override

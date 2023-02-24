@@ -4,10 +4,9 @@
 
 package frc.robot;
 
-import frc.robot.commands.CentralCommand;
 import frc.robot.commands.DriveCommand;
+import frc.robot.commands.TeleopIntake;
 import frc.robot.commands.auton.BalanceCommand;
-import frc.robot.subsystems.Arm;
 import frc.robot.subsystems.Conveyor;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.swerve.Swerve;
@@ -22,6 +21,8 @@ public class RobotContainer {
     private final XboxController driveController = new XboxController(0);
     
     private final Swerve swerveSubsystem = new Swerve();
+    private final Conveyor conveyorSubsystem = Conveyor.getInstance();
+    private final Intake intakeSubsystem = Intake.getInstance();
     
     private final DriveCommand driveCommand = new DriveCommand(
         swerveSubsystem,
@@ -30,10 +31,17 @@ public class RobotContainer {
         driveController::getLeftY,
         driveController::getRightX);
     
+    private final TeleopIntake intakeCommand = new TeleopIntake(
+        conveyorSubsystem,
+        intakeSubsystem,
+        () -> driveController.getRightBumper(), 
+        () -> driveController.getBButton()
+    );
+
     public RobotContainer () {
-        Intake.getInstance();
         putConfigSendable("Swerve Subsystem", swerveSubsystem);
         swerveSubsystem.setDefaultCommand(driveCommand);
+        intakeSubsystem.setDefaultCommand(intakeCommand);
     }
     
     public static void putConfigSendable (String title, Sendable sendable) {
@@ -47,7 +55,7 @@ public class RobotContainer {
     
     public Command getAutonomousCommand () {
         // This can return null to not run a command
-        return new BalanceCommand(swerveSubsystem);
+        return new BalanceCommand(null);
     }
     
 }
