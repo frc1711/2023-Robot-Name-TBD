@@ -6,13 +6,17 @@ package frc.robot.subsystems.swerve;
 
 import com.kauailabs.navx.frc.AHRS;
 
+import claw.CLAWRobot;
+import claw.logs.CLAWLogger;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.IDMap;
+import frc.robot.LiveCommandTester;
 import frc.robot.RobotContainer;
 
 public class Swerve extends SubsystemBase {
@@ -68,6 +72,34 @@ public class Swerve extends SubsystemBase {
         RobotContainer.putConfigSendable("fr-module", frModule);
         RobotContainer.putConfigSendable("rl-module", rlModule);
         RobotContainer.putConfigSendable("rr-module", rrModule);
+        
+        XboxController controller = new XboxController(0);
+        
+        LiveCommandTester<XboxController> tester = new LiveCommandTester<>(
+            () -> controller,
+            c -> {
+                flModule.updateSteerMotor(c.getLeftX()*4);
+                flModule.updateDriveMotor(0);
+                
+                frModule.updateSteerMotor(c.getLeftX()*4);
+                frModule.updateDriveMotor(0);
+                
+                rlModule.updateSteerMotor(c.getLeftX()*4);
+                rlModule.updateDriveMotor(0);
+                
+                rrModule.updateSteerMotor(c.getLeftX()*4);
+                rrModule.updateDriveMotor(0);
+                
+                CLAWLogger.getLogger("test").out("hello there");
+            },
+            this::stop,
+            this
+        );
+        
+        RobotContainer.putConfigCommand("test command", tester.new TestCommand(), false);
+        CLAWRobot.getExtensibleCommandInterpreter().addCommandProcessor(
+            tester.toCommandProcessor("swervetest")
+        );
     }
     
     /**
