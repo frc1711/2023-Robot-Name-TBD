@@ -9,13 +9,18 @@ import com.revrobotics.RelativeEncoder;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
 import claw.CLAWRobot;
+import claw.math.InputTransform;
+import claw.math.Transform;
 import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
+import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.IDMap;
 import frc.robot.LiveCommandTester;
+import frc.robot.RobotContainer;
 
 public class Arm extends SubsystemBase {
     
@@ -67,15 +72,18 @@ public class Arm extends SubsystemBase {
         clawEncoder = clawMotor.getEncoder();
         
         XboxController controller = new XboxController(0);
+        Transform transform = InputTransform.getInputTransform(
+            InputTransform.SQUARE_CURVE,
+            0.2
+        );
+        
         LiveCommandTester<XboxController> tester = new LiveCommandTester<>(
             () -> controller,
             c -> {
-                if (c.getAButton()) {
-                    runClawHomingSequence();
-                    stopArm();
-                } else {
-                    stop();
-                }
+                operateClaw(ClawMovement.NONE);
+                if (c.getLeftBumper()) {
+                    setArmVoltage(7 * transform.apply(c.getRightY()));
+                } else stopArm();
             },
             this::stop,
             this
@@ -84,14 +92,12 @@ public class Arm extends SubsystemBase {
         CLAWRobot.getExtensibleCommandInterpreter().addCommandProcessor(
             tester.toCommandProcessor("armtest")
         );
+        
+        RobotContainer.putConfigSendable("Arm Subsystem", this);
     }
     
-    public void setArmSpeed(double input) {
-        // TODO: Find a decent speed multiplier
-        if (armLimitSwitch.get())
-            stopArm();
-        else
-            armMotor.setVoltage(0);
+    public void setArmVoltage(double input) {
+        armMotor.setVoltage(input);
     }
     
     public void stopArm() {
@@ -143,6 +149,11 @@ public class Arm extends SubsystemBase {
     public void stop() {
         stopArm();
         operateClaw(ClawMovement.NONE);
+    }
+    
+    @Override
+    public void initSendable (SendableBuilder builder) {
+        builder.addDoubleProperty("Claw output current", clawMotor::getOutputCurrent, null);
     }
     
 }
