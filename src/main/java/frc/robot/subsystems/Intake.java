@@ -8,18 +8,24 @@ import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
+import claw.CLAWRobot;
 import claw.hardware.Device;
+import claw.hardware.LimitSwitchDevice;
 import claw.hardware.Device.DeviceInitializer;
+import claw.hardware.LimitSwitchDevice.NormalState;
 import edu.wpi.first.util.sendable.SendableBuilder;
-import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.LiveCommandTester;
 import frc.robot.RobotContainer;
 
 public class Intake extends SubsystemBase {
     
     private static final double
-        ENGAGE_VOLTAGE = 1,
-        DISENGAGE_VOLTAGE = -4;
+        ENGAGE_VOLTAGE = 1.2,
+        DISENGAGE_VOLTAGE = -1.5;
+    
+    private static final double INTAKE_FORWARD_SPEED = 3;
     
     private static Intake intakeInstance;
     
@@ -65,76 +71,94 @@ public class Intake extends SubsystemBase {
             Intake::finalizeSparkMax
         );
     
-    private final Device<DigitalInput>
-        lowerLimitSwitch = new Device<>(
-            "DIO.LIMIT_SWITCH.INTAKE.LOWER_LIMIT",
-            DigitalInput::new,
-            DigitalInput::close
-        ),
-        upperLimitSwitch = new Device<>(
-            "DIO.LIMIT_SWITCH.INTAKE.UPPER_LIMIT",
-            DigitalInput::new,
-            DigitalInput::close
-        );
+    private final LimitSwitchDevice
+        lowerLimitSwitch = new LimitSwitchDevice("DIO.LIMIT_SWITCH.INTAKE.LOWER_LIMIT", NormalState.NORMALLY_CLOSED),
+        upperLimitSwitch = new LimitSwitchDevice("DIO.LIMIT_SWITCH.INTAKE.UPPER_LIMIT", NormalState.NORMALLY_CLOSED);
     
     private boolean isFullyEngaged = false;
     
     public Intake () {
         RobotContainer.putConfigSendable("IntakeSubsystem", this);
+        
+        XboxController controller = new XboxController(0);
+        LiveCommandTester<XboxController> tester = new LiveCommandTester<>(
+            () -> controller,
+            c -> {
+                if (c.getAButton()) {
+                    setIntakeEngagement(IntakeEngagement.ENGAGE);
+                } else setIntakeEngagement(IntakeEngagement.DISENGAGE);
+            },
+            this::stop,
+            this
+        );
+        
+        CLAWRobot.getExtensibleCommandInterpreter().addCommandProcessor(tester.toCommandProcessor("intaketest"));
+        
+        RobotContainer.putConfigSendable("Intake Subsystem", this);
     }
     
     public enum IntakeEngagement {
         ENGAGE,
-        DISENGAGE;
+        DISENGAGE,
+        PASSIVE;
     }
     
     public void setIntakeEngagement (IntakeEngagement engagement) {
         if (engagement == IntakeEngagement.DISENGAGE) {
             isFullyEngaged = false;
-        } else if (lowerLimitSwitch.get().get()) {
+        } else if (isLowerPressed()) {
             isFullyEngaged = true;
         }
         
         double engageSpeed = 0;
         
         if (engagement == IntakeEngagement.ENGAGE) {
-            if (!lowerLimitSwitch.get().get()) {
+            if (!isLowerPressed()) {
                 engageSpeed = ENGAGE_VOLTAGE;
             }
-        } else {
-            if (!upperLimitSwitch.get().get()) {
+        } else if (engagement == IntakeEngagement.DISENGAGE) {
+            if (!isUpperPressed()) {
                 engageSpeed = DISENGAGE_VOLTAGE;
             }
         }
         
         leftEngage.get().setVoltage(engageSpeed);
-        rightEngage.get().setVoltage(engageSpeed);
+        rightEngage.get().setVoltage(-engageSpeed);
     }
     
     public void initSendable (SendableBuilder builder) {
-        builder.addBooleanProperty("lower-limit", () -> lowerLimitSwitch.get().get(), null);
-        builder.addBooleanProperty("upper-limit", () -> upperLimitSwitch.get().get(), null);
+        builder.addBooleanProperty("lower-limit", this::isLowerPressed, null);
+        builder.addBooleanProperty("upper-limit", this::isUpperPressed, null);
     }
     
-    public void stopLowerBar () {
-        setLowerBarSpeed(0);
+    private boolean isLowerPressed () {
+        return !lowerLimitSwitch.isPressed();
     }
     
-    public void stopTopBar () {
-        setTopBarSpeed(0);
+    private boolean isUpperPressed () {
+        return !upperLimitSwitch.isPressed();
     }
     
-    public void setTopBarSpeed (double input) {
-        topRoller.get().setVoltage(input);
+    public enum IntakeMode {
+        FORWARD (1),
+        REVERSE (-1),
+        STOP (0);
+        
+        private final double speedMult;
+        private IntakeMode (double speedMult) {
+            this.speedMult = speedMult;
+        }
     }
     
-    public void setLowerBarSpeed (double input) {
-        bottomRoller.get().setVoltage(input);
+    public void setIntakeMode (IntakeMode mode) {
+        double speed = mode.speedMult * INTAKE_FORWARD_SPEED;
+        topRoller.get().setVoltage(speed);
+        bottomRoller.get().setVoltage(speed);
     }
     
     public void stop () {
-        stopLowerBar();
-        stopTopBar();
+        setIntakeEngagement(IntakeEngagement.PASSIVE);
+        setIntakeMode(IntakeMode.STOP);
     }
     
 }
