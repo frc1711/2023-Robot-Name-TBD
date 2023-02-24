@@ -8,6 +8,7 @@ package frc.robot;
 // import frc.robot.commands.DriveCommand;
 import frc.robot.commands.TeleopIntake;
 import frc.robot.commands.auton.BalanceCommand;
+import frc.robot.subsystems.Arm;
 // import frc.robot.subsystems.Arm;
 import frc.robot.subsystems.Conveyor;
 import frc.robot.subsystems.Intake;
@@ -43,6 +44,7 @@ public class RobotContainer {
 
     public RobotContainer () {
         conveyorSubsystem.setDefaultCommand(intakeCommand);
+        Arm.getInstance();
         // putConfigSendable("Swerve Subsystem", swerveSubsystem);
         // swerveSubsystem.setDefaultCommand(driveCommand);
     }

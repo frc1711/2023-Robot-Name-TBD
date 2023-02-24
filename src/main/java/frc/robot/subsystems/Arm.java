@@ -8,11 +8,14 @@ import com.revrobotics.CANSparkMax;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
+import claw.CLAWRobot;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.IDMap;
+import frc.robot.LiveCommandTester;
 
 public class Arm extends SubsystemBase {
     
@@ -35,15 +38,15 @@ public class Arm extends SubsystemBase {
     
     private static final double
         CLAW_MOVE_VOLTAGE = 0.3,
-        CLAW_HOMING_VOLTAGE = 0.1;
+        CLAW_HOMING_VOLTAGE = 2.5;
     
     private static Arm armInstance;
     
     public static Arm getInstance () {
         if (armInstance == null) {
             armInstance = new Arm(
-                new CANSparkMax(IDMap.ARM, MotorType.kBrushless), 
-                new CANSparkMax(IDMap.CLAW, MotorType.kBrushless), 
+                new CANSparkMax(15, MotorType.kBrushless), 
+                new CANSparkMax(14, MotorType.kBrushless), 
                 new DigitalInput(IDMap.ARM_LIMIT_SWITCH)
             );
         }
@@ -62,6 +65,25 @@ public class Arm extends SubsystemBase {
         this.clawMotor = clawMotor;
         this.armLimitSwitch = armLimitSwitch;
         clawEncoder = clawMotor.getEncoder();
+        
+        XboxController controller = new XboxController(0);
+        LiveCommandTester<XboxController> tester = new LiveCommandTester<>(
+            () -> controller,
+            c -> {
+                if (c.getAButton()) {
+                    runClawHomingSequence();
+                    stopArm();
+                } else {
+                    stop();
+                }
+            },
+            this::stop,
+            this
+        );
+        
+        CLAWRobot.getExtensibleCommandInterpreter().addCommandProcessor(
+            tester.toCommandProcessor("armtest")
+        );
     }
     
     public void setArmSpeed(double input) {
