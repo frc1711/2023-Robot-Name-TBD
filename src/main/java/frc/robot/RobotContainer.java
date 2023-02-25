@@ -9,6 +9,7 @@ import frc.robot.commands.IntakeEngagementCommand;
 import frc.robot.commands.TeleopIntake;
 import frc.robot.commands.IntakeEngagementCommand.IntakeEngagement;
 import frc.robot.commands.auton.BalanceCommand;
+import frc.robot.subsystems.Arm;
 import frc.robot.subsystems.Conveyor;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.swerve.Swerve;
@@ -46,6 +47,8 @@ public class RobotContainer {
         putConfigSendable("Swerve Subsystem", swerveSubsystem);
         swerveSubsystem.setDefaultCommand(driveCommand);
         intakeSubsystem.setDefaultCommand(intakeCommand);
+        conveyorSubsystem.setDefaultCommand(intakeCommand);
+        Arm.getInstance();
     }
     
     public static void putConfigSendable (String title, Sendable sendable) {

@@ -71,7 +71,6 @@ public class CentralCommand extends CommandBase {
             arm.stop();
             conveyor.stop();
         } else {
-            arm.setArmSpeed(armController.getAsBoolean() ? r * s : 0);
             arm.operateClaw(ClawMovement.NONE);
         }
     }
