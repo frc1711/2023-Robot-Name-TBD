@@ -32,21 +32,21 @@ public class Arm extends SubsystemBase {
      * extension of the claw (fully released). This offset helps to prevent the claw from extending too far and
      * breaking itself.
      */
-    private static final double CLAW_MAX_REACH_OFFSET = 30;
+    private static final double CLAW_MAX_REACH_OFFSET = 22.3333;
     
     /**
      * An offset in the claw's relative encoder's reading from the homing spot (fully collapsed) to the minimum
      * extension of the claw (almost fully grabbing). This offset helps to prevent the claw from contracting too
      * much and breaking itself.
      */
-    private static final double CLAW_MIN_REACH_OFFSET = 2;
+    private static final double CLAW_MIN_REACH_OFFSET = 2.4763;
     
     // TODO: Add javadocs
-    private static final double GRAB_OUTPUT_CURRENT = 5;
+    private static final double GRAB_OUTPUT_CURRENT = 6;
     
     private static final double
-        CLAW_MOVE_VOLTAGE = 0.3,
-        CLAW_HOMING_VOLTAGE = 2.5;
+        CLAW_MOVE_VOLTAGE = 4.5,
+        CLAW_HOMING_VOLTAGE = 1.8;
     
     private static Arm armInstance;
     
@@ -67,12 +67,15 @@ public class Arm extends SubsystemBase {
     
     private final Device<DutyCycle> armEncoder = new Device<>(
         "DIO.ENCODER.ARM.ARM_ENCODER",
-        id -> new DutyCycle(new DigitalInput(2)),
+        id -> new DutyCycle(new DigitalInput(id)),
         DutyCycle::close
     );
     
-    private final Debouncer clawGrabDebouncer = new Debouncer(.2, DebounceType.kRising);
+    private final Debouncer clawGrabDebouncer = new Debouncer(.6, DebounceType.kRising);
     private double clawEncoderOffset = 0;
+    
+    private boolean isHoldingObject = false;
+    private boolean hasHitLimit = false;
     
     public Arm(CANSparkMax armMotor, CANSparkMax clawMotor, DigitalInput armLimitSwitch) {
         this.armMotor = armMotor;
@@ -80,22 +83,53 @@ public class Arm extends SubsystemBase {
         this.armLimitSwitch = armLimitSwitch;
         clawEncoder = clawMotor.getEncoder();
         
-        XboxController controller = new XboxController(0);
+        XboxController controller = new XboxController(1);
         Transform transform = InputTransform.getInputTransform(
             InputTransform.SQUARE_CURVE,
             0.2
         );
         
+        Debouncer hasHitLimitDebouncer = new Debouncer(1, DebounceType.kFalling);
+        
         LiveCommandTester tester = new LiveCommandTester(
-            "Use controller 0. Left bumper enables control, move the arm using the left joystick.",
+            "Use controller 1. Y button enables arm control, move the arm using the left joystick. " +
+            "Use the A button to enable the claw homing sequence. Use left and right bumpers to " +
+            "release and grab using the claw.",
             liveValues -> {
-                operateClaw(ClawMovement.NONE);
-                
-                if (controller.getLeftBumper()) {
+                if (controller.getAButton() && !hasHitLimit) {
                     
-                    double armVoltage = 7 * transform.apply(controller.getRightY());
+                    // Run homing sequence
+                    hasHitLimit = hasHitLimitDebouncer.calculate(runClawHomingSequence());
+                    
+                } else if (controller.getRightBumper()) {
+                    
+                    // Grab claw
+                    operateClaw(ClawMovement.GRAB);
+                    
+                } else if (controller.getLeftBumper()) {
+                    
+                    // Release claw
+                    operateClaw(ClawMovement.RELEASE);
+                    
+                } else {
+                    
+                    // No claw operations
+                    operateClaw(ClawMovement.NONE);
+                    hasHitLimit = hasHitLimitDebouncer.calculate(false);
+                    
+                }
+                
+                liveValues.setField("Claw can release", clawCanExtend());
+                liveValues.setField("Claw can grab", clawCanContract());
+                liveValues.setField("Output current", clawMotor.getAppliedOutput());
+                liveValues.setField("Has hit limit (homing)", hasHitLimit);
+                liveValues.setField("Encoder reading", clawMotor.getEncoder().getPosition());
+                
+                if (controller.getYButton()) {
+                    
+                    double armVoltage = 7 * transform.apply(controller.getLeftY());
                     liveValues.setField("Arm voltage", armVoltage);
-                    setArmVoltage(7 * transform.apply(controller.getRightY()));
+                    setArmVoltage(armVoltage);
                     
                 } else {
                     liveValues.setField("Arm voltage", 0.0);
@@ -121,9 +155,10 @@ public class Arm extends SubsystemBase {
         armMotor.setVoltage(0);
     }
     
+    private final Debouncer homingSequenceDebouncer = new Debouncer(0.045, DebounceType.kRising);
     public boolean runClawHomingSequence () {
-        if (clawMotor.getOutputCurrent() > GRAB_OUTPUT_CURRENT) {
-            clawEncoderOffset = clawEncoder.getPosition();
+        if (homingSequenceDebouncer.calculate(clawMotor.getOutputCurrent() > GRAB_OUTPUT_CURRENT)) {
+            clawEncoderOffset = getClawEncoder();
             clawMotor.setVoltage(0);
             return true;
         } else {
@@ -132,27 +167,35 @@ public class Arm extends SubsystemBase {
         }
     }
     
+    private double getClawEncoder () {
+        return -clawMotor.getEncoder().getPosition();
+    }
+    
     private boolean clawCanContract () {
-        return clawEncoder.getPosition() - clawEncoderOffset > CLAW_MIN_REACH_OFFSET;
+        return getClawEncoder() - clawEncoderOffset > CLAW_MIN_REACH_OFFSET;
     }
     
     private boolean clawCanExtend () {
-        return clawEncoder.getPosition() - clawEncoderOffset < CLAW_MAX_REACH_OFFSET;
+        return getClawEncoder() - clawEncoderOffset < CLAW_MAX_REACH_OFFSET;
     }
     
     public void operateClaw (ClawMovement move) {
-        boolean isHoldingObject = clawGrabDebouncer.calculate(clawMotor.getOutputCurrent() > GRAB_OUTPUT_CURRENT);
         switch (move) {
             case NONE:
                 clawMotor.stopMotor();
                 break;
             case GRAB:
-                if (isHoldingObject || !clawCanContract()) clawMotor.stopMotor();
-                else clawMotor.setVoltage(CLAW_MOVE_VOLTAGE);
+                if (isHoldingObject || !clawCanContract()) {
+                    clawMotor.stopMotor();
+                } else {
+                    clawMotor.setVoltage(CLAW_MOVE_VOLTAGE);
+                    isHoldingObject = clawGrabDebouncer.calculate(clawMotor.getOutputCurrent() > GRAB_OUTPUT_CURRENT);
+                }
                 break;
             case RELEASE:
                 if (!clawCanExtend()) clawMotor.stopMotor();
                 else clawMotor.setVoltage(-CLAW_MOVE_VOLTAGE);
+                isHoldingObject = false;
                 break;
         }
     }

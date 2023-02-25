@@ -154,6 +154,10 @@ public class LiveCommandTester {
             setField(fieldName, Integer.toString(value));
         }
         
+        public void setField (String fieldName, boolean value) {
+            setField(fieldName, Boolean.toString(value));
+        }
+        
         private void update (ConsoleManager console) {
             synchronized (fieldsLock) {
                 
