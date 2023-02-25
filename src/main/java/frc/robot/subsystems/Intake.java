@@ -24,7 +24,9 @@ import frc.robot.RobotContainer;
 
 public class Intake extends SubsystemBase {
     
-    private static final double INTAKE_FORWARD_SPEED = 3;
+    private static final double
+        INTAKE_TOP_FORWARD_VOLTAGE = -3,
+        INTAKE_BOTTOM_FORWARD_VOLTAGE = -3;
     
     private static Intake intakeInstance;
     
@@ -98,9 +100,8 @@ public class Intake extends SubsystemBase {
     }
     
     public void setIntakeMode (IntakeMode mode) {
-        double speed = mode.speedMult * INTAKE_FORWARD_SPEED;
-        topRoller.get().setVoltage(speed);
-        bottomRoller.get().setVoltage(speed);
+        topRoller.get().setVoltage(mode.speedMult * INTAKE_TOP_FORWARD_VOLTAGE);
+        bottomRoller.get().setVoltage(mode.speedMult * INTAKE_BOTTOM_FORWARD_VOLTAGE);
     }
     
     public double getEngagementVelocity () {

@@ -13,6 +13,7 @@ import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.commands.IntakeEngagementCommand.IntakeEngagement;
 import frc.robot.subsystems.Conveyor;
 import frc.robot.subsystems.Intake;
+import frc.robot.subsystems.Intake.IntakeMode;
 
 public class TeleopIntake extends CommandBase {
     
@@ -41,18 +42,30 @@ public class TeleopIntake extends CommandBase {
     
     @Override
     public void execute() {
-        conveyor.stop();
         double value = intakeControl.getAsDouble();
         
-        if (value > 0.8) {
-            new IntakeEngagementCommand(intake, IntakeEngagement.DISENGAGE)
-                .until(() -> intakeControl.getAsDouble() < 0.6)
-                .schedule();
-        } else if (value < -0.8) {
-            new IntakeEngagementCommand(intake, IntakeEngagement.ENGAGE)
-                .until(() -> intakeControl.getAsDouble() > -0.6)
-                .schedule();
-        } else intake.stop();
+        if (value > 0.5) {
+            intake.setIntakeMode(IntakeMode.FORWARD);
+            conveyor.setSpeed(3);
+        } else if (value < -0.5) {
+            intake.setIntakeMode(IntakeMode.REVERSE);
+            conveyor.setSpeed(-3);
+        } else {
+            intake.setIntakeMode(IntakeMode.STOP);
+            conveyor.stop();
+        }
+        
+        intake.setEngagementVoltage(0);
+        
+        // if (value > 0.8) {
+        //     new IntakeEngagementCommand(intake, IntakeEngagement.DISENGAGE)
+        //         .until(() -> intakeControl.getAsDouble() < 0.6)
+        //         .schedule();
+        // } else if (value < -0.8) {
+        //     new IntakeEngagementCommand(intake, IntakeEngagement.ENGAGE)
+        //         .until(() -> intakeControl.getAsDouble() > -0.6)
+        //         .schedule();
+        // } else intake.stop();
         
     }
     
