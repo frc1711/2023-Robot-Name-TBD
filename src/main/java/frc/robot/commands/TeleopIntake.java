@@ -10,6 +10,7 @@ import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.subsystems.Conveyor;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Intake.IntakeEngagement;
+import frc.robot.subsystems.Intake.IntakeMode;
 
 public class TeleopIntake extends CommandBase {
     
@@ -42,11 +43,30 @@ public class TeleopIntake extends CommandBase {
         
         if (intakeControl.getAsBoolean()) {
             
+            // Engage the intake
             intake.setIntakeEngagement(IntakeEngagement.ENGAGE);
+            
+            // Set the intake to run if it is mostly deployed
+            if (intake.getEngagementPosition() > 0.7) {
+                intake.setIntakeMode(IntakeMode.FORWARD);
+            } else {
+                intake.setIntakeMode(IntakeMode.STOP);
+            }
             
         } else {
             
+            // Disengage the intake
             intake.setIntakeEngagement(IntakeEngagement.DISENGAGE);
+            
+            // Set the intake to run in reverse if it is deployed far enough
+            double intakePos = intake.getEngagementPosition();
+            if (intakePos > 0.8) {
+                intake.setIntakeMode(IntakeMode.FORWARD);
+            } else if (intakePos > 0.3) {
+                intake.setIntakeMode(IntakeMode.REVERSE);
+            } else {
+                intake.setIntakeMode(IntakeMode.STOP);
+            }
             
         }
         
