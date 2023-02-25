@@ -4,6 +4,7 @@
 
 package frc.robot;
 
+import frc.robot.commands.ArmControlCommand;
 import frc.robot.commands.DriveCommand;
 import frc.robot.commands.TeleopIntake;
 import frc.robot.commands.auton.BalanceCommand;
@@ -26,6 +27,7 @@ public class RobotContainer {
     private final Swerve swerveSubsystem = new Swerve();
     private final Conveyor conveyorSubsystem = Conveyor.getInstance();
     private final Intake intakeSubsystem = Intake.getInstance();
+    private final Arm armSubsystem = Arm.getInstance();
     
     private final DriveCommand driveCommand = new DriveCommand(
         swerveSubsystem,
@@ -37,16 +39,22 @@ public class RobotContainer {
     private final TeleopIntake intakeCommand = new TeleopIntake(
         conveyorSubsystem,
         intakeSubsystem,
-        driveController::getAButton,
-        driveController::getBButton
+        systemController::getAButton,
+        systemController::getBButton
     );
-
+    
+    private final ArmControlCommand armCommand = new ArmControlCommand(
+        armSubsystem,
+        () -> -systemController.getLeftY(),
+        systemController::getLeftBumper,
+        systemController::getRightBumper
+    );
+    
     public RobotContainer () {
-        putConfigSendable("Swerve Subsystem", swerveSubsystem);
         swerveSubsystem.setDefaultCommand(driveCommand);
         intakeSubsystem.setDefaultCommand(intakeCommand);
         conveyorSubsystem.setDefaultCommand(intakeCommand);
-        Arm.getInstance();
+        armSubsystem.setDefaultCommand(armCommand);
     }
     
     public static void putConfigSendable (String title, Sendable sendable) {
