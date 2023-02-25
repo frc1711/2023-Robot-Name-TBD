@@ -4,6 +4,7 @@
 
 package frc.robot;
 
+import frc.robot.commands.ArmControlCommand;
 // import frc.robot.commands.CentralCommand;
 // import frc.robot.commands.DriveCommand;
 import frc.robot.commands.TeleopIntake;
@@ -23,10 +24,12 @@ import edu.wpi.first.wpilibj2.command.CommandBase;
 public class RobotContainer {
     
     private final XboxController driveController = new XboxController(0);
+    private final XboxController systemController = new XboxController(1);
     
     // private final Swerve swerveSubsystem = new Swerve();
     private final Conveyor conveyorSubsystem = Conveyor.getInstance();
     private final Intake intakeSubsystem = Intake.getInstance();
+    private final Arm armSubsystem = Arm.getInstance();
     
     // private final DriveCommand driveCommand = new DriveCommand(
     //     swerveSubsystem,
@@ -42,9 +45,16 @@ public class RobotContainer {
         () -> driveController.getBButton()
         );
 
+    private final ArmControlCommand armCommand = new ArmControlCommand(
+        armSubsystem,
+        () -> -systemController.getLeftY(),
+        systemController::getLeftBumper,
+        systemController::getRightBumper
+    );
+    
     public RobotContainer () {
         conveyorSubsystem.setDefaultCommand(intakeCommand);
-        Arm.getInstance();
+        armSubsystem.setDefaultCommand(armCommand);
         // putConfigSendable("Swerve Subsystem", swerveSubsystem);
         // swerveSubsystem.setDefaultCommand(driveCommand);
     }

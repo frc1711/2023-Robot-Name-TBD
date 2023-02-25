@@ -5,7 +5,6 @@
 package frc.robot.subsystems;
 
 import com.revrobotics.CANSparkMax;
-import com.revrobotics.RelativeEncoder;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
 import claw.CLAWRobot;
@@ -13,12 +12,10 @@ import claw.hardware.Device;
 import claw.math.InputTransform;
 import claw.math.Transform;
 import edu.wpi.first.math.filter.Debouncer;
-import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DutyCycle;
-import edu.wpi.first.wpilibj.PWM;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.IDMap;
@@ -62,8 +59,6 @@ public class Arm extends SubsystemBase {
     }
     
     private final CANSparkMax armMotor, clawMotor;
-    private final DigitalInput armLimitSwitch;
-    private final RelativeEncoder clawEncoder;
     
     private final Device<DutyCycle> armEncoder = new Device<>(
         "DIO.ENCODER.ARM.ARM_ENCODER",
@@ -74,14 +69,12 @@ public class Arm extends SubsystemBase {
     private final Debouncer clawGrabDebouncer = new Debouncer(.8, DebounceType.kRising);
     private double clawEncoderOffset = 0;
     
+    private boolean clawHasBeenHomed = false;
     private boolean isHoldingObject = false;
-    private boolean hasHitLimit = false;
     
     public Arm(CANSparkMax armMotor, CANSparkMax clawMotor, DigitalInput armLimitSwitch) {
         this.armMotor = armMotor;
         this.clawMotor = clawMotor;
-        this.armLimitSwitch = armLimitSwitch;
-        clawEncoder = clawMotor.getEncoder();
         
         XboxController controller = new XboxController(1);
         Transform transform = InputTransform.getInputTransform(
@@ -89,24 +82,22 @@ public class Arm extends SubsystemBase {
             0.2
         );
         
-        Debouncer hasHitLimitDebouncer = new Debouncer(1, DebounceType.kFalling);
-        
         LiveCommandTester tester = new LiveCommandTester(
             "Use controller 1. Y button enables arm control, move the arm using the left joystick. " +
             "Use the A button to enable the claw homing sequence. Use left and right bumpers to " +
             "release and grab using the claw.",
             liveValues -> {
-                if (controller.getAButton() && !hasHitLimit) {
+                if (controller.getAButton() && !hasClawBeenHomed()) {
                     
                     // Run homing sequence
-                    hasHitLimit = hasHitLimitDebouncer.calculate(runClawHomingSequence());
+                    runClawHomingSequence();
                     
-                } else if (controller.getRightBumper()) {
+                } else if (hasClawBeenHomed() && controller.getRightBumper()) {
                     
                     // Grab claw
                     operateClaw(ClawMovement.GRAB);
                     
-                } else if (controller.getLeftBumper()) {
+                } else if (hasClawBeenHomed() && controller.getLeftBumper()) {
                     
                     // Release claw
                     operateClaw(ClawMovement.RELEASE);
@@ -115,14 +106,12 @@ public class Arm extends SubsystemBase {
                     
                     // No claw operations
                     operateClaw(ClawMovement.NONE);
-                    hasHitLimit = hasHitLimitDebouncer.calculate(false);
                     
                 }
                 
                 liveValues.setField("Claw can release", clawCanExtend());
                 liveValues.setField("Claw can grab", clawCanContract());
                 liveValues.setField("Output current", clawMotor.getAppliedOutput());
-                liveValues.setField("Has hit limit (homing)", hasHitLimit);
                 liveValues.setField("Encoder reading", clawMotor.getEncoder().getPosition());
                 
                 if (controller.getYButton()) {
@@ -156,15 +145,18 @@ public class Arm extends SubsystemBase {
     }
     
     private final Debouncer homingSequenceDebouncer = new Debouncer(0.045, DebounceType.kRising);
-    public boolean runClawHomingSequence () {
+    public void runClawHomingSequence () {
         if (homingSequenceDebouncer.calculate(clawMotor.getOutputCurrent() > GRAB_OUTPUT_CURRENT)) {
             clawEncoderOffset = getClawEncoder();
             clawMotor.setVoltage(0);
-            return true;
+            clawHasBeenHomed = true;
         } else {
             clawMotor.setVoltage(CLAW_HOMING_VOLTAGE);
-            return false;
         }
+    }
+    
+    public boolean hasClawBeenHomed () {
+        return clawHasBeenHomed;
     }
     
     private double getClawEncoder () {
