@@ -46,30 +46,31 @@ public class TeleopIntake extends CommandBase {
     @Override
     public void execute() {
         double value = intakeControl.getAsDouble();
-        int conveyorForwardSpeed = reverseConveyor.getAsBoolean() ? -3 : 3;
         
-        if (value > 0.5) {
-            intake.setIntakeMode(IntakeMode.FORWARD);
-            conveyor.setSpeed(conveyorForwardSpeed);
-        } else if (value < -0.5) {
-            intake.setIntakeMode(IntakeMode.REVERSE);
-            conveyor.setSpeed(-conveyorForwardSpeed);
-        } else {
-            intake.setIntakeMode(IntakeMode.STOP);
-            conveyor.stop();
-        }
+        // int conveyorForwardSpeed = reverseConveyor.getAsBoolean() ? -3 : 3;
+        // if (value > 0.5) {
+        //     intake.setIntakeMode(IntakeMode.FORWARD);
+        //     conveyor.setSpeed(conveyorForwardSpeed);
+        // } else if (value < -0.5) {
+        //     intake.setIntakeMode(IntakeMode.REVERSE);
+        //     conveyor.setSpeed(-conveyorForwardSpeed);
+        // } else {
+        //     intake.setIntakeMode(IntakeMode.STOP);
+        //     conveyor.stop();
+        // }
+        // intake.setEngagementVoltage(0);
         
-        intake.setEngagementVoltage(0);
-        
-        // if (value > 0.8) {
-        //     new IntakeEngagementCommand(intake, IntakeEngagement.DISENGAGE)
-        //         .until(() -> intakeControl.getAsDouble() < 0.6)
-        //         .schedule();
-        // } else if (value < -0.8) {
-        //     new IntakeEngagementCommand(intake, IntakeEngagement.ENGAGE)
-        //         .until(() -> intakeControl.getAsDouble() > -0.6)
-        //         .schedule();
-        // } else intake.stop();
+        if (value > 0.8) {
+            new IntakeEngagementCommand(intake, IntakeEngagement.DISENGAGE)
+                .until(() -> intakeControl.getAsDouble() < 0.6)
+                .withInterruptBehavior(InterruptionBehavior.kCancelIncoming)
+                .schedule();
+        } else if (value < -0.8) {
+            new IntakeEngagementCommand(intake, IntakeEngagement.ENGAGE)
+                .until(() -> intakeControl.getAsDouble() > -0.6)
+                .withInterruptBehavior(InterruptionBehavior.kCancelIncoming)
+                .schedule();
+        } else intake.stop();
         
     }
     

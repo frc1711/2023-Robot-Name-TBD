@@ -18,6 +18,7 @@ public class IntakeEngagementCommand extends CommandBase {
     public IntakeEngagementCommand (Intake intake, IntakeEngagement engagement) {
         this.intake = intake;
         this.engagement = engagement;
+        addRequirements(intake);
     }
     
     @Override
@@ -30,7 +31,8 @@ public class IntakeEngagementCommand extends CommandBase {
     @Override
     public void execute () {
         // pid.calculate(intake.getEngagementVelocity(), engagement == IntakeEngagement.ENGAGE ? 80 : -80);
-        intake.setEngagementVoltage(engagement == IntakeEngagement.ENGAGE ? 1.2 : -4);
+        intake.setEngagementVoltage(engagement == IntakeEngagement.ENGAGE ? 1.2 : -1.8);
+        
     }
     
     @Override
