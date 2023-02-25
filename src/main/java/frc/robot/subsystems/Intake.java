@@ -78,8 +78,21 @@ public class Intake extends SubsystemBase {
         lowerLimitSwitch = new LimitSwitchDevice("DIO.LIMIT_SWITCH.INTAKE.LOWER_LIMIT", NormalState.NORMALLY_CLOSED),
         upperLimitSwitch = new LimitSwitchDevice("DIO.LIMIT_SWITCH.INTAKE.UPPER_LIMIT", NormalState.NORMALLY_CLOSED);
     
+    private final double BOTTOM_INTAKE_RAW_POSITION = 6.69;
+    private double engagementPositionOffset = getEngagementRawPosition();
+    
     public Intake () {
         RobotContainer.putConfigSendable("Intake Subsystem", this);
+        LiveCommandTester tester = new LiveCommandTester(
+            "Use controller 1.",
+            liveFields -> {
+                liveFields.setField("Intake position", getEngagementPosition());
+            },
+            this::stop,
+            this
+        );
+        
+        CLAWRobot.getExtensibleCommandInterpreter().addCommandProcessor(tester.toCommandProcessor("intaketest"));
     }
     
     public boolean isLowerPressed () {
@@ -110,6 +123,14 @@ public class Intake extends SubsystemBase {
         return leftEngage.get().getEncoder().getVelocity() - rightEngage.get().getEncoder().getVelocity();
     }
     
+    private double getEngagementRawPosition () {
+        return leftEngage.get().getEncoder().getPosition() - rightEngage.get().getEncoder().getPosition();
+    }
+    
+    public double getEngagementPosition () {
+        return (getEngagementRawPosition() - engagementPositionOffset) / BOTTOM_INTAKE_RAW_POSITION;
+    }
+    
     public void setEngagementVoltage (double voltage) {
         leftEngage.get().setVoltage(voltage);
         rightEngage.get().setVoltage(-voltage);
@@ -128,6 +149,14 @@ public class Intake extends SubsystemBase {
     public void initSendable (SendableBuilder builder) {
         builder.addBooleanProperty("lower-limit", this::isLowerPressed, null);
         builder.addBooleanProperty("upper-limit", this::isUpperPressed, null);
+    }
+    
+    @Override
+    public void periodic () {
+        if (isUpperPressed() && !isLowerPressed())
+            engagementPositionOffset = getEngagementRawPosition();
+        else if (isLowerPressed() && !isUpperPressed())
+            engagementPositionOffset = getEngagementRawPosition() - BOTTOM_INTAKE_RAW_POSITION;
     }
     
 }

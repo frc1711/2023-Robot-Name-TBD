@@ -60,12 +60,12 @@ public class TeleopIntake extends CommandBase {
         // }
         // intake.setEngagementVoltage(0);
         
-        if (value > 0.8) {
+        if (value > 0.8 && !intake.isUpperPressed()) {
             new IntakeEngagementCommand(intake, IntakeEngagement.DISENGAGE)
                 .until(() -> intakeControl.getAsDouble() < 0.6)
                 .withInterruptBehavior(InterruptionBehavior.kCancelIncoming)
                 .schedule();
-        } else if (value < -0.8) {
+        } else if (value < -0.8 && !intake.isLowerPressed()) {
             new IntakeEngagementCommand(intake, IntakeEngagement.ENGAGE)
                 .until(() -> intakeControl.getAsDouble() > -0.6)
                 .withInterruptBehavior(InterruptionBehavior.kCancelIncoming)

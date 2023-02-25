@@ -54,15 +54,13 @@ public class Arm extends SubsystemBase {
         if (armInstance == null) {
             armInstance = new Arm(
                 new CANSparkMax(15, MotorType.kBrushless), 
-                new CANSparkMax(14, MotorType.kBrushless), 
-                new DigitalInput(IDMap.ARM_LIMIT_SWITCH)
+                new CANSparkMax(14, MotorType.kBrushless)
             );
         }
         return armInstance;
     }
     
     private final CANSparkMax armMotor, clawMotor;
-    private final DigitalInput armLimitSwitch;
     private final RelativeEncoder clawEncoder;
     
     private final Device<DutyCycle> armEncoder = new Device<>(
@@ -77,10 +75,9 @@ public class Arm extends SubsystemBase {
     private boolean isHoldingObject = false;
     private boolean hasHitLimit = false;
     
-    public Arm(CANSparkMax armMotor, CANSparkMax clawMotor, DigitalInput armLimitSwitch) {
+    public Arm(CANSparkMax armMotor, CANSparkMax clawMotor) {
         this.armMotor = armMotor;
         this.clawMotor = clawMotor;
-        this.armLimitSwitch = armLimitSwitch;
         clawEncoder = clawMotor.getEncoder();
         
         XboxController controller = new XboxController(1);
