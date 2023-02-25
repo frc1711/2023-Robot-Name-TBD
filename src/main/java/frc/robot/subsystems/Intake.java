@@ -24,6 +24,8 @@ import frc.robot.RobotContainer;
 
 public class Intake extends SubsystemBase {
     
+    // Cubes: -2.3, -2.8
+    // Cones: -3.8, -4.5
     private static final double
         INTAKE_TOP_FORWARD_VOLTAGE = -3.8,
         INTAKE_BOTTOM_FORWARD_VOLTAGE = -4.5;
