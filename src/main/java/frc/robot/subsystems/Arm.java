@@ -17,6 +17,7 @@ import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.DutyCycle;
 import edu.wpi.first.wpilibj.PWM;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -64,10 +65,10 @@ public class Arm extends SubsystemBase {
     private final DigitalInput armLimitSwitch;
     private final RelativeEncoder clawEncoder;
     
-    private final Device<PWM> armEncoder = new Device<>(
-        "PWM.ENCODER.ARM.ARM_ENCODER",
-        PWM::new,
-        PWM::close
+    private final Device<DutyCycle> armEncoder = new Device<>(
+        "DIO.ENCODER.ARM.ARM_ENCODER",
+        id -> new DutyCycle(new DigitalInput(2)),
+        DutyCycle::close
     );
     
     private final Debouncer clawGrabDebouncer = new Debouncer(.2, DebounceType.kRising);
@@ -162,7 +163,7 @@ public class Arm extends SubsystemBase {
     @Override
     public void initSendable (SendableBuilder builder) {
         builder.addDoubleProperty("Claw output current", clawMotor::getOutputCurrent, null);
-        builder.addIntegerProperty("Arm position", () -> armEncoder.get().getRaw(), null);
+        builder.addDoubleProperty("Arm position", () -> armEncoder.get().getOutput(), null);
     }
     
 }
