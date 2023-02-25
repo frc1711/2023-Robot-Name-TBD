@@ -38,7 +38,8 @@ public class RobotContainer {
     private final TeleopIntake intakeCommand = new TeleopIntake(
         conveyorSubsystem,
         intakeSubsystem,
-        () -> -systemController.getLeftY()
+        () -> -systemController.getLeftY(),
+        systemController::getAButton
     );
 
     public RobotContainer () {

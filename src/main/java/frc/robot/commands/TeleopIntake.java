@@ -20,17 +20,20 @@ public class TeleopIntake extends CommandBase {
     private final Conveyor conveyor;
     private final Intake intake;
     private final DoubleSupplier intakeControl;
+    private final BooleanSupplier reverseConveyor;
     
     // private final Debouncer intakeDebouncer = new Debouncer(2, DebounceType.kFalling);
     
     public TeleopIntake(
         Conveyor conveyor,
         Intake intake,
-        DoubleSupplier intakeControl
+        DoubleSupplier intakeControl,
+        BooleanSupplier reverseConveyor
     ) {
         this.conveyor = conveyor;
         this.intake = intake;
         this.intakeControl = intakeControl;
+        this.reverseConveyor = reverseConveyor;
         addRequirements(conveyor, intake);
     }
     
@@ -43,13 +46,14 @@ public class TeleopIntake extends CommandBase {
     @Override
     public void execute() {
         double value = intakeControl.getAsDouble();
+        int conveyorForwardSpeed = reverseConveyor.getAsBoolean() ? -3 : 3;
         
         if (value > 0.5) {
             intake.setIntakeMode(IntakeMode.FORWARD);
-            conveyor.setSpeed(3);
+            conveyor.setSpeed(conveyorForwardSpeed);
         } else if (value < -0.5) {
             intake.setIntakeMode(IntakeMode.REVERSE);
-            conveyor.setSpeed(-3);
+            conveyor.setSpeed(-conveyorForwardSpeed);
         } else {
             intake.setIntakeMode(IntakeMode.STOP);
             conveyor.stop();
