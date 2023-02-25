@@ -5,9 +5,7 @@
 package frc.robot;
 
 import frc.robot.commands.DriveCommand;
-import frc.robot.commands.IntakeEngagementCommand;
 import frc.robot.commands.TeleopIntake;
-import frc.robot.commands.IntakeEngagementCommand.IntakeEngagement;
 import frc.robot.commands.auton.BalanceCommand;
 import frc.robot.subsystems.Arm;
 import frc.robot.subsystems.Conveyor;
@@ -39,8 +37,8 @@ public class RobotContainer {
     private final TeleopIntake intakeCommand = new TeleopIntake(
         conveyorSubsystem,
         intakeSubsystem,
-        () -> -systemController.getLeftY(),
-        systemController::getAButton
+        systemController::getAButton,
+        systemController::getBButton
     );
 
     public RobotContainer () {

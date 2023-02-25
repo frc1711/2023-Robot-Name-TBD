@@ -5,35 +5,29 @@
 package frc.robot.commands;
 
 import java.util.function.BooleanSupplier;
-import java.util.function.DoubleSupplier;
 
-// import edu.wpi.first.math.filter.Debouncer;
-// import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.wpilibj2.command.CommandBase;
-import frc.robot.commands.IntakeEngagementCommand.IntakeEngagement;
 import frc.robot.subsystems.Conveyor;
 import frc.robot.subsystems.Intake;
-import frc.robot.subsystems.Intake.IntakeMode;
+import frc.robot.subsystems.Intake.IntakeEngagement;
 
 public class TeleopIntake extends CommandBase {
     
     private final Conveyor conveyor;
     private final Intake intake;
-    private final DoubleSupplier intakeControl;
-    private final BooleanSupplier reverseConveyor;
-    
-    // private final Debouncer intakeDebouncer = new Debouncer(2, DebounceType.kFalling);
+    private final BooleanSupplier intakeControl;
+    private final BooleanSupplier reverseControl;
     
     public TeleopIntake(
         Conveyor conveyor,
         Intake intake,
-        DoubleSupplier intakeControl,
-        BooleanSupplier reverseConveyor
+        BooleanSupplier intakeControl,
+        BooleanSupplier reverseControl
     ) {
         this.conveyor = conveyor;
         this.intake = intake;
         this.intakeControl = intakeControl;
-        this.reverseConveyor = reverseConveyor;
+        this.reverseControl = reverseControl;
         addRequirements(conveyor, intake);
     }
     
@@ -45,7 +39,16 @@ public class TeleopIntake extends CommandBase {
     
     @Override
     public void execute() {
-        double value = intakeControl.getAsDouble();
+        
+        if (intakeControl.getAsBoolean()) {
+            
+            intake.setIntakeEngagement(IntakeEngagement.ENGAGE);
+            
+        } else {
+            
+            intake.setIntakeEngagement(IntakeEngagement.DISENGAGE);
+            
+        }
         
         // int conveyorForwardSpeed = reverseConveyor.getAsBoolean() ? -3 : 3;
         // if (value > 0.5) {
@@ -59,18 +62,6 @@ public class TeleopIntake extends CommandBase {
         //     conveyor.stop();
         // }
         // intake.setEngagementVoltage(0);
-        
-        if (value > 0.8 && !intake.isUpperPressed()) {
-            new IntakeEngagementCommand(intake, IntakeEngagement.DISENGAGE)
-                .until(() -> intakeControl.getAsDouble() < 0.6)
-                .withInterruptBehavior(InterruptionBehavior.kCancelIncoming)
-                .schedule();
-        } else if (value < -0.8 && !intake.isLowerPressed()) {
-            new IntakeEngagementCommand(intake, IntakeEngagement.ENGAGE)
-                .until(() -> intakeControl.getAsDouble() > -0.6)
-                .withInterruptBehavior(InterruptionBehavior.kCancelIncoming)
-                .schedule();
-        } else intake.stop();
         
     }
     

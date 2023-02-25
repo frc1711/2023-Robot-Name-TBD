@@ -13,11 +13,9 @@ import claw.hardware.Device;
 import claw.hardware.LimitSwitchDevice;
 import claw.hardware.Device.DeviceInitializer;
 import claw.hardware.LimitSwitchDevice.NormalState;
+import claw.math.InputTransform;
 import claw.math.Transform;
-import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.util.sendable.SendableBuilder;
-import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.LiveCommandTester;
 import frc.robot.RobotContainer;
@@ -95,11 +93,11 @@ public class Intake extends SubsystemBase {
         CLAWRobot.getExtensibleCommandInterpreter().addCommandProcessor(tester.toCommandProcessor("intaketest"));
     }
     
-    public boolean isLowerPressed () {
+    private boolean isLowerPressed () {
         return !lowerLimitSwitch.isPressed();
     }
     
-    public boolean isUpperPressed () {
+    private boolean isUpperPressed () {
         return !upperLimitSwitch.isPressed();
     }
     
@@ -114,29 +112,79 @@ public class Intake extends SubsystemBase {
         }
     }
     
+    public enum IntakeEngagement {
+        ENGAGE (
+            // Get a 0 for pos>0.2 and 1 for pos<0.25
+            ((Transform)((double pos) -> 0.25 - pos))
+            .then(Transform.SIGN)
+            .then(Transform.clamp(0, 1))
+            
+            // Multiply for the final voltage
+            .then((Transform)((double x) -> 1.5*x))
+        ),
+        
+        DISENGAGE (
+            // Apply a curve so the engagement voltage isn't linear
+            // and it sharply drops off at the beginning
+            InputTransform.THREE_HALVES_CURVE
+            
+            // Scale from 3.8 at the very bottom to 0.5 at the top
+            .then((Transform)((double pos) -> pos * 3.8))
+            .then(Transform.clamp(0.75, 3.8))
+            
+            // Negate speed because we're disengaging
+            .then(Transform.NEGATE)
+        ),
+        
+        PASSIVE (Transform.clamp(0, 0));
+        
+        private final Transform positionToVoltage;
+        private IntakeEngagement (Transform positionToVoltage) {
+            this.positionToVoltage = positionToVoltage;
+        }
+    }
+    
     public void setIntakeMode (IntakeMode mode) {
         topRoller.get().setVoltage(mode.speedMult * INTAKE_TOP_FORWARD_VOLTAGE);
         bottomRoller.get().setVoltage(mode.speedMult * INTAKE_BOTTOM_FORWARD_VOLTAGE);
     }
     
-    public double getEngagementVelocity () {
-        return leftEngage.get().getEncoder().getVelocity() - rightEngage.get().getEncoder().getVelocity();
+    public void setIntakeEngagement (IntakeEngagement engagement) {
+        double voltage = engagement.positionToVoltage.apply(getEngagementPosition());
+        
+        if (engagement == IntakeEngagement.ENGAGE) {
+            setEngagementVoltage(isLowerPressed() ? 0 : voltage);
+        } else if (engagement == IntakeEngagement.DISENGAGE) {
+            setEngagementVoltage(isUpperPressed() ? 0 : voltage);
+        } else if (engagement == IntakeEngagement.PASSIVE) {
+            setEngagementVoltage(voltage);
+        }
     }
     
+    /**
+     * The raw engagement position according to the encoders.
+     */
     private double getEngagementRawPosition () {
         return leftEngage.get().getEncoder().getPosition() - rightEngage.get().getEncoder().getPosition();
     }
     
+    /**
+     * Get the position of the intake engagement, adjusted so that 0 represents fully disengaged and 1 fully engaged.
+     */
     public double getEngagementPosition () {
         return (getEngagementRawPosition() - engagementPositionOffset) / BOTTOM_INTAKE_RAW_POSITION;
     }
     
-    public void setEngagementVoltage (double voltage) {
+    /**
+     * Set the voltage of both the left and right engagement motor controllers
+     * so that a positive value is engaging and a negative value is disengaging.
+     */
+    private void setEngagementVoltage (double voltage) {
         leftEngage.get().setVoltage(voltage);
         rightEngage.get().setVoltage(-voltage);
     }
     
-    public void stopEngagementMotors () {
+    private void stopEngagementMotors () {
         leftEngage.get().stopMotor();
         rightEngage.get().stopMotor();
     }
