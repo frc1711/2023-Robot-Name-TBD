@@ -18,7 +18,6 @@ import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DutyCycle;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.IDMap;
 import frc.robot.LiveCommandTester;
 import frc.robot.RobotContainer;
 
@@ -51,8 +50,7 @@ public class Arm extends SubsystemBase {
         if (armInstance == null) {
             armInstance = new Arm(
                 new CANSparkMax(15, MotorType.kBrushless), 
-                new CANSparkMax(14, MotorType.kBrushless), 
-                new DigitalInput(IDMap.ARM_LIMIT_SWITCH)
+                new CANSparkMax(14, MotorType.kBrushless)
             );
         }
         return armInstance;
@@ -72,7 +70,7 @@ public class Arm extends SubsystemBase {
     private boolean clawHasBeenHomed = false;
     private boolean isHoldingObject = false;
     
-    public Arm(CANSparkMax armMotor, CANSparkMax clawMotor, DigitalInput armLimitSwitch) {
+    public Arm(CANSparkMax armMotor, CANSparkMax clawMotor) {
         this.armMotor = armMotor;
         this.clawMotor = clawMotor;
         
