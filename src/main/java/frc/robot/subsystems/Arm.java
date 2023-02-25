@@ -39,13 +39,13 @@ public class Arm extends SubsystemBase {
      * extension of the claw (almost fully grabbing). This offset helps to prevent the claw from contracting too
      * much and breaking itself.
      */
-    private static final double CLAW_MIN_REACH_OFFSET = 2.4763;
+    private static final double CLAW_MIN_REACH_OFFSET = 1;
     
     // TODO: Add javadocs
     private static final double GRAB_OUTPUT_CURRENT = 6;
     
     private static final double
-        CLAW_MOVE_VOLTAGE = 4.5,
+        CLAW_MOVE_VOLTAGE = 4,
         CLAW_HOMING_VOLTAGE = 1.8;
     
     private static Arm armInstance;
@@ -71,7 +71,7 @@ public class Arm extends SubsystemBase {
         DutyCycle::close
     );
     
-    private final Debouncer clawGrabDebouncer = new Debouncer(.6, DebounceType.kRising);
+    private final Debouncer clawGrabDebouncer = new Debouncer(.8, DebounceType.kRising);
     private double clawEncoderOffset = 0;
     
     private boolean isHoldingObject = false;
