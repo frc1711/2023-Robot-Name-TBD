@@ -9,6 +9,7 @@ import com.revrobotics.RelativeEncoder;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
 import claw.CLAWRobot;
+import claw.hardware.Device;
 import claw.math.InputTransform;
 import claw.math.Transform;
 import edu.wpi.first.math.filter.Debouncer;
@@ -16,6 +17,7 @@ import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.PWM;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.IDMap;
@@ -61,6 +63,12 @@ public class Arm extends SubsystemBase {
     private final CANSparkMax armMotor, clawMotor;
     private final DigitalInput armLimitSwitch;
     private final RelativeEncoder clawEncoder;
+    
+    private final Device<PWM> armEncoder = new Device<>(
+        "PWM.ENCODER.ARM.ARM_ENCODER",
+        PWM::new,
+        PWM::close
+    );
     
     private final Debouncer clawGrabDebouncer = new Debouncer(.2, DebounceType.kRising);
     private double clawEncoderOffset = 0;
@@ -154,6 +162,7 @@ public class Arm extends SubsystemBase {
     @Override
     public void initSendable (SendableBuilder builder) {
         builder.addDoubleProperty("Claw output current", clawMotor::getOutputCurrent, null);
+        builder.addIntegerProperty("Arm position", () -> armEncoder.get().getRaw(), null);
     }
     
 }
