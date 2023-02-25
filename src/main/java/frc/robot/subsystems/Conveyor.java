@@ -27,15 +27,20 @@ public class Conveyor extends SubsystemBase{
 			motor.close();
 		}
 	);
-
-	private Conveyor () {}
-
-	public void setSpeed(double input) {
-		conveyorMotor.get().setVoltage(input);
+    
+    public enum ConveyorMode {
+        FORWARD (4),
+        REVERSE (-4),
+        STOP (0);
+        
+        private final double voltage;
+        private ConveyorMode (double voltage) {
+            this.voltage = voltage;
+        }
+    }
+    
+	public void setMode (ConveyorMode mode) {
+		conveyorMotor.get().setVoltage(mode.voltage);
 	}
-
-	public void stop() {
-		conveyorMotor.get().stopMotor();
-	}
-
+    
 }

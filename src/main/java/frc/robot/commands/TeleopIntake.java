@@ -6,9 +6,12 @@ package frc.robot.commands;
 
 import java.util.function.BooleanSupplier;
 
+import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.subsystems.Conveyor;
 import frc.robot.subsystems.Intake;
+import frc.robot.subsystems.Conveyor.ConveyorMode;
 import frc.robot.subsystems.Intake.IntakeEngagement;
 import frc.robot.subsystems.Intake.IntakeMode;
 
@@ -18,6 +21,8 @@ public class TeleopIntake extends CommandBase {
     private final Intake intake;
     private final BooleanSupplier intakeControl;
     private final BooleanSupplier reverseControl;
+    
+    private final Debouncer runConveyorDebouncer = new Debouncer(2, DebounceType.kFalling);
     
     public TeleopIntake(
         Conveyor conveyor,
@@ -34,7 +39,7 @@ public class TeleopIntake extends CommandBase {
     
     @Override
     public void initialize() {
-        conveyor.stop();
+        conveyor.setMode(ConveyorMode.STOP);
         intake.stop();
     }
     
@@ -70,24 +75,13 @@ public class TeleopIntake extends CommandBase {
             
         }
         
-        // int conveyorForwardSpeed = reverseConveyor.getAsBoolean() ? -3 : 3;
-        // if (value > 0.5) {
-        //     intake.setIntakeMode(IntakeMode.FORWARD);
-        //     conveyor.setSpeed(conveyorForwardSpeed);
-        // } else if (value < -0.5) {
-        //     intake.setIntakeMode(IntakeMode.REVERSE);
-        //     conveyor.setSpeed(-conveyorForwardSpeed);
-        // } else {
-        //     intake.setIntakeMode(IntakeMode.STOP);
-        //     conveyor.stop();
-        // }
-        // intake.setEngagementVoltage(0);
+        conveyor.setMode(runConveyorDebouncer.calculate(intakeControl.getAsBoolean()) ? ConveyorMode.FORWARD : ConveyorMode.STOP);
         
     }
     
     @Override
-    public void end(boolean interrupted) {
-        conveyor.stop();
+    public void end (boolean interrupted) {
+        conveyor.setMode(ConveyorMode.STOP);
         intake.stop();
     }
     
