@@ -7,7 +7,6 @@ package frc.robot.subsystems.swerve;
 import com.kauailabs.navx.frc.AHRS;
 
 import claw.CLAWRobot;
-import claw.logs.CLAWLogger;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
@@ -75,28 +74,27 @@ public class Swerve extends SubsystemBase {
         
         XboxController controller = new XboxController(0);
         
-        LiveCommandTester<XboxController> tester = new LiveCommandTester<>(
-            () -> controller,
-            c -> {
-                flModule.updateSteerMotor(c.getLeftX()*4);
+        LiveCommandTester tester = new LiveCommandTester(
+            "No special usage. Fully automatic.",
+            liveValues -> {
+                flModule.updateSteerMotor(controller.getLeftX()*4);
                 flModule.updateDriveMotor(0);
                 
-                frModule.updateSteerMotor(c.getLeftX()*4);
+                frModule.updateSteerMotor(controller.getLeftX()*4);
                 frModule.updateDriveMotor(0);
                 
-                rlModule.updateSteerMotor(c.getLeftX()*4);
+                rlModule.updateSteerMotor(controller.getLeftX()*4);
                 rlModule.updateDriveMotor(0);
                 
-                rrModule.updateSteerMotor(c.getLeftX()*4);
+                rrModule.updateSteerMotor(controller.getLeftX()*4);
                 rrModule.updateDriveMotor(0);
                 
-                CLAWLogger.getLogger("test").out("hello there");
+                liveValues.setField("test field", "hello");
             },
             this::stop,
             this
         );
         
-        RobotContainer.putConfigCommand("test command", tester.new TestCommand(), false);
         CLAWRobot.getExtensibleCommandInterpreter().addCommandProcessor(
             tester.toCommandProcessor("swervetest")
         );

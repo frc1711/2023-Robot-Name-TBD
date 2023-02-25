@@ -86,13 +86,21 @@ public class Arm extends SubsystemBase {
             0.2
         );
         
-        LiveCommandTester<XboxController> tester = new LiveCommandTester<>(
-            () -> controller,
-            c -> {
+        LiveCommandTester tester = new LiveCommandTester(
+            "Use controller 0. Left bumper enables control, move the arm using the left joystick.",
+            liveValues -> {
                 operateClaw(ClawMovement.NONE);
-                if (c.getLeftBumper()) {
-                    setArmVoltage(7 * transform.apply(c.getRightY()));
-                } else stopArm();
+                
+                if (controller.getLeftBumper()) {
+                    
+                    double armVoltage = 7 * transform.apply(controller.getRightY());
+                    liveValues.setField("Arm voltage", armVoltage);
+                    setArmVoltage(7 * transform.apply(controller.getRightY()));
+                    
+                } else {
+                    liveValues.setField("Arm voltage", 0.0);
+                    stopArm();
+                }
             },
             this::stop,
             this
