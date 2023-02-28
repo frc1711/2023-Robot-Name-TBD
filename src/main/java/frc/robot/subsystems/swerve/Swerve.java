@@ -7,11 +7,11 @@ package frc.robot.subsystems.swerve;
 import com.kauailabs.navx.frc.AHRS;
 
 import claw.CLAWRobot;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.IDMap;
@@ -72,24 +72,30 @@ public class Swerve extends SubsystemBase {
         RobotContainer.putConfigSendable("rl-module", rlModule);
         RobotContainer.putConfigSendable("rr-module", rrModule);
         
-        XboxController controller = new XboxController(0);
-        
         LiveCommandTester tester = new LiveCommandTester(
             "No special usage. Fully automatic.",
             liveValues -> {
-                flModule.updateSteerMotor(controller.getLeftX()*4);
+                
+                double angle = System.currentTimeMillis()/5. % 360.;
+                
+                liveValues.setField("Angle", angle + " deg");
+                
+                flModule.updateSteerMotor(Rotation2d.fromDegrees(angle));
                 flModule.updateDriveMotor(0);
+                liveValues.setField("fl", flModule.getRotation().getDegrees());
                 
-                frModule.updateSteerMotor(controller.getLeftX()*4);
+                frModule.updateSteerMotor(Rotation2d.fromDegrees(angle));
                 frModule.updateDriveMotor(0);
+                liveValues.setField("fr", frModule.getRotation().getDegrees());
                 
-                rlModule.updateSteerMotor(controller.getLeftX()*4);
+                rlModule.updateSteerMotor(Rotation2d.fromDegrees(angle));
                 rlModule.updateDriveMotor(0);
+                liveValues.setField("rl", rlModule.getRotation().getDegrees());
                 
-                rrModule.updateSteerMotor(controller.getLeftX()*4);
+                rrModule.updateSteerMotor(Rotation2d.fromDegrees(angle));
                 rrModule.updateDriveMotor(0);
+                liveValues.setField("rr", rrModule.getRotation().getDegrees());
                 
-                liveValues.setField("test field", "hello");
             },
             this::stop,
             this
@@ -107,7 +113,7 @@ public class Swerve extends SubsystemBase {
      */
     public void moveRobotRelative (ChassisSpeeds speeds) {
         SwerveModuleState[] moduleStates = kinematics.toSwerveModuleStates(speeds);
-        SwerveDriveKinematics.desaturateWheelSpeeds(moduleStates, SwerveModule.getMaxDriveSpeedMetersPerSec());
+        SwerveModule.desaturateWheelSpeeds(moduleStates);
         flModule.update(moduleStates[0]);
         frModule.update(moduleStates[1]);
         rlModule.update(moduleStates[2]);

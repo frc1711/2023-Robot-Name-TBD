@@ -6,6 +6,7 @@ import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
@@ -20,8 +21,12 @@ class SwerveModule implements Sendable {
     private static final SimpleMotorFeedforward STEER_FEEDFORWARD = new SimpleMotorFeedforward(0.14, 1);
     private static final SimpleMotorFeedforward DRIVE_FEEDFORWARD = new SimpleMotorFeedforward(0.2, 1);
     
-    public static double getMaxDriveSpeedMetersPerSec () {
+    private static double getMaxDriveSpeedMetersPerSec () {
         return RobotController.getBatteryVoltage() / METERS_PER_SEC_TO_DRIVE_VOLTS;
+    }
+    
+    public static void desaturateWheelSpeeds (SwerveModuleState[] moduleStates) {
+        SwerveDriveKinematics.desaturateWheelSpeeds(moduleStates, getMaxDriveSpeedMetersPerSec());
     }
     
     private static CANSparkMax initializeMotor (int canId) {
