@@ -8,14 +8,16 @@ import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
 import claw.CLAWRobot;
-import claw.hardware.Device;
+import claw.Setting;
+import claw.hardware.AbsoluteEncoderDevice;
 import claw.math.InputTransform;
 import claw.math.Transform;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.DigitalInput;
-import edu.wpi.first.wpilibj.DutyCycle;
+import edu.wpi.first.wpilibj.DutyCycleEncoder;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.LiveCommandTester;
@@ -58,10 +60,12 @@ public class Arm extends SubsystemBase {
     
     private final CANSparkMax armMotor, clawMotor;
     
-    private final Device<DutyCycle> armEncoder = new Device<>(
+    private final AbsoluteEncoderDevice<DutyCycleEncoder> armEncoder = new AbsoluteEncoderDevice<>(
         "DIO.ENCODER.ARM.ARM_ENCODER",
-        id -> new DutyCycle(new DigitalInput(id)),
-        DutyCycle::close
+        id -> new DutyCycleEncoder(new DigitalInput(id)),
+        DutyCycleEncoder::close,
+        new Setting<Double>("ARM_ENCODER.CONFIG_OFFSET", () -> 0.),
+        encoder -> Rotation2d.fromDegrees(encoder.getAbsolutePosition())
     );
     
     private final Debouncer clawGrabDebouncer = new Debouncer(.8, DebounceType.kRising);
@@ -204,7 +208,7 @@ public class Arm extends SubsystemBase {
     @Override
     public void initSendable (SendableBuilder builder) {
         builder.addDoubleProperty("Claw output current", clawMotor::getOutputCurrent, null);
-        builder.addDoubleProperty("Arm position", () -> armEncoder.get().getOutput(), null);
+        builder.addDoubleProperty("Arm position", () -> armEncoder.getRotationMeasurement().getDegrees(), null);
     }
     
 }
