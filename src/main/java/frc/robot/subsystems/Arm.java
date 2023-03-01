@@ -41,7 +41,7 @@ public class Arm extends SubsystemBase {
     private static final double CLAW_MIN_REACH_OFFSET = 1;
     
     // TODO: Add javadocs
-    private static final double GRAB_OUTPUT_CURRENT = 6;
+    private static final double GRAB_OUTPUT_CURRENT = 8;
     
     private static final double
         CLAW_MOVE_VOLTAGE = 4,
@@ -91,12 +91,16 @@ public class Arm extends SubsystemBase {
             0.2
         );
         
+        final Debouncer db = new Debouncer(0.3, DebounceType.kRising);
         LiveCommandTester tester = new LiveCommandTester(
             "Use controller 1. Y button enables arm control, move the arm using the left joystick. " +
             "Use the A button to enable the claw homing sequence. Use left and right bumpers to " +
             "release and grab using the claw.\n\nHold both triggers and press X to configure the arm down position. " +
             "Hold both triggers and press B to configure the arm up position.",
             liveValues -> {
+                
+                boolean isH = db.calculate(clawMotor.getOutputCurrent() > 30);
+                
                 if (controller.getAButton() && !hasClawBeenHomed()) {
                     
                     // Run homing sequence
@@ -104,13 +108,20 @@ public class Arm extends SubsystemBase {
                     
                 } else if (hasClawBeenHomed() && controller.getRightBumper()) {
                     
+                    if (!isH) {
+                        clawMotor.setVoltage(CLAW_MOVE_VOLTAGE);
+                    } else clawMotor.stopMotor();
+                    
                     // Grab claw
-                    operateClaw(ClawMovement.GRAB);
+                    // operateClaw(ClawMovement.GRAB);
                     
                 } else if (hasClawBeenHomed() && controller.getLeftBumper()) {
                     
                     // Release claw
-                    operateClaw(ClawMovement.RELEASE);
+                    
+                    clawMotor.setVoltage(-CLAW_MOVE_VOLTAGE);
+                    
+                    // operateClaw(ClawMovement.RELEASE);
                     
                 } else {
                     
@@ -168,7 +179,7 @@ public class Arm extends SubsystemBase {
         armMotor.setVoltage(0);
     }
     
-    private final Debouncer homingSequenceDebouncer = new Debouncer(0.045, DebounceType.kRising);
+    private final Debouncer homingSequenceDebouncer = new Debouncer(0.1, DebounceType.kRising);
     public void runClawHomingSequence () {
         if (homingSequenceDebouncer.calculate(clawMotor.getOutputCurrent() > GRAB_OUTPUT_CURRENT)) {
             clawEncoderOffset = getClawEncoder();
