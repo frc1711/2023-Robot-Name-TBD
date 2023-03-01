@@ -3,6 +3,7 @@ package frc.robot.commands;
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 
+import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj2.command.CommandBase;
@@ -14,6 +15,11 @@ public class DriveCommand extends CommandBase {
     private static final InputCurve
         ROTATE_CURVE = InputCurve.THREE_HALVES_CURVE.withDeadband(0.14),
         STRAFE_CURVE = InputCurve.THREE_HALVES_CURVE.withDeadband(0.14);
+    
+    private final SlewRateLimiter
+        strafeXLimiter = new SlewRateLimiter(16, -16, 0),
+        strafeYLimiter = new SlewRateLimiter(16, -16, 0),
+        rotateLimiter = new SlewRateLimiter(32, -32, 0);
     
     private final Swerve swerve;
     private final BooleanSupplier xModeInput;
@@ -48,7 +54,11 @@ public class DriveCommand extends CommandBase {
         double rotateInputRaw = rotateAxis.getAsDouble();
         
         Input2D strafeSpeeds = InputCurve.apply(STRAFE_CURVE, strafeInputRaw).scale(5);
-        double rotateSpeed = InputCurve.apply(ROTATE_CURVE, rotateInputRaw) * 6;
+        double rotateSpeed = -InputCurve.apply(ROTATE_CURVE, rotateInputRaw) * 6;
+        
+        double strafeX = strafeXLimiter.calculate(-strafeSpeeds.y());
+        double strafeY = strafeYLimiter.calculate(-strafeSpeeds.x());
+        rotateSpeed = rotateLimiter.calculate(rotateSpeed);
         
         DS_strafeX = strafeInputRaw.x();
         DS_strafeY = strafeInputRaw.y();
@@ -57,7 +67,7 @@ public class DriveCommand extends CommandBase {
         // Robot orientation and ChassisSpeeds is based on the idea that +x is the front of the robot,
         // +y is the left side of the robot, etc.
         // Axes, of course, do not work like this
-        swerve.moveFieldRelative(new ChassisSpeeds(-strafeSpeeds.y(), -strafeSpeeds.x(), -rotateSpeed));
+        swerve.moveFieldRelative(new ChassisSpeeds(strafeX, strafeY, rotateSpeed));
     }
     
     @Override
