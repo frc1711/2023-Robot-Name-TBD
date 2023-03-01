@@ -13,27 +13,27 @@ import frc.robot.subsystems.Conveyor;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Conveyor.ConveyorMode;
 import frc.robot.subsystems.Intake.IntakeEngagement;
-import frc.robot.subsystems.Intake.IntakeMode;
+import frc.robot.subsystems.Intake.IntakeSpeedMode;
 
 public class TeleopIntake extends CommandBase {
     
     private final Conveyor conveyor;
     private final Intake intake;
-    private final BooleanSupplier intakeControl;
-    private final BooleanSupplier reverseControl;
+    private final BooleanSupplier intakeCubeControl, intakeConeControl;
     
     private final Debouncer runConveyorDebouncer = new Debouncer(2, DebounceType.kFalling);
+    private IntakeRunType lastIntakeRunType = IntakeRunType.NONE;
     
     public TeleopIntake(
         Conveyor conveyor,
         Intake intake,
-        BooleanSupplier intakeControl,
-        BooleanSupplier reverseControl
+        BooleanSupplier intakeCubeControl,
+        BooleanSupplier intakeConeControl
     ) {
         this.conveyor = conveyor;
         this.intake = intake;
-        this.intakeControl = intakeControl;
-        this.reverseControl = reverseControl;
+        this.intakeCubeControl = intakeCubeControl;
+        this.intakeConeControl = intakeConeControl;
         addRequirements(conveyor, intake);
     }
     
@@ -43,39 +43,61 @@ public class TeleopIntake extends CommandBase {
         intake.stop();
     }
     
+    private enum IntakeRunType {
+        CONE (IntakeSpeedMode.CONE, IntakeSpeedMode.CONE_REVERSE),
+        CUBE (IntakeSpeedMode.CUBE, IntakeSpeedMode.CUBE_REVERSE),
+        NONE (IntakeSpeedMode.STOP, IntakeSpeedMode.STOP);
+        
+        private final IntakeSpeedMode forwardMode, reverseMode;
+        private IntakeRunType (IntakeSpeedMode forwardMode, IntakeSpeedMode reverseMode) {
+            this.forwardMode = forwardMode;
+            this.reverseMode = reverseMode;
+        }
+        
+        private void runOnIntake (Intake intake) {
+            final double engagementPosition = intake.getEngagementPosition();
+            if (engagementPosition > 0.75) {
+                intake.setIntakeSpeedMode(forwardMode);
+            } else if (engagementPosition > 0.4) {
+                intake.setIntakeSpeedMode(reverseMode);
+            } else {
+                intake.setIntakeSpeedMode(IntakeSpeedMode.STOP);
+            }
+        }
+    }
+    
+    private IntakeRunType getCurrentRunType () {
+        if (intakeConeControl.getAsBoolean()) {
+            return IntakeRunType.CONE;
+        } else if (intakeCubeControl.getAsBoolean()) {
+            return IntakeRunType.CUBE;
+        } else {
+            return IntakeRunType.NONE;
+        }
+    }
+    
     @Override
     public void execute() {
         
-        if (intakeControl.getAsBoolean()) {
-            
-            // Engage the intake
+        // Set the last intake run type if we're actively being commanded to running the intake
+        IntakeRunType runType = getCurrentRunType();
+        if (runType != IntakeRunType.NONE) {
             intake.setIntakeEngagement(IntakeEngagement.ENGAGE);
-            
-            // Set the intake to run if it is mostly deployed
-            if (intake.getEngagementPosition() > 0.7) {
-                intake.setIntakeMode(IntakeMode.FORWARD);
-            } else {
-                intake.setIntakeMode(IntakeMode.STOP);
-            }
-            
+            lastIntakeRunType = runType;
         } else {
-            
-            // Disengage the intake
             intake.setIntakeEngagement(IntakeEngagement.DISENGAGE);
-            
-            // Set the intake to run in reverse if it is deployed far enough
-            double intakePos = intake.getEngagementPosition();
-            if (intakePos > 0.8) {
-                intake.setIntakeMode(IntakeMode.FORWARD);
-            } else if (intakePos > 0.3) {
-                intake.setIntakeMode(IntakeMode.REVERSE);
-            } else {
-                intake.setIntakeMode(IntakeMode.STOP);
-            }
-            
         }
         
-        conveyor.setMode(runConveyorDebouncer.calculate(intakeControl.getAsBoolean()) ? ConveyorMode.FORWARD : ConveyorMode.STOP);
+        // Run the conveyor according to a debouncer, allowing for running for a period
+        // of time after the intake is stopped
+        conveyor.setMode(
+            runConveyorDebouncer.calculate(runType != IntakeRunType.NONE)
+                ? ConveyorMode.FORWARD
+                : ConveyorMode.STOP
+        );
+        
+        // Run the last intake type so that while disengaging the intake continues to run
+        lastIntakeRunType.runOnIntake(intake);
         
     }
     
