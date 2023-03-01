@@ -3,6 +3,7 @@ package frc.robot.commands;
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 
+import claw.logs.CLAWLogger;
 import claw.math.InputTransform;
 import claw.math.Transform;
 import edu.wpi.first.wpilibj2.command.CommandBase;
@@ -15,9 +16,7 @@ public class ArmControlCommand extends CommandBase {
     private final DoubleSupplier armControl;
     private final BooleanSupplier grabControl, releaseControl;
     
-    private final Transform armVoltageTransform =
-        InputTransform.getInputTransform(InputTransform.THREE_HALVES_CURVE, 0.1)
-        .then((Transform)(x -> 7*x));
+    private final Transform armVoltageTransform = InputTransform.getInputTransform(InputTransform.THREE_HALVES_CURVE, 0.1);
     
     public ArmControlCommand (Arm arm, DoubleSupplier armControl, BooleanSupplier grabControl, BooleanSupplier releaseControl) {
         this.arm = arm;
@@ -45,7 +44,7 @@ public class ArmControlCommand extends CommandBase {
             arm.operateClaw(ClawMovement.NONE);
         }
         
-        arm.setArmVoltage(armVoltageTransform.apply(armControl.getAsDouble()));
+        arm.setArmSpeed(armVoltageTransform.apply(armControl.getAsDouble()));
         
     }
     

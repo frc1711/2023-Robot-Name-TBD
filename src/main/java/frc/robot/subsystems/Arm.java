@@ -5,14 +5,17 @@
 package frc.robot.subsystems;
 
 import com.revrobotics.CANSparkMax;
+import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
 import claw.CLAWRobot;
+import claw.Setting;
 import claw.hardware.Device;
 import claw.math.InputTransform;
 import claw.math.Transform;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DutyCycle;
@@ -38,11 +41,17 @@ public class Arm extends SubsystemBase {
     private static final double CLAW_MIN_REACH_OFFSET = 1;
     
     // TODO: Add javadocs
-    private static final double GRAB_OUTPUT_CURRENT = 6;
+    private static final double
+        GRAB_OUTPUT_CURRENT = 20,
+        HOME_OUTPUT_CURRENT = 8;
     
     private static final double
         CLAW_MOVE_VOLTAGE = 4,
         CLAW_HOMING_VOLTAGE = 1.8;
+    
+    private static final double
+        ARM_MIN_ANGLE_DEGREES = -8.5,
+        ARM_MAX_ANGLE_DEGREES = 98;
     
     private static Arm armInstance;
     
@@ -60,11 +69,17 @@ public class Arm extends SubsystemBase {
     
     private final Device<DutyCycle> armEncoder = new Device<>(
         "DIO.ENCODER.ARM.ARM_ENCODER",
-        id -> new DutyCycle(new DigitalInput(id)),
+        id -> {
+            return new DutyCycle(new DigitalInput(id));
+        },
         DutyCycle::close
     );
     
-    private final Debouncer clawGrabDebouncer = new Debouncer(.8, DebounceType.kRising);
+    private final Debouncer clawGrabDebouncer = new Debouncer(.3, DebounceType.kRising);
+    
+    private static final Setting<Double> ARM_ENCODER_ZERO = new Setting<>("ARM_ENCODER_CONFIG.ZERO", () -> 0.);
+    private static final Setting<Double> ARM_ENCODER_NINETY = new Setting<>("ARM_ENCODER_CONFIG.NINETY", () -> 1.);
+    
     private double clawEncoderOffset = 0;
     
     private boolean clawHasBeenHomed = false;
@@ -72,7 +87,9 @@ public class Arm extends SubsystemBase {
     
     public Arm(CANSparkMax armMotor, CANSparkMax clawMotor) {
         this.armMotor = armMotor;
+        armMotor.setIdleMode(IdleMode.kBrake);
         this.clawMotor = clawMotor;
+        clawMotor.setIdleMode(IdleMode.kBrake);
         
         XboxController controller = new XboxController(1);
         Transform transform = InputTransform.getInputTransform(
@@ -83,8 +100,10 @@ public class Arm extends SubsystemBase {
         LiveCommandTester tester = new LiveCommandTester(
             "Use controller 1. Y button enables arm control, move the arm using the left joystick. " +
             "Use the A button to enable the claw homing sequence. Use left and right bumpers to " +
-            "release and grab using the claw.",
+            "release and grab using the claw.\n\nHold both triggers and press X to configure the arm down position. " +
+            "Hold both triggers and press B to configure the arm up position.",
             liveValues -> {
+                
                 if (controller.getAButton() && !hasClawBeenHomed()) {
                     
                     // Run homing sequence
@@ -107,21 +126,23 @@ public class Arm extends SubsystemBase {
                     
                 }
                 
+                if (controller.getLeftTriggerAxis() > 0.8 && controller.getRightTriggerAxis() > 0.8) {
+                    if (controller.getXButton())
+                        ARM_ENCODER_ZERO.set(armEncoder.get().getOutput());
+                    else if (controller.getBButton())
+                        ARM_ENCODER_NINETY.set(armEncoder.get().getOutput());
+                }
+                
                 liveValues.setField("Claw can release", clawCanExtend());
                 liveValues.setField("Claw can grab", clawCanContract());
                 liveValues.setField("Output current", clawMotor.getAppliedOutput());
                 liveValues.setField("Encoder reading", clawMotor.getEncoder().getPosition());
+                liveValues.setField("Arm position", getArmRotation().getDegrees() + " deg");
                 
                 if (controller.getYButton()) {
-                    
-                    double armVoltage = 7 * transform.apply(controller.getLeftY());
-                    liveValues.setField("Arm voltage", armVoltage);
-                    setArmVoltage(armVoltage);
-                    
-                } else {
-                    liveValues.setField("Arm voltage", 0.0);
-                    stopArm();
-                }
+                    double armVoltage = transform.apply(controller.getLeftY());
+                    setArmSpeedOverride(armVoltage);
+                } else stopArm();
             },
             this::stop,
             this
@@ -134,17 +155,37 @@ public class Arm extends SubsystemBase {
         RobotContainer.putConfigSendable("Arm Subsystem", this);
     }
     
-    public void setArmVoltage(double input) {
-        armMotor.setVoltage(input);
+    private Rotation2d getArmRotation () {
+        // xProp is the proportion from 0 to 90 degrees
+        double xProp = (armEncoder.get().getOutput() - ARM_ENCODER_ZERO.get()) / (ARM_ENCODER_NINETY.get() - ARM_ENCODER_ZERO.get());
+        return Rotation2d.fromDegrees(xProp * 90);
+    }
+    
+    /**
+     * Move the arm forward at a given speed on the interval [-1, 1],
+     * ignoring the position of the arm (overriding safety stops).
+     * @param input
+     */
+    public void setArmSpeedOverride (double input) {
+        armMotor.setVoltage(input * 12);
+    }
+    
+    public void setArmSpeed (double input) {
+        
+        double armDegrees = getArmRotation().getDegrees();
+        if ((input >= 0 && armDegrees < ARM_MAX_ANGLE_DEGREES) || (input < 0 && armDegrees > ARM_MIN_ANGLE_DEGREES)) {
+            setArmSpeedOverride(input);
+        } else stopArm();
+        
     }
     
     public void stopArm() {
         armMotor.setVoltage(0);
     }
     
-    private final Debouncer homingSequenceDebouncer = new Debouncer(0.045, DebounceType.kRising);
+    private final Debouncer homingSequenceDebouncer = new Debouncer(0.1, DebounceType.kRising);
     public void runClawHomingSequence () {
-        if (homingSequenceDebouncer.calculate(clawMotor.getOutputCurrent() > GRAB_OUTPUT_CURRENT)) {
+        if (homingSequenceDebouncer.calculate(clawMotor.getOutputCurrent() > HOME_OUTPUT_CURRENT)) {
             clawEncoderOffset = getClawEncoder();
             clawMotor.setVoltage(0);
             clawHasBeenHomed = true;
@@ -204,7 +245,7 @@ public class Arm extends SubsystemBase {
     @Override
     public void initSendable (SendableBuilder builder) {
         builder.addDoubleProperty("Claw output current", clawMotor::getOutputCurrent, null);
-        builder.addDoubleProperty("Arm position", () -> armEncoder.get().getOutput(), null);
+        builder.addDoubleProperty("Arm position", () -> getArmRotation().getDegrees(), null);
     }
     
 }

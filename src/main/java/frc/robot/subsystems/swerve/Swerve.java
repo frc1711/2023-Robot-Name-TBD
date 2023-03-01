@@ -12,6 +12,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.IDMap;
@@ -62,6 +63,8 @@ public class Swerve extends SubsystemBase {
     );
     
     public Swerve () {
+        RobotContainer.putConfigSendable("Swerve Subsystem", this);
+        
         // Add configuration buttons to the shuffleboard
         RobotContainer.putConfigCommand("Zero Swerve Modules", new InstantCommand(() -> this.zeroModules(), this).ignoringDisable(true), true);
         RobotContainer.putConfigCommand("Zero Gyro", new InstantCommand(() -> this.zeroGyro(), this).ignoringDisable(true), true);
@@ -156,12 +159,10 @@ public class Swerve extends SubsystemBase {
     }
     
     public double getRobotPitch () {
-        // The gyro is oriented 90 degrees to the right, so to get the robot's pitch you actually need the gyro's roll
-        return gyro.getRoll();
+        return gyro.getPitch();
     }
     
     public double getRobotYaw () {
-        // The gyro is oriented 90 degrees to the right, so to get the robot's pitch you actually need the gyro's roll
         return gyro.getYaw();
     }
     
@@ -173,6 +174,11 @@ public class Swerve extends SubsystemBase {
         frModule.stop();
         rlModule.stop();
         rrModule.stop();
+    }
+    
+    @Override
+    public void initSendable (SendableBuilder builder) {
+        builder.addDoubleProperty("Yaw", gyro::getYaw, null);
     }
     
 }
