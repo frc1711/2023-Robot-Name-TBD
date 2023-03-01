@@ -21,7 +21,7 @@ public class TeleopIntake extends CommandBase {
     private final Intake intake;
     private final BooleanSupplier intakeCubeControl, intakeConeControl;
     
-    private final Debouncer runConveyorDebouncer = new Debouncer(2, DebounceType.kFalling);
+    private final Debouncer runConveyorDebouncer = new Debouncer(3.5, DebounceType.kFalling);
     private IntakeRunType lastIntakeRunType = IntakeRunType.NONE;
     
     public TeleopIntake(
