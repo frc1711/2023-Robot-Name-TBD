@@ -49,6 +49,10 @@ public class Arm extends SubsystemBase {
         CLAW_MOVE_VOLTAGE = 4,
         CLAW_HOMING_VOLTAGE = 1.8;
     
+    private static final double
+        ARM_MIN_ANGLE_DEGREES = -8.5,
+        ARM_MAX_ANGLE_DEGREES = 98;
+    
     private static Arm armInstance;
     
     public static Arm getInstance () {
@@ -136,15 +140,9 @@ public class Arm extends SubsystemBase {
                 liveValues.setField("Arm position", getArmRotation().getDegrees() + " deg");
                 
                 if (controller.getYButton()) {
-                    
-                    double armVoltage = 7 * transform.apply(controller.getLeftY());
-                    liveValues.setField("Arm voltage", armVoltage);
-                    setArmVoltage(armVoltage);
-                    
-                } else {
-                    liveValues.setField("Arm voltage", 0.0);
-                    stopArm();
-                }
+                    double armVoltage = transform.apply(controller.getLeftY());
+                    setArmSpeedOverride(armVoltage);
+                } else stopArm();
             },
             this::stop,
             this
@@ -163,8 +161,22 @@ public class Arm extends SubsystemBase {
         return Rotation2d.fromDegrees(xProp * 90);
     }
     
-    public void setArmVoltage(double input) {
-        armMotor.setVoltage(input);
+    /**
+     * Move the arm forward at a given speed on the interval [-1, 1],
+     * ignoring the position of the arm (overriding safety stops).
+     * @param input
+     */
+    public void setArmSpeedOverride (double input) {
+        armMotor.setVoltage(input * 12);
+    }
+    
+    public void setArmSpeed (double input) {
+        
+        double armDegrees = getArmRotation().getDegrees();
+        if ((input >= 0 && armDegrees < ARM_MAX_ANGLE_DEGREES) || (input < 0 && armDegrees > ARM_MIN_ANGLE_DEGREES)) {
+            setArmSpeedOverride(input);
+        } else stopArm();
+        
     }
     
     public void stopArm() {
