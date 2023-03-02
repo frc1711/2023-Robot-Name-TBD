@@ -4,6 +4,8 @@
 
 package frc.robot.subsystems.swerve;
 
+import java.util.Optional;
+
 import com.kauailabs.navx.frc.AHRS;
 
 import claw.CLAWRobot;
@@ -16,6 +18,7 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.util.sendable.SendableBuilder;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
@@ -23,6 +26,8 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.IDMap;
 import frc.robot.LiveCommandTester;
 import frc.robot.RobotContainer;
+import frc.robot.limelight.Limelight;
+import frc.robot.limelight.Limelight.AprilTagData;
 
 public class Swerve extends SubsystemBase {
     
@@ -214,6 +219,13 @@ public class Swerve extends SubsystemBase {
             rlModule.getPosition(),
             rrModule.getPosition(),
         });
+        
+        Optional<AprilTagData> tag = Limelight.getAprilTag();
+        if (tag.isPresent()) {
+            AprilTagData data = tag.get();
+            double time = Timer.getFPGATimestamp();
+            poseEstimator.addVisionMeasurement(data.robotPose().toPose2d(), time);
+        }
         
         sendableField.setRobotPose(poseEstimator.getEstimatedPosition());
     }
