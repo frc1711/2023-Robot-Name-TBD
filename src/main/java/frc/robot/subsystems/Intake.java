@@ -129,7 +129,7 @@ public class Intake extends SubsystemBase {
             
             // Scale from 3.8 at the very bottom to 0.5 at the top
             .then((Transform)((double pos) -> pos * 3.8))
-            .then(Transform.clamp(0.75, 3.8))
+            .then(Transform.clamp(1.2, 3.8))
             
             // Negate speed because we're disengaging
             .then(Transform.NEGATE)
