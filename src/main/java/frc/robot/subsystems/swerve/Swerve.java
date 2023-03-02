@@ -159,7 +159,7 @@ public class Swerve extends SubsystemBase {
     }
     
     public double getRobotPitch () {
-        return gyro.getPitch();
+        return gyro.getRoll();
     }
     
     public double getRobotYaw () {
@@ -178,7 +178,8 @@ public class Swerve extends SubsystemBase {
     
     @Override
     public void initSendable (SendableBuilder builder) {
-        builder.addDoubleProperty("Yaw", gyro::getYaw, null);
+        builder.addDoubleProperty("Yaw", this::getRobotYaw, null);
+        builder.addDoubleProperty("Pitch", this::getRobotPitch, null);
     }
     
 }
