@@ -6,6 +6,8 @@ import java.util.function.DoubleSupplier;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.util.sendable.SendableBuilder;
+import edu.wpi.first.wpilibj.Counter;
+import edu.wpi.first.wpilibj.interfaces.Gyro;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.commands.InputCurve.Input2D;
 import frc.robot.subsystems.swerve.Swerve;
@@ -22,7 +24,7 @@ public class DriveCommand extends CommandBase {
         rotateLimiter = new SlewRateLimiter(32, -32, 0);
     
     private final Swerve swerve;
-    private final BooleanSupplier xModeInput, turboModeControl;
+    private final BooleanSupplier xModeInput, turboModeControl, resetGyro;
     private final DoubleSupplier strafeXAxis, strafeYAxis, rotateAxis;
     
     private double DS_strafeX, DS_strafeY, DS_rotate;
@@ -31,17 +33,23 @@ public class DriveCommand extends CommandBase {
             Swerve swerve,
             
             BooleanSupplier xModeInput,
+            
             DoubleSupplier strafeXAxis,
             DoubleSupplier strafeYAxis,
             DoubleSupplier rotateAxis,
-            BooleanSupplier turboModeControl
+            
+            BooleanSupplier turboModeControl,
+            BooleanSupplier resetGyro
         ) {
         this.swerve = swerve;
         this.xModeInput = xModeInput;
+        
         this.strafeXAxis = strafeXAxis;
         this.strafeYAxis = strafeYAxis;
         this.rotateAxis = rotateAxis;
+        
         this.turboModeControl = turboModeControl;
+        this.resetGyro = resetGyro;
         addRequirements(swerve);
     }
     
@@ -52,9 +60,15 @@ public class DriveCommand extends CommandBase {
     
     @Override
     public void execute () {
+        // Driving swerve
         if (xModeInput.getAsBoolean())
             swerve.xMode();
         else driveSwerveDefault();
+        
+        // Zeroing gyro
+        if (resetGyro.getAsBoolean()) {
+            swerve.zeroGyro();
+        }
     }
     
     private void driveSwerveDefault () {

@@ -35,7 +35,8 @@ public class RobotContainer {
         driveController::getLeftX,
         driveController::getLeftY,
         driveController::getRightX,
-        driveController::getLeftStickButton
+        driveController::getLeftStickButton,
+        () -> driveController.getLeftTriggerAxis() > 0.8 && driveController.getRightTriggerAxis() > 0.8
     );
     
     private final TeleopIntake intakeCommand = new TeleopIntake(
