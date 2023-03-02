@@ -7,10 +7,12 @@ package frc.robot;
 import frc.robot.commands.ArmControlCommand;
 import frc.robot.commands.DriveCommand;
 import frc.robot.commands.TeleopIntake;
+import frc.robot.commands.auton.PlaceGamePieceTest;
 import frc.robot.subsystems.Arm;
 import frc.robot.subsystems.Claw;
 import frc.robot.subsystems.Conveyor;
 import frc.robot.subsystems.Intake;
+import frc.robot.subsystems.Arm.ArmPosition;
 import frc.robot.subsystems.swerve.Swerve;
 
 import edu.wpi.first.util.sendable.Sendable;
@@ -77,7 +79,7 @@ public class RobotContainer {
     }
     
     public Command getAutonomousCommand () {
-        return null;
+        return new PlaceGamePieceTest(armSubsystem, clawSubsystem, swerveSubsystem, ArmPosition.MIDDLE);
         // return swerveSubsystem.getControllerCommand(new Trajectory(Arrays.asList(
         //     new State(0, 0, 1, new Pose2d(), 0),
         //     new State(1, 1, 0, new Pose2d(), 0),

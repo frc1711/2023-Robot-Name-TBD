@@ -244,8 +244,8 @@ public class Swerve extends SubsystemBase {
         builder.addDoubleProperty("Pitch", this::getRobotPitch, null);
     }
     
-    public Command getControllerCommand (List<Pose2d> waypoints) {
-        Trajectory trajectory = TrajectoryGenerator.generateTrajectory(waypoints, new TrajectoryConfig(4, 4));
+    public Command getControllerCommand (Pose2d... waypoints) {
+        Trajectory trajectory = TrajectoryGenerator.generateTrajectory(List.of(waypoints), new TrajectoryConfig(4, 4));
         
         return new SwerveControllerCommand(
             trajectory,

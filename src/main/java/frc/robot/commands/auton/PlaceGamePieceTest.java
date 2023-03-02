@@ -1,0 +1,87 @@
+package frc.robot.commands.auton;
+
+import java.util.function.BooleanSupplier;
+
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.ParallelDeadlineGroup;
+import edu.wpi.first.wpilibj2.command.RunCommand;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
+import frc.robot.subsystems.Arm;
+import frc.robot.subsystems.Claw;
+import frc.robot.subsystems.Arm.ArmPosition;
+import frc.robot.subsystems.Claw.ClawMovement;
+import frc.robot.subsystems.swerve.Swerve;
+
+public class PlaceGamePieceTest extends SequentialCommandGroup {
+    
+    public PlaceGamePieceTest (Arm arm, Claw claw, Swerve swerve, ArmPosition armScorePosition) {
+        super(
+            // Home the claw to fully opened
+            new InstantCommand(claw::homeAsFullyOpen, claw),
+            
+            // Grab the game piece
+            controlClaw(claw, ClawMovement.GRAB),
+            
+            // Move the arm to the correct position to score
+            withControlClaw(
+                new MoveArmCommand(arm, armScorePosition),
+                claw,
+                ClawMovement.GRAB
+            ),
+            
+            // // Move swerve forwards
+            // withControlClaw(
+            //     swerve.getControllerCommand(
+            //         new Pose2d(0, 0, Rotation2d.fromDegrees(0)),
+            //         new Pose2d(1, 0, Rotation2d.fromDegrees(0))
+            //     ),
+            //     claw,
+            //     ClawMovement.GRAB
+            // ),
+            
+            // Release the game piece
+            controlClaw(claw, ClawMovement.RELEASE),
+            
+            // // Move swerve backwards
+            // withControlClaw(
+            //     swerve.getControllerCommand(
+            //         new Pose2d(1, 0, Rotation2d.fromDegrees(0)),
+            //         new Pose2d(0, 0, Rotation2d.fromDegrees(0))
+            //     ),
+            //     claw,
+            //     ClawMovement.RELEASE
+            // ),
+            
+            // Stow the arm
+            withControlClaw(
+                new MoveArmCommand(arm, ArmPosition.STOWED),
+                claw,
+                ClawMovement.RELEASE
+            )
+            
+        );
+    }
+    
+    private static Command withControlClaw (Command command, Claw claw, ClawMovement clawControl) {
+        return new ParallelDeadlineGroup(
+            command,
+            new RunCommand(() -> claw.operateClaw(clawControl), claw)
+        );
+    }
+    
+    private static Command controlClaw (Claw claw, ClawMovement clawControl) {
+        BooleanSupplier hasFinished;
+        
+        if (clawControl == ClawMovement.GRAB) {
+            hasFinished = claw::isFullyGrabbing;
+        } else if (clawControl == ClawMovement.RELEASE) {
+            hasFinished = claw::isFullyReleased;
+        } else {
+            hasFinished = () -> true;
+        }
+        
+        return new RunCommand(() -> claw.operateClaw(clawControl), claw).until(hasFinished);
+    }
+    
+}

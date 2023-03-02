@@ -117,9 +117,10 @@ public class Arm extends SubsystemBase {
     public enum ArmPosition {
         HIGH    (Rotation2d.fromDegrees(95)),
         MIDDLE  (Rotation2d.fromDegrees(70)),
-        LOW     (Rotation2d.fromDegrees(35));
+        LOW     (Rotation2d.fromDegrees(35)),
+        STOWED  (Rotation2d.fromDegrees(-6.5));
         
-        private final Rotation2d rotation;
+        public final Rotation2d rotation;
         private ArmPosition (Rotation2d rotation) {
             this.rotation = rotation;
         }
