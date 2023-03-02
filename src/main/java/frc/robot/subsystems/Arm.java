@@ -138,8 +138,6 @@ public class Arm extends SubsystemBase {
                         ARM_ENCODER_NINETY.set(armEncoder.get().getOutput());
                 }
                 
-                liveValues.setField("Claw can release", clawCanExtend());
-                liveValues.setField("Claw can grab", clawCanContract());
                 liveValues.setField("Output current", clawMotor.getAppliedOutput());
                 liveValues.setField("Encoder reading", clawMotor.getEncoder().getPosition());
                 liveValues.setField("Arm position", getArmRotation().getDegrees() + " deg");
@@ -160,7 +158,7 @@ public class Arm extends SubsystemBase {
         RobotContainer.putConfigSendable("Arm Subsystem", this);
     }
     
-    private Rotation2d getArmRotation () {
+    public Rotation2d getArmRotation () {
         // xProp is the proportion from 0 to 90 degrees
         double xProp = (armEncoder.get().getOutput() - ARM_ENCODER_ZERO.get()) / (ARM_ENCODER_NINETY.get() - ARM_ENCODER_ZERO.get());
         return Rotation2d.fromDegrees(xProp * 90);
@@ -219,20 +217,35 @@ public class Arm extends SubsystemBase {
         }
     }
     
+    public void homeAsFullyOpen () {
+        clawEncoderOffset = getClawEncoder() - CLAW_MAX_REACH_OFFSET;
+    }
+    
     public boolean hasClawBeenHomed () {
         return clawHasBeenHomed;
     }
     
+    /**
+     * A greater encoder value indicates that the claw is more open
+     */
     private double getClawEncoder () {
         return -clawMotor.getEncoder().getPosition();
     }
     
-    private boolean clawCanContract () {
+    private boolean isClawOverLowerLimit () {
         return getClawEncoder() - clawEncoderOffset > CLAW_MIN_REACH_OFFSET;
     }
     
-    private boolean clawCanExtend () {
+    private boolean isClawUnderUpperLimit () {
         return getClawEncoder() - clawEncoderOffset < CLAW_MAX_REACH_OFFSET;
+    }
+    
+    public boolean isFullyReleased () {
+        return !isClawUnderUpperLimit();
+    }
+    
+    public boolean isFullyGrabbing () {
+        return isHoldingObject || !isClawOverLowerLimit();
     }
     
     public void operateClaw (ClawMovement move) {
@@ -241,7 +254,13 @@ public class Arm extends SubsystemBase {
                 clawMotor.stopMotor();
                 break;
             case GRAB:
-                if (isHoldingObject || !clawCanContract()) {
+                
+                // TODO: Make it so that, once isHoldingObject is first set to true, there is an "object hold position"
+                // which is stored so that the claw will actively drive to this position in case the grip starts to loosen.
+                // This would prevent the issue of the grip loosening over time, which happens now because the motor stops driving
+                // entirely once it first detects that it's grabbing an object with isHoldingObject
+                
+                if (isFullyGrabbing()) {
                     clawMotor.stopMotor();
                 } else {
                     clawMotor.setVoltage(CLAW_MOVE_VOLTAGE);
@@ -249,8 +268,10 @@ public class Arm extends SubsystemBase {
                 }
                 break;
             case RELEASE:
-                if (!clawCanExtend()) clawMotor.stopMotor();
-                else clawMotor.setVoltage(-CLAW_MOVE_VOLTAGE);
+                if (isFullyReleased())
+                    clawMotor.stopMotor();
+                else
+                    clawMotor.setVoltage(-CLAW_MOVE_VOLTAGE);
                 isHoldingObject = false;
                 break;
         }
