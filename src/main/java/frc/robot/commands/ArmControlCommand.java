@@ -7,12 +7,14 @@ import claw.math.InputTransform;
 import claw.math.Transform;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.subsystems.Arm;
+import frc.robot.subsystems.Claw;
 import frc.robot.subsystems.Arm.ArmPosition;
-import frc.robot.subsystems.Arm.ClawMovement;
+import frc.robot.subsystems.Claw.ClawMovement;
 
 public class ArmControlCommand extends CommandBase {
     
     private final Arm arm;
+    private final Claw claw;
     private final DoubleSupplier armControl;
     private final BooleanSupplier armToLow, armToMid, armToHigh, grabControl, releaseControl;
     
@@ -20,6 +22,7 @@ public class ArmControlCommand extends CommandBase {
     
     public ArmControlCommand (
         Arm arm,
+        Claw claw,
         DoubleSupplier armControl,
         BooleanSupplier armToLow,
         BooleanSupplier armToMid,
@@ -29,6 +32,7 @@ public class ArmControlCommand extends CommandBase {
         BooleanSupplier releaseControl
     ) {
         this.arm = arm;
+        this.claw = claw;
         this.armControl = armControl;
         this.armToLow = armToLow;
         this.armToMid = armToMid;
@@ -48,14 +52,14 @@ public class ArmControlCommand extends CommandBase {
     public void execute () {
         
         // Set claw movement
-        if (!arm.hasClawBeenHomed()) {
-            arm.runClawHomingSequence();
+        if (!claw.hasBeenHomed()) {
+            claw.runClawHomingSequence();
         } else if (grabControl.getAsBoolean()) {
-            arm.operateClaw(ClawMovement.GRAB);
+            claw.operateClaw(ClawMovement.GRAB);
         } else if (releaseControl.getAsBoolean()) {
-            arm.operateClaw(ClawMovement.RELEASE);
+            claw.operateClaw(ClawMovement.RELEASE);
         } else {
-            arm.operateClaw(ClawMovement.NONE);
+            claw.operateClaw(ClawMovement.NONE);
         }
         
         // Set arm movement

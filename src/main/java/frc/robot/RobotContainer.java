@@ -8,6 +8,7 @@ import frc.robot.commands.ArmControlCommand;
 import frc.robot.commands.DriveCommand;
 import frc.robot.commands.TeleopIntake;
 import frc.robot.subsystems.Arm;
+import frc.robot.subsystems.Claw;
 import frc.robot.subsystems.Conveyor;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.swerve.Swerve;
@@ -24,10 +25,11 @@ public class RobotContainer {
         driveController = new XboxController(0),
         systemController = new XboxController(1);
     
-    private final Swerve swerveSubsystem = new Swerve();
+    private final Swerve swerveSubsystem = Swerve.getInstance();
     private final Conveyor conveyorSubsystem = Conveyor.getInstance();
     private final Intake intakeSubsystem = Intake.getInstance();
     private final Arm armSubsystem = Arm.getInstance();
+    private final Claw clawSubsystem = new Claw();
     
     private final DriveCommand driveCommand = new DriveCommand(
         swerveSubsystem,
@@ -48,6 +50,7 @@ public class RobotContainer {
     
     private final ArmControlCommand armCommand = new ArmControlCommand(
         armSubsystem,
+        clawSubsystem,
         () -> -systemController.getLeftY(),
         systemController::getAButton,
         systemController::getXButton,

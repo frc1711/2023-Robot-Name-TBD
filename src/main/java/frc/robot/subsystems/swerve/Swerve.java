@@ -110,7 +110,7 @@ public class Swerve extends SubsystemBase {
     
     private double measurementOffset = 0;
     
-    public Swerve () {
+    private Swerve () {
         RobotContainer.putConfigSendable("Swerve Subsystem", this);
         RobotContainer.putConfigSendable("Position", sendableField);
         

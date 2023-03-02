@@ -13,8 +13,6 @@ import claw.Setting;
 import claw.hardware.Device;
 import claw.math.InputTransform;
 import claw.math.Transform;
-import edu.wpi.first.math.filter.Debouncer;
-import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.DigitalInput;
@@ -26,29 +24,6 @@ import frc.robot.RobotContainer;
 
 public class Arm extends SubsystemBase {
     
-    /**
-     * An offset in the claw's relative encoder's reading from the homing spot (fully collapsed) to the maximum
-     * extension of the claw (fully released). This offset helps to prevent the claw from extending too far and
-     * breaking itself.
-     */
-    private static final double CLAW_MAX_REACH_OFFSET = 24;
-    
-    /**
-     * An offset in the claw's relative encoder's reading from the homing spot (fully collapsed) to the minimum
-     * extension of the claw (almost fully grabbing). This offset helps to prevent the claw from contracting too
-     * much and breaking itself.
-     */
-    private static final double CLAW_MIN_REACH_OFFSET = 1;
-    
-    // TODO: Add javadocs
-    private static final double
-        GRAB_OUTPUT_CURRENT = 20,
-        HOME_OUTPUT_CURRENT = 8;
-    
-    private static final double
-        CLAW_MOVE_VOLTAGE = 4,
-        CLAW_HOMING_VOLTAGE = 1.8;
-    
     private static final double
         ARM_MIN_ANGLE_DEGREES = -7,
         ARM_MAX_ANGLE_DEGREES = 99;
@@ -58,14 +33,13 @@ public class Arm extends SubsystemBase {
     public static Arm getInstance () {
         if (armInstance == null) {
             armInstance = new Arm(
-                new CANSparkMax(15, MotorType.kBrushless), 
-                new CANSparkMax(14, MotorType.kBrushless)
+                new CANSparkMax(15, MotorType.kBrushless)
             );
         }
         return armInstance;
     }
     
-    private final CANSparkMax armMotor, clawMotor;
+    private final CANSparkMax armMotor;
     
     private final Device<DutyCycle> armEncoder = new Device<>(
         "DIO.ENCODER.ARM.ARM_ENCODER",
@@ -75,8 +49,6 @@ public class Arm extends SubsystemBase {
         DutyCycle::close
     );
     
-    private final Debouncer clawGrabDebouncer = new Debouncer(.3, DebounceType.kRising);
-    
     private static final Setting<Double> ARM_ENCODER_ZERO = new Setting<>("ARM_ENCODER_CONFIG.ZERO", () -> 0.);
     private static final Setting<Double> ARM_ENCODER_NINETY = new Setting<>("ARM_ENCODER_CONFIG.NINETY", () -> 1.);
     
@@ -85,16 +57,9 @@ public class Arm extends SubsystemBase {
         .then(Transform.clamp(-0.5, 0.5))
         .then(Transform.NEGATE);
     
-    private double clawEncoderOffset = 0;
-    
-    private boolean clawHasBeenHomed = false;
-    private boolean isHoldingObject = false;
-    
-    public Arm(CANSparkMax armMotor, CANSparkMax clawMotor) {
+    public Arm(CANSparkMax armMotor) {
         this.armMotor = armMotor;
         armMotor.setIdleMode(IdleMode.kBrake);
-        this.clawMotor = clawMotor;
-        clawMotor.setIdleMode(IdleMode.kBrake);
         
         XboxController controller = new XboxController(1);
         Transform transform = InputTransform.getInputTransform(
@@ -109,28 +74,6 @@ public class Arm extends SubsystemBase {
             "Hold both triggers and press B to configure the arm up position.",
             liveValues -> {
                 
-                if (controller.getAButton() && !hasClawBeenHomed()) {
-                    
-                    // Run homing sequence
-                    runClawHomingSequence();
-                    
-                } else if (hasClawBeenHomed() && controller.getRightBumper()) {
-                    
-                    // Grab claw
-                    operateClaw(ClawMovement.GRAB);
-                    
-                } else if (hasClawBeenHomed() && controller.getLeftBumper()) {
-                    
-                    // Release claw
-                    operateClaw(ClawMovement.RELEASE);
-                    
-                } else {
-                    
-                    // No claw operations
-                    operateClaw(ClawMovement.NONE);
-                    
-                }
-                
                 if (controller.getLeftTriggerAxis() > 0.8 && controller.getRightTriggerAxis() > 0.8) {
                     if (controller.getXButton())
                         ARM_ENCODER_ZERO.set(armEncoder.get().getOutput());
@@ -138,14 +81,12 @@ public class Arm extends SubsystemBase {
                         ARM_ENCODER_NINETY.set(armEncoder.get().getOutput());
                 }
                 
-                liveValues.setField("Output current", clawMotor.getAppliedOutput());
-                liveValues.setField("Encoder reading", clawMotor.getEncoder().getPosition());
                 liveValues.setField("Arm position", getArmRotation().getDegrees() + " deg");
                 
                 if (controller.getYButton()) {
                     double armVoltage = transform.apply(controller.getLeftY());
                     setArmSpeedOverride(armVoltage);
-                } else stopArm();
+                } else stop();
             },
             this::stop,
             this
@@ -198,99 +139,16 @@ public class Arm extends SubsystemBase {
         double armDegrees = getArmRotation().getDegrees();
         if ((input >= 0 && armDegrees < ARM_MAX_ANGLE_DEGREES) || (input < 0 && armDegrees > ARM_MIN_ANGLE_DEGREES)) {
             setArmSpeedOverride(input);
-        } else stopArm();
+        } else stop();
         
     }
     
-    public void stopArm() {
-        armMotor.setVoltage(0);
-    }
-    
-    private final Debouncer homingSequenceDebouncer = new Debouncer(0.1, DebounceType.kRising);
-    public void runClawHomingSequence () {
-        if (homingSequenceDebouncer.calculate(clawMotor.getOutputCurrent() > HOME_OUTPUT_CURRENT)) {
-            clawEncoderOffset = getClawEncoder();
-            clawMotor.setVoltage(0);
-            clawHasBeenHomed = true;
-        } else {
-            clawMotor.setVoltage(CLAW_HOMING_VOLTAGE);
-        }
-    }
-    
-    public void homeAsFullyOpen () {
-        clawEncoderOffset = getClawEncoder() - CLAW_MAX_REACH_OFFSET;
-    }
-    
-    public boolean hasClawBeenHomed () {
-        return clawHasBeenHomed;
-    }
-    
-    /**
-     * A greater encoder value indicates that the claw is more open
-     */
-    private double getClawEncoder () {
-        return -clawMotor.getEncoder().getPosition();
-    }
-    
-    private boolean isClawOverLowerLimit () {
-        return getClawEncoder() - clawEncoderOffset > CLAW_MIN_REACH_OFFSET;
-    }
-    
-    private boolean isClawUnderUpperLimit () {
-        return getClawEncoder() - clawEncoderOffset < CLAW_MAX_REACH_OFFSET;
-    }
-    
-    public boolean isFullyReleased () {
-        return !isClawUnderUpperLimit();
-    }
-    
-    public boolean isFullyGrabbing () {
-        return isHoldingObject || !isClawOverLowerLimit();
-    }
-    
-    public void operateClaw (ClawMovement move) {
-        switch (move) {
-            case NONE:
-                clawMotor.stopMotor();
-                break;
-            case GRAB:
-                
-                // TODO: Make it so that, once isHoldingObject is first set to true, there is an "object hold position"
-                // which is stored so that the claw will actively drive to this position in case the grip starts to loosen.
-                // This would prevent the issue of the grip loosening over time, which happens now because the motor stops driving
-                // entirely once it first detects that it's grabbing an object with isHoldingObject
-                
-                if (isFullyGrabbing()) {
-                    clawMotor.stopMotor();
-                } else {
-                    clawMotor.setVoltage(CLAW_MOVE_VOLTAGE);
-                    isHoldingObject = clawGrabDebouncer.calculate(clawMotor.getOutputCurrent() > GRAB_OUTPUT_CURRENT);
-                }
-                break;
-            case RELEASE:
-                if (isFullyReleased())
-                    clawMotor.stopMotor();
-                else
-                    clawMotor.setVoltage(-CLAW_MOVE_VOLTAGE);
-                isHoldingObject = false;
-                break;
-        }
-    }
-    
-    public enum ClawMovement {
-        NONE,
-        GRAB,
-        RELEASE;
-    }
-    
-    public void stop() {
-        stopArm();
-        operateClaw(ClawMovement.NONE);
+    public void stop () {
+        armMotor.stopMotor();
     }
     
     @Override
     public void initSendable (SendableBuilder builder) {
-        builder.addDoubleProperty("Claw output current", clawMotor::getOutputCurrent, null);
         builder.addDoubleProperty("Arm position", () -> getArmRotation().getDegrees(), null);
     }
     
