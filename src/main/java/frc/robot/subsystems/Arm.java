@@ -31,7 +31,7 @@ public class Arm extends SubsystemBase {
      * extension of the claw (fully released). This offset helps to prevent the claw from extending too far and
      * breaking itself.
      */
-    private static final double CLAW_MAX_REACH_OFFSET = 22.3333;
+    private static final double CLAW_MAX_REACH_OFFSET = 24;
     
     /**
      * An offset in the claw's relative encoder's reading from the homing spot (fully collapsed) to the minimum
