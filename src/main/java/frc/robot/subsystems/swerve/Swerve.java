@@ -94,11 +94,11 @@ public class Swerve extends SubsystemBase {
     private final Constraints robotConstraints = new Constraints(8, 8);
     
     private final PIDController
-        autonDriveXController = new PIDController(0, 0, 0),
-        autonDriveYController = new PIDController(0, 0, 0);
+        autonDriveXController = new PIDController(1, 0, 0),
+        autonDriveYController = new PIDController(1, 0, 0);
     
     private final ProfiledPIDController autonDriveThetaController = new ProfiledPIDController(
-        0,
+        1,
         0,
         0,
         robotConstraints
