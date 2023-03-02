@@ -34,7 +34,9 @@ public class RobotContainer {
         driveController::getStartButton,
         driveController::getLeftX,
         driveController::getLeftY,
-        driveController::getRightX);
+        driveController::getRightX,
+        driveController::getLeftStickButton
+    );
     
     private final TeleopIntake intakeCommand = new TeleopIntake(
         conveyorSubsystem,

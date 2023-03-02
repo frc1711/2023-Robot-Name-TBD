@@ -22,17 +22,26 @@ public class DriveCommand extends CommandBase {
         rotateLimiter = new SlewRateLimiter(32, -32, 0);
     
     private final Swerve swerve;
-    private final BooleanSupplier xModeInput;
+    private final BooleanSupplier xModeInput, turboModeControl;
     private final DoubleSupplier strafeXAxis, strafeYAxis, rotateAxis;
     
     private double DS_strafeX, DS_strafeY, DS_rotate;
     
-    public DriveCommand (Swerve swerve, BooleanSupplier xModeInput, DoubleSupplier strafeXAxis, DoubleSupplier strafeYAxis, DoubleSupplier rotateAxis) {
+    public DriveCommand (
+            Swerve swerve,
+            
+            BooleanSupplier xModeInput,
+            DoubleSupplier strafeXAxis,
+            DoubleSupplier strafeYAxis,
+            DoubleSupplier rotateAxis,
+            BooleanSupplier turboModeControl
+        ) {
         this.swerve = swerve;
         this.xModeInput = xModeInput;
         this.strafeXAxis = strafeXAxis;
         this.strafeYAxis = strafeYAxis;
         this.rotateAxis = rotateAxis;
+        this.turboModeControl = turboModeControl;
         addRequirements(swerve);
     }
     
@@ -53,8 +62,11 @@ public class DriveCommand extends CommandBase {
         Input2D strafeInputRaw = new Input2D(strafeXAxis.getAsDouble(), strafeYAxis.getAsDouble());
         double rotateInputRaw = rotateAxis.getAsDouble();
         
-        Input2D strafeSpeeds = InputCurve.apply(STRAFE_CURVE, strafeInputRaw).scale(5);
-        double rotateSpeed = -InputCurve.apply(ROTATE_CURVE, rotateInputRaw) * 6;
+        Input2D strafeSpeeds = InputCurve.apply(STRAFE_CURVE, strafeInputRaw).scale(4);
+        if (turboModeControl.getAsBoolean()) {
+            strafeSpeeds = strafeSpeeds.scale(3);
+        }
+        double rotateSpeed = -InputCurve.apply(ROTATE_CURVE, rotateInputRaw) * 5;
         
         double strafeX = strafeXLimiter.calculate(-strafeSpeeds.y());
         double strafeY = strafeYLimiter.calculate(-strafeSpeeds.x());
