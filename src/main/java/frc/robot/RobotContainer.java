@@ -49,6 +49,10 @@ public class RobotContainer {
     private final ArmControlCommand armCommand = new ArmControlCommand(
         armSubsystem,
         () -> -systemController.getLeftY(),
+        systemController::getAButton,
+        systemController::getXButton,
+        systemController::getYButton,
+        
         systemController::getLeftBumper,
         systemController::getRightBumper
     );
