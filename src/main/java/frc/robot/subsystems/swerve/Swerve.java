@@ -13,6 +13,7 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.util.sendable.SendableBuilder;
+import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.IDMap;
@@ -62,6 +63,8 @@ public class Swerve extends SubsystemBase {
         REAR_RIGHT_MODULE_TRANSLATION
     );
     
+    private double measurementOffset = 0;
+    
     public Swerve () {
         RobotContainer.putConfigSendable("Swerve Subsystem", this);
         
@@ -75,29 +78,32 @@ public class Swerve extends SubsystemBase {
         RobotContainer.putConfigSendable("rl-module", rlModule);
         RobotContainer.putConfigSendable("rr-module", rrModule);
         
+        XboxController controller = new XboxController(3);
+        
+        
         LiveCommandTester tester = new LiveCommandTester(
             "No special usage. Fully automatic.",
             liveValues -> {
                 
-                double angle = System.currentTimeMillis()/5. % 360.;
+                SwerveModuleState desiredState;
+                double measurement =
+                    (flModule.getDisplacementMeters() +
+                    frModule.getDisplacementMeters() +
+                    rlModule.getDisplacementMeters() +
+                    rrModule.getDisplacementMeters()) / 4;
                 
-                liveValues.setField("Angle", angle + " deg");
+                if (controller.getAButton()) {
+                    desiredState = new SwerveModuleState(1, Rotation2d.fromDegrees(0));
+                    liveValues.setField("measurement", (measurement - measurementOffset) + " m");
+                } else {
+                    desiredState = new SwerveModuleState(0, Rotation2d.fromDegrees(0));
+                    measurementOffset = measurement;
+                }
                 
-                flModule.updateSteerMotor(Rotation2d.fromDegrees(angle));
-                flModule.updateDriveMotor(0);
-                liveValues.setField("fl", flModule.getRotation().getDegrees());
-                
-                frModule.updateSteerMotor(Rotation2d.fromDegrees(angle));
-                frModule.updateDriveMotor(0);
-                liveValues.setField("fr", frModule.getRotation().getDegrees());
-                
-                rlModule.updateSteerMotor(Rotation2d.fromDegrees(angle));
-                rlModule.updateDriveMotor(0);
-                liveValues.setField("rl", rlModule.getRotation().getDegrees());
-                
-                rrModule.updateSteerMotor(Rotation2d.fromDegrees(angle));
-                rrModule.updateDriveMotor(0);
-                liveValues.setField("rr", rrModule.getRotation().getDegrees());
+                flModule.update(desiredState);
+                frModule.update(desiredState);
+                rlModule.update(desiredState);
+                rrModule.update(desiredState);
                 
             },
             this::stop,

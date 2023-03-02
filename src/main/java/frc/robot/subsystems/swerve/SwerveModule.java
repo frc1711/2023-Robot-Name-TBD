@@ -106,6 +106,10 @@ class SwerveModule implements Sendable {
         updateSteerMotor(voltsOutput);
     }
     
+    public double getDisplacementMeters () {
+        return driveMotor.getEncoder().getPosition() / 20.032;
+    }
+    
     /**
      * Stop all motor controllers assigned to this {@link SwerveModule}.
      */
