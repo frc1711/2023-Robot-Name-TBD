@@ -105,6 +105,9 @@ public class Swerve extends SubsystemBase {
     
     private final Field2d sendableField = new Field2d();
     
+    private double gyroTeleopYawOffset = 0;
+    
+    
     private double measurementOffset = 0;
     
     public Swerve () {
@@ -112,8 +115,8 @@ public class Swerve extends SubsystemBase {
         RobotContainer.putConfigSendable("Position", sendableField);
         
         // Add configuration buttons to the shuffleboard
-        RobotContainer.putConfigCommand("Zero Swerve Modules", new InstantCommand(() -> this.zeroModules(), this).ignoringDisable(true), true);
-        RobotContainer.putConfigCommand("Zero Gyro", new InstantCommand(() -> this.zeroGyro(), this).ignoringDisable(true), true);
+        RobotContainer.putConfigCommand("Zero Swerve Modules", new InstantCommand(this::zeroModules, this).ignoringDisable(true), true);
+        RobotContainer.putConfigCommand("Teleop Zero Gyro", new InstantCommand(this::zeroGyroTeleop, this).ignoringDisable(true), true);
         
         // Add modules to the shuffleboard
         RobotContainer.putConfigSendable("fl-module", flModule);
@@ -178,11 +181,17 @@ public class Swerve extends SubsystemBase {
     
     /**
      * Update all the swerve drive motor controllers to try to match the given field-relative {@link ChassisSpeeds}.
-     * This method must be called periodically.
+     * This method must be called periodically. The movement will be relative to the last zeroGyroTeleop reset.
      * @param speeds The {@code ChassisSpeeds} to try to match with the swerve drive.
      */
-    public void moveFieldRelative (ChassisSpeeds speeds) {
-        ChassisSpeeds robotRelativeSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(speeds, gyro.getRotation2d());
+    public void moveFieldRelativeTeleop (ChassisSpeeds speeds) {
+        ChassisSpeeds robotRelativeSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
+            speeds,
+            gyro.getRotation2d().minus(
+                Rotation2d.fromDegrees(gyroTeleopYawOffset)
+            )
+        );
+        
         moveRobotRelative(robotRelativeSpeeds);
     }
     
@@ -207,8 +216,8 @@ public class Swerve extends SubsystemBase {
      * Zeroes the gyro's yaw so that field-relative robot driving will see the current robot position as the
      * "starting orientation".
      */
-    public void zeroGyro () {
-        gyro.zeroYaw();
+    public void zeroGyroTeleop () {
+        gyroTeleopYawOffset = getRobotYaw();
     }
     
     public double getRobotPitch () {

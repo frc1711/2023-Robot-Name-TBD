@@ -6,8 +6,6 @@ import java.util.function.DoubleSupplier;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.util.sendable.SendableBuilder;
-import edu.wpi.first.wpilibj.Counter;
-import edu.wpi.first.wpilibj.interfaces.Gyro;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.commands.InputCurve.Input2D;
 import frc.robot.subsystems.swerve.Swerve;
@@ -67,7 +65,7 @@ public class DriveCommand extends CommandBase {
         
         // Zeroing gyro
         if (resetGyro.getAsBoolean()) {
-            swerve.zeroGyro();
+            swerve.zeroGyroTeleop();
         }
     }
     
@@ -93,7 +91,7 @@ public class DriveCommand extends CommandBase {
         // Robot orientation and ChassisSpeeds is based on the idea that +x is the front of the robot,
         // +y is the left side of the robot, etc.
         // Axes, of course, do not work like this
-        swerve.moveFieldRelative(new ChassisSpeeds(strafeX, strafeY, rotateSpeed));
+        swerve.moveFieldRelativeTeleop(new ChassisSpeeds(strafeX, strafeY, rotateSpeed));
     }
     
     @Override
