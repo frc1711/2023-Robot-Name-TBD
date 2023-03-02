@@ -96,11 +96,11 @@ public class Intake extends SubsystemBase {
     }
     
     public enum IntakeSpeedMode {
-        CONE            (-2.3, -2.8),
-        CONE_REVERSE    (2.3, 2.8),
+        CONE            (-3.8, -4.5),
+        CONE_REVERSE    (3.8, 4.5),
         
-        CUBE            (-3.8, -4.5),
-        CUBE_REVERSE    (3.8, 4.5),
+        CUBE            (-2.3, -2.8),
+        CUBE_REVERSE    (2.3, 2.8),
         
         STOP            (0, 0);
         

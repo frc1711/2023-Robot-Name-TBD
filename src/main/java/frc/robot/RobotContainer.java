@@ -7,7 +7,6 @@ package frc.robot;
 import frc.robot.commands.ArmControlCommand;
 import frc.robot.commands.DriveCommand;
 import frc.robot.commands.TeleopIntake;
-import frc.robot.commands.auton.BalanceCommand;
 import frc.robot.subsystems.Arm;
 import frc.robot.subsystems.Conveyor;
 import frc.robot.subsystems.Intake;
@@ -75,7 +74,7 @@ public class RobotContainer {
     
     public Command getAutonomousCommand () {
         // This can return null to not run a command
-        
+        return null;
     }
     
 }

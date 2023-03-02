@@ -47,10 +47,10 @@ public class Swerve extends SubsystemBase {
     }
     
     private static final Translation2d
-        FRONT_LEFT_MODULE_TRANSLATION = new Translation2d(0.5, 0.5),
-        FRONT_RIGHT_MODULE_TRANSLATION = new Translation2d(0.5, -0.5),
-        REAR_LEFT_MODULE_TRANSLATION = new Translation2d(-0.5, 0.5),
-        REAR_RIGHT_MODULE_TRANSLATION = new Translation2d(-0.5, -0.5);
+        FRONT_LEFT_MODULE_TRANSLATION = new Translation2d(0.404, 0.404),
+        FRONT_RIGHT_MODULE_TRANSLATION = new Translation2d(0.404, -0.404),
+        REAR_LEFT_MODULE_TRANSLATION = new Translation2d(-0.404, 0.404),
+        REAR_RIGHT_MODULE_TRANSLATION = new Translation2d(-0.404, -0.404);
     
     private final AHRS gyro = new AHRS();
     
@@ -110,6 +110,7 @@ public class Swerve extends SubsystemBase {
     
     public Swerve () {
         RobotContainer.putConfigSendable("Swerve Subsystem", this);
+        RobotContainer.putConfigSendable("Position", sendableField);
         
         // Add configuration buttons to the shuffleboard
         RobotContainer.putConfigCommand("Zero Swerve Modules", new InstantCommand(() -> this.zeroModules(), this).ignoringDisable(true), true);
@@ -121,29 +122,32 @@ public class Swerve extends SubsystemBase {
         RobotContainer.putConfigSendable("rl-module", rlModule);
         RobotContainer.putConfigSendable("rr-module", rrModule);
         
+        XboxController controller = new XboxController(3);
+        
         LiveCommandTester tester = new LiveCommandTester(
             "No special usage. Fully automatic.",
             liveValues -> {
                 
-                double angle = System.currentTimeMillis()/5. % 360.;
+                SwerveModuleState desiredState;
+                double measurement = 0;
+                // double measurement =
+                //     (flModule.getDisplacementMeters() +
+                //     frModule.getDisplacementMeters() +
+                //     rlModule.getDisplacementMeters() +
+                //     rrModule.getDisplacementMeters()) / 4;
                 
-                liveValues.setField("Angle", angle + " deg");
+                if (controller.getAButton()) {
+                    desiredState = new SwerveModuleState(1, Rotation2d.fromDegrees(0));
+                    liveValues.setField("measurement", (measurement - measurementOffset) + " m");
+                } else {
+                    desiredState = new SwerveModuleState(0, Rotation2d.fromDegrees(0));
+                    measurementOffset = measurement;
+                }
                 
-                flModule.updateSteerMotor(Rotation2d.fromDegrees(angle));
-                flModule.updateDriveMotor(0);
-                liveValues.setField("fl", flModule.getRotation().getDegrees());
-                
-                frModule.updateSteerMotor(Rotation2d.fromDegrees(angle));
-                frModule.updateDriveMotor(0);
-                liveValues.setField("fr", frModule.getRotation().getDegrees());
-                
-                rlModule.updateSteerMotor(Rotation2d.fromDegrees(angle));
-                rlModule.updateDriveMotor(0);
-                liveValues.setField("rl", rlModule.getRotation().getDegrees());
-                
-                rrModule.updateSteerMotor(Rotation2d.fromDegrees(angle));
-                rrModule.updateDriveMotor(0);
-                liveValues.setField("rr", rrModule.getRotation().getDegrees());
+                flModule.update(desiredState);
+                frModule.update(desiredState);
+                rlModule.update(desiredState);
+                rrModule.update(desiredState);
                 
             },
             this::stop,
