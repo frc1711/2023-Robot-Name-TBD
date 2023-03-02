@@ -22,12 +22,6 @@ import frc.robot.RobotContainer;
 
 public class Intake extends SubsystemBase {
     
-    // Cubes: -2.3, -2.8
-    // Cones: -3.8, -4.5
-    private static final double
-        INTAKE_TOP_FORWARD_VOLTAGE = -2.3,
-        INTAKE_BOTTOM_FORWARD_VOLTAGE = -2.8;
-    
     private static Intake intakeInstance;
     
     public static Intake getInstance() {
@@ -101,14 +95,19 @@ public class Intake extends SubsystemBase {
         return !upperLimitSwitch.isPressed();
     }
     
-    public enum IntakeMode {
-        FORWARD (1),
-        REVERSE (-1),
-        STOP (0);
+    public enum IntakeSpeedMode {
+        CONE            (-2.3, -2.8),
+        CONE_REVERSE    (2.3, 2.8),
         
-        private final double speedMult;
-        private IntakeMode (double speedMult) {
-            this.speedMult = speedMult;
+        CUBE            (-3.8, -4.5),
+        CUBE_REVERSE    (3.8, 4.5),
+        
+        STOP            (0, 0);
+        
+        private final double intakeTopVoltage, intakeBottomVoltage;
+        private IntakeSpeedMode (double intakeTopVoltage, double intakeBottomVoltage) {
+            this.intakeTopVoltage = intakeTopVoltage;
+            this.intakeBottomVoltage = intakeBottomVoltage;
         }
     }
     
@@ -144,9 +143,9 @@ public class Intake extends SubsystemBase {
         }
     }
     
-    public void setIntakeMode (IntakeMode mode) {
-        topRoller.get().setVoltage(mode.speedMult * INTAKE_TOP_FORWARD_VOLTAGE);
-        bottomRoller.get().setVoltage(mode.speedMult * INTAKE_BOTTOM_FORWARD_VOLTAGE);
+    public void setIntakeSpeedMode (IntakeSpeedMode mode) {
+        topRoller.get().setVoltage(mode.intakeTopVoltage);
+        bottomRoller.get().setVoltage(mode.intakeBottomVoltage);
     }
     
     public void setIntakeEngagement (IntakeEngagement engagement) {
@@ -191,7 +190,7 @@ public class Intake extends SubsystemBase {
     
     public void stop () {
         stopEngagementMotors();
-        setIntakeMode(IntakeMode.STOP);
+        setIntakeSpeedMode(IntakeSpeedMode.STOP);
     }
     
     public void initSendable (SendableBuilder builder) {

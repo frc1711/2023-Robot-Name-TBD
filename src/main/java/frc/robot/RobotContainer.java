@@ -42,8 +42,8 @@ public class RobotContainer {
     private final TeleopIntake intakeCommand = new TeleopIntake(
         conveyorSubsystem,
         intakeSubsystem,
-        driveController::getAButton,
-        driveController::getBButton
+        () -> driveController.getLeftBumper(),
+        () -> driveController.getRightBumper()
     );
     
     private final ArmControlCommand armCommand = new ArmControlCommand(
