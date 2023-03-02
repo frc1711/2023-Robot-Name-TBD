@@ -50,8 +50,8 @@ public class Arm extends SubsystemBase {
         CLAW_HOMING_VOLTAGE = 1.8;
     
     private static final double
-        ARM_MIN_ANGLE_DEGREES = -8.5,
-        ARM_MAX_ANGLE_DEGREES = 98;
+        ARM_MIN_ANGLE_DEGREES = -7,
+        ARM_MAX_ANGLE_DEGREES = 99;
     
     private static Arm armInstance;
     
@@ -79,6 +79,11 @@ public class Arm extends SubsystemBase {
     
     private static final Setting<Double> ARM_ENCODER_ZERO = new Setting<>("ARM_ENCODER_CONFIG.ZERO", () -> 0.);
     private static final Setting<Double> ARM_ENCODER_NINETY = new Setting<>("ARM_ENCODER_CONFIG.NINETY", () -> 1.);
+    
+    private final Transform armDegreesOffsetToSpeed =
+        ((Transform)(deg -> deg/8.))
+        .then(Transform.clamp(-0.5, 0.5))
+        .then(Transform.NEGATE);
     
     private double clawEncoderOffset = 0;
     
@@ -168,6 +173,26 @@ public class Arm extends SubsystemBase {
      */
     public void setArmSpeedOverride (double input) {
         armMotor.setVoltage(input * 12);
+    }
+    
+    public enum ArmPosition {
+        HIGH    (Rotation2d.fromDegrees(95)),
+        MIDDLE  (Rotation2d.fromDegrees(70)),
+        LOW     (Rotation2d.fromDegrees(35));
+        
+        private final Rotation2d rotation;
+        private ArmPosition (Rotation2d rotation) {
+            this.rotation = rotation;
+        }
+    }
+    
+    public void moveArmToPosition (ArmPosition position) {
+        moveArmToRotation(position.rotation);
+    }
+    
+    public void moveArmToRotation (Rotation2d rotation) {
+        double degreesOffset = getArmRotation().minus(rotation).getDegrees();
+        setArmSpeed(armDegreesOffsetToSpeed.apply(degreesOffset));
     }
     
     public void setArmSpeed (double input) {
