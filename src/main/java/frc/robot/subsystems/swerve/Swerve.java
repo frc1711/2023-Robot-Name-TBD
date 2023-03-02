@@ -7,13 +7,17 @@ package frc.robot.subsystems.swerve;
 import com.kauailabs.navx.frc.AHRS;
 
 import claw.CLAWRobot;
+import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.IDMap;
@@ -31,10 +35,10 @@ public class Swerve extends SubsystemBase {
     }
     
     private static final Translation2d
-        FRONT_LEFT_MODULE_TRANSLATION = new Translation2d(0.5, 0.5),
-        FRONT_RIGHT_MODULE_TRANSLATION = new Translation2d(0.5, -0.5),
-        REAR_LEFT_MODULE_TRANSLATION = new Translation2d(-0.5, 0.5),
-        REAR_RIGHT_MODULE_TRANSLATION = new Translation2d(-0.5, -0.5);
+        FRONT_LEFT_MODULE_TRANSLATION = new Translation2d(0.404, 0.404),
+        FRONT_RIGHT_MODULE_TRANSLATION = new Translation2d(0.404, -0.404),
+        REAR_LEFT_MODULE_TRANSLATION = new Translation2d(-0.404, 0.404),
+        REAR_RIGHT_MODULE_TRANSLATION = new Translation2d(-0.404, -0.404);
     
     private final AHRS gyro = new AHRS();
     
@@ -63,10 +67,25 @@ public class Swerve extends SubsystemBase {
         REAR_RIGHT_MODULE_TRANSLATION
     );
     
+    private final SwerveDrivePoseEstimator poseEstimator = new SwerveDrivePoseEstimator(
+        kinematics,
+        gyro.getRotation2d(),
+        new SwerveModulePosition[]{
+            flModule.getPosition(),
+            frModule.getPosition(),
+            rlModule.getPosition(),
+            rrModule.getPosition(),
+        },
+        new Pose2d()
+    );
+    
+    private final Field2d sendableField = new Field2d();
+    
     private double measurementOffset = 0;
     
     public Swerve () {
         RobotContainer.putConfigSendable("Swerve Subsystem", this);
+        RobotContainer.putConfigSendable("Position", sendableField);
         
         // Add configuration buttons to the shuffleboard
         RobotContainer.putConfigCommand("Zero Swerve Modules", new InstantCommand(() -> this.zeroModules(), this).ignoringDisable(true), true);
@@ -80,17 +99,17 @@ public class Swerve extends SubsystemBase {
         
         XboxController controller = new XboxController(3);
         
-        
         LiveCommandTester tester = new LiveCommandTester(
             "No special usage. Fully automatic.",
             liveValues -> {
                 
                 SwerveModuleState desiredState;
-                double measurement =
-                    (flModule.getDisplacementMeters() +
-                    frModule.getDisplacementMeters() +
-                    rlModule.getDisplacementMeters() +
-                    rrModule.getDisplacementMeters()) / 4;
+                double measurement = 0;
+                // double measurement =
+                //     (flModule.getDisplacementMeters() +
+                //     frModule.getDisplacementMeters() +
+                //     rlModule.getDisplacementMeters() +
+                //     rrModule.getDisplacementMeters()) / 4;
                 
                 if (controller.getAButton()) {
                     desiredState = new SwerveModuleState(1, Rotation2d.fromDegrees(0));
@@ -185,6 +204,18 @@ public class Swerve extends SubsystemBase {
     @Override
     public void initSendable (SendableBuilder builder) {
         builder.addDoubleProperty("Yaw", gyro::getYaw, null);
+    }
+    
+    @Override
+    public void periodic () {
+        poseEstimator.update(gyro.getRotation2d(), new SwerveModulePosition[]{
+            flModule.getPosition(),
+            frModule.getPosition(),
+            rlModule.getPosition(),
+            rrModule.getPosition(),
+        });
+        
+        sendableField.setRobotPose(poseEstimator.getEstimatedPosition());
     }
     
 }

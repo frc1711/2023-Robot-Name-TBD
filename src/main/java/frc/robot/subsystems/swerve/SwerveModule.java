@@ -7,6 +7,7 @@ import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
@@ -106,8 +107,15 @@ class SwerveModule implements Sendable {
         updateSteerMotor(voltsOutput);
     }
     
-    public double getDisplacementMeters () {
+    private double getDisplacementMeters () {
         return driveMotor.getEncoder().getPosition() / 20.032;
+    }
+    
+    public SwerveModulePosition getPosition () {
+        return new SwerveModulePosition(
+            getDisplacementMeters(),
+            getRotation()
+        );
     }
     
     /**
@@ -128,7 +136,7 @@ class SwerveModule implements Sendable {
         steerEncoder.zeroRotation();
     }
     
-    public Rotation2d getRotation () {
+    private Rotation2d getRotation () {
         return steerEncoder.getRotation();
     }
     
