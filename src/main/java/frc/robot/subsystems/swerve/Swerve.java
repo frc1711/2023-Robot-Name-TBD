@@ -167,6 +167,7 @@ public class Swerve extends SubsystemBase {
     public void moveRobotRelative (ChassisSpeeds speeds) {
         SwerveModuleState[] moduleStates = kinematics.toSwerveModuleStates(speeds);
         SwerveModule.desaturateWheelSpeeds(moduleStates);
+        setModuleStates(moduleStates);
     }
     
     private void setModuleStates (SwerveModuleState[] states) {
