@@ -1,6 +1,6 @@
 package frc.robot.commands.auton;
 
-import edu.wpi.first.math.MathUtil;
+import claw.math.Transform;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
@@ -10,14 +10,36 @@ import frc.robot.subsystems.swerve.Swerve;
 
 public class BalanceCommand extends CommandBase {
     
+    
+    // TODO: Add balance command to the drive remote
+    
+    
+    
     private static final double PITCH_SETPOINT_ERROR_DEG = 1;
     
     private final Swerve swerveDrive;
     
-    private final PIDController drivePID = new PIDController(-0.06, 0, -0.008);
+    private final PIDController
+        drivePID = new PIDController(-0.06, 0, -0.008),
+        correctiveTurnPID = new PIDController(0.02, 0, 0);
+    
     private final Debouncer balancedDebouncer = new Debouncer(1, DebounceType.kRising);
     
     private double initialRobotYaw = 0;
+    
+    private final Transform yawOffsetToCorrectionTurn =
+        // Wrap degrees from -180 to +180
+        ((Transform)(deg -> {
+            while (deg > 180) deg -= 360;
+            while (deg < -180) deg += 360;
+            return deg;
+        }))
+        
+        // Apply the corrective turn PID
+        .then(correctiveTurnPID::calculate)
+        
+        // Apply a clamp
+        .then(Transform.clamp(-2, 2));
     
     public BalanceCommand (Swerve swerveDrive) {
         this.swerveDrive = swerveDrive;
@@ -30,7 +52,10 @@ public class BalanceCommand extends CommandBase {
         initialRobotYaw = swerveDrive.getRobotYaw();
         
         drivePID.reset();
+        correctiveTurnPID.reset();
+        
         drivePID.setTolerance(1);
+        correctiveTurnPID.setTolerance(3);
     }
     
     @Override
@@ -40,22 +65,9 @@ public class BalanceCommand extends CommandBase {
         double speed = drivePID.calculate(pitch);
         if (Math.abs(pitch) < PITCH_SETPOINT_ERROR_DEG) speed = 0;
         
-        swerveDrive.moveRobotRelative(new ChassisSpeeds(speed, 0, getTurnCorrection(speed)));
-    }
-    
-    private double getTurnCorrection (double moveSpeed) {
+        double turnSpeed = yawOffsetToCorrectionTurn.apply(swerveDrive.getRobotYaw() - initialRobotYaw);
         
-        // Don't try to turn if the robot is driving too slowly, it can mess up the balancing process
-        double turnSpeed = 0;
-        
-        if (Math.abs(moveSpeed) > 2) {
-            // TODO: Tune turn speed
-            turnSpeed = 0;
-            // turnSpeed = (initialRobotYaw - swerveDrive.getRobotYaw()) * 0.5;
-        }
-        
-        return MathUtil.clamp(turnSpeed, -4, 4);
-        
+        swerveDrive.moveRobotRelative(new ChassisSpeeds(speed, 0, turnSpeed));
     }
     
     @Override
