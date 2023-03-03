@@ -24,7 +24,7 @@ public class PlaceGamePieceTest extends SequentialCommandGroup {
             controlClaw(claw, ClawMovement.GRAB)
             
             // // Move the arm to the correct position to score
-            // withControlClaw(
+            // ,withControlClaw(
             //     new MoveArmCommand(arm, armScorePosition),
             //     claw,
             //     ClawMovement.GRAB
@@ -32,22 +32,28 @@ public class PlaceGamePieceTest extends SequentialCommandGroup {
             
             // // // Move swerve forwards
             // // withControlClaw(
-            // //     swerve.getControllerCommand(
-            // //         new Pose2d(0, 0, Rotation2d.fromDegrees(0)),
-            // //         new Pose2d(1, 0, Rotation2d.fromDegrees(0))
+            // //     new TimedDriveCommand(
+            // //         swerve,
+            // //         1,
+            // //         0,
+            // //         2,
+            // //         2
             // //     ),
             // //     claw,
             // //     ClawMovement.GRAB
-            // // ),
+            // // )
             
             // // Release the game piece
             // controlClaw(claw, ClawMovement.RELEASE),
             
             // // // Move swerve backwards
             // // withControlClaw(
-            // //     swerve.getControllerCommand(
-            // //         new Pose2d(1, 0, Rotation2d.fromDegrees(0)),
-            // //         new Pose2d(0, 0, Rotation2d.fromDegrees(0))
+            // //     new TimedDriveCommand(
+            // //         swerve,
+            // //         -1,
+            // //         0,
+            // //         2,
+            // //         2
             // //     ),
             // //     claw,
             // //     ClawMovement.RELEASE
