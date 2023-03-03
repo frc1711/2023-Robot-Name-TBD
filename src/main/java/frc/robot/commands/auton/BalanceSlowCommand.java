@@ -38,11 +38,10 @@ public class BalanceSlowCommand extends CommandBase {
         
         // .then(Transform.NEGATE)
         
-        // Apply the corrective turn PID
-        .then(x -> 0.02 * x)
-        
-        // Apply a clamp
-        .then(Transform.clamp(-2, 2));
+        // Apply the corrective turn
+        .then(offsetDeg -> offsetDeg / 30.)
+        .then(Transform.clamp(-1, 1))
+        .then(v -> 3.5*v);
     
     public BalanceSlowCommand (Swerve swerveDrive) {
         this.swerveDrive = swerveDrive;
