@@ -21,44 +21,44 @@ public class PlaceGamePieceTest extends SequentialCommandGroup {
             new InstantCommand(claw::homeAsFullyOpen, claw),
             
             // Grab the game piece
-            controlClaw(claw, ClawMovement.GRAB),
+            controlClaw(claw, ClawMovement.GRAB)
             
-            // Move the arm to the correct position to score
-            withControlClaw(
-                new MoveArmCommand(arm, armScorePosition),
-                claw,
-                ClawMovement.GRAB
-            ),
-            
-            // // Move swerve forwards
+            // // Move the arm to the correct position to score
             // withControlClaw(
-            //     swerve.getControllerCommand(
-            //         new Pose2d(0, 0, Rotation2d.fromDegrees(0)),
-            //         new Pose2d(1, 0, Rotation2d.fromDegrees(0))
-            //     ),
+            //     new MoveArmCommand(arm, armScorePosition),
             //     claw,
             //     ClawMovement.GRAB
             // ),
             
-            // Release the game piece
-            controlClaw(claw, ClawMovement.RELEASE),
+            // // // Move swerve forwards
+            // // withControlClaw(
+            // //     swerve.getControllerCommand(
+            // //         new Pose2d(0, 0, Rotation2d.fromDegrees(0)),
+            // //         new Pose2d(1, 0, Rotation2d.fromDegrees(0))
+            // //     ),
+            // //     claw,
+            // //     ClawMovement.GRAB
+            // // ),
             
-            // // Move swerve backwards
+            // // Release the game piece
+            // controlClaw(claw, ClawMovement.RELEASE),
+            
+            // // // Move swerve backwards
+            // // withControlClaw(
+            // //     swerve.getControllerCommand(
+            // //         new Pose2d(1, 0, Rotation2d.fromDegrees(0)),
+            // //         new Pose2d(0, 0, Rotation2d.fromDegrees(0))
+            // //     ),
+            // //     claw,
+            // //     ClawMovement.RELEASE
+            // // ),
+            
+            // // Stow the arm
             // withControlClaw(
-            //     swerve.getControllerCommand(
-            //         new Pose2d(1, 0, Rotation2d.fromDegrees(0)),
-            //         new Pose2d(0, 0, Rotation2d.fromDegrees(0))
-            //     ),
+            //     new MoveArmCommand(arm, ArmPosition.STOWED),
             //     claw,
             //     ClawMovement.RELEASE
-            // ),
-            
-            // Stow the arm
-            withControlClaw(
-                new MoveArmCommand(arm, ArmPosition.STOWED),
-                claw,
-                ClawMovement.RELEASE
-            )
+            // )
             
         );
     }
