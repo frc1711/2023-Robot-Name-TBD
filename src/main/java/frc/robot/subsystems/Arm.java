@@ -38,12 +38,12 @@ public class Arm extends SubsystemBase {
      * extension of the claw (almost fully grabbing). This offset helps to prevent the claw from contracting too
      * much and breaking itself.
      */
-    private static final double CLAW_MIN_REACH_OFFSET = 1;
+    private static final double CLAW_MIN_REACH_OFFSET = 0;
     
     // TODO: Add javadocs
     private static final double
         GRAB_OUTPUT_CURRENT = 20,
-        HOME_OUTPUT_CURRENT = 8;
+        HOME_OUTPUT_CURRENT = 13;
     
     private static final double
         CLAW_MOVE_VOLTAGE = 4,

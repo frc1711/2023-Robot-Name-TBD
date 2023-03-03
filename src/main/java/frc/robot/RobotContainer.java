@@ -75,7 +75,8 @@ public class RobotContainer {
     
     public Command getAutonomousCommand () {
         // This can return null to not run a command
-        return new BalanceCommand(null);
+        // return new BalanceCommand(null);
+        return null;
     }
     
 }
