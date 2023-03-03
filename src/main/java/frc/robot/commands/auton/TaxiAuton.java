@@ -7,7 +7,7 @@ public class TaxiAuton extends WrapperCommand {
     
     public TaxiAuton (Swerve swerve) {
         super(
-            new DriveStraightCommand(swerve, false, 1.5)
+            new DriveStraightCommand(swerve, true, 2)
         );
     }
     
