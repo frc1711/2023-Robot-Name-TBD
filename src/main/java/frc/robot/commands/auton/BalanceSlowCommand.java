@@ -8,10 +8,13 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.subsystems.swerve.Swerve;
 
-public class BalanceCommand extends CommandBase {
+public class BalanceSlowCommand extends CommandBase {
     
-    
-    // TODO: Add balance command to the drive remote
+    /**
+     * TESTING:
+     * 1. Negating yaw offset correction
+     * 2. Adjusting drivePID
+     */
     
     
     
@@ -19,9 +22,7 @@ public class BalanceCommand extends CommandBase {
     
     private final Swerve swerveDrive;
     
-    private final PIDController
-        drivePID = new PIDController(-0.086, 0, -0.002),
-        correctiveTurnPID = new PIDController(0.02, 0, 0);
+    private final PIDController drivePID = new PIDController(-0.05, 0, -0.002);
     
     private final Debouncer balancedDebouncer = new Debouncer(1, DebounceType.kRising);
     
@@ -35,13 +36,15 @@ public class BalanceCommand extends CommandBase {
             return deg;
         }))
         
+        // .then(Transform.NEGATE)
+        
         // Apply the corrective turn PID
-        .then(correctiveTurnPID::calculate)
+        .then(x -> 0.02 * x)
         
         // Apply a clamp
         .then(Transform.clamp(-2, 2));
     
-    public BalanceCommand (Swerve swerveDrive) {
+    public BalanceSlowCommand (Swerve swerveDrive) {
         this.swerveDrive = swerveDrive;
         addRequirements(swerveDrive);
     }
@@ -52,10 +55,8 @@ public class BalanceCommand extends CommandBase {
         initialRobotYaw = swerveDrive.getRobotYaw();
         
         drivePID.reset();
-        correctiveTurnPID.reset();
         
         drivePID.setTolerance(1);
-        correctiveTurnPID.setTolerance(3);
     }
     
     @Override
