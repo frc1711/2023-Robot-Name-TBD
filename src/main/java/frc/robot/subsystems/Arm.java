@@ -11,9 +11,10 @@ import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 import claw.CLAWRobot;
 import claw.Setting;
 import claw.hardware.Device;
-import claw.logs.CLAWLogger;
 import claw.math.InputTransform;
 import claw.math.Transform;
+import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.DigitalInput;
@@ -28,6 +29,8 @@ public class Arm extends SubsystemBase {
     private static final double
         ARM_MIN_ANGLE_DEGREES = -7,
         ARM_MAX_ANGLE_DEGREES = 99;
+    
+    private static final double ARM_CURRENT_LIMIT = 25;
     
     private static Arm armInstance;
     
@@ -50,6 +53,10 @@ public class Arm extends SubsystemBase {
         DutyCycle::close
     );
     
+    private final Debouncer
+        armCurrentStopFirstDebouncer = new Debouncer(0.23, DebounceType.kRising),
+        armCurrentStopSecondDebouncer = new Debouncer(1.4, DebounceType.kFalling);
+    
     private static final Setting<Double> ARM_ENCODER_ZERO = new Setting<>("ARM_ENCODER_CONFIG.ZERO", () -> 0.);
     private static final Setting<Double> ARM_ENCODER_NINETY = new Setting<>("ARM_ENCODER_CONFIG.NINETY", () -> 1.);
     
@@ -69,9 +76,8 @@ public class Arm extends SubsystemBase {
         );
         
         LiveCommandTester tester = new LiveCommandTester(
-            "Use controller 2. Y button enables arm control, move the arm using the left joystick. " +
-            "Use the A button to enable the claw homing sequence. Use left and right bumpers to " +
-            "release and grab using the claw.\n\nHold both triggers and press X to configure the arm down position. " +
+            "Use controller 2. Left joystick to control the arm. " +
+            "\n\nHold both triggers and press X to configure the arm down position. " +
             "Hold both triggers and press B to configure the arm up position.",
             liveValues -> {
                 
@@ -83,6 +89,7 @@ public class Arm extends SubsystemBase {
                 }
                 
                 liveValues.setField("Arm position", getArmRotation().getDegrees() + " deg");
+                liveValues.setField("Arm current", armMotor.getOutputCurrent());
                 
                 if (controller.getYButton()) {
                     double armVoltage = transform.apply(controller.getLeftY());
@@ -139,8 +146,16 @@ public class Arm extends SubsystemBase {
     public void setArmSpeed (double input) {
         
         double armDegrees = getArmRotation().getDegrees();
-        if ((input >= 0 && armDegrees < ARM_MAX_ANGLE_DEGREES) || (input < 0 && armDegrees > ARM_MIN_ANGLE_DEGREES)) {
-            setArmSpeedOverride(input);
+        boolean armCurrentLimitTripped = armCurrentStopSecondDebouncer.calculate(
+            armCurrentStopFirstDebouncer.calculate(
+                armMotor.getOutputCurrent() > ARM_CURRENT_LIMIT
+            )
+        );
+        
+        if (!armCurrentLimitTripped) {
+            if ((input >= 0 && armDegrees < ARM_MAX_ANGLE_DEGREES) || (input < 0 && armDegrees > ARM_MIN_ANGLE_DEGREES)) {
+                setArmSpeedOverride(input);
+            } else stop();
         } else stop();
         
     }
@@ -152,6 +167,7 @@ public class Arm extends SubsystemBase {
     @Override
     public void initSendable (SendableBuilder builder) {
         builder.addDoubleProperty("Arm position", () -> getArmRotation().getDegrees(), null);
+        builder.addDoubleProperty("Arm output current", () -> armMotor.getOutputCurrent(), null);
     }
     
 }
