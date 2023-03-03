@@ -31,7 +31,7 @@ public class Arm extends SubsystemBase {
         ARM_MIN_ANGLE_DEGREES = -7,
         ARM_MAX_ANGLE_DEGREES = 99;
     
-    private static final double ARM_CURRENT_LIMIT = 35;
+    private static final double ARM_CURRENT_LIMIT = 25;
     
     private static Arm armInstance;
     
@@ -155,12 +155,11 @@ public class Arm extends SubsystemBase {
     public void setArmSpeed (double input) {
         
         double armDegrees = getArmRotation().getDegrees();
-        // boolean armCurrentLimitTripped = armCurrentStopSecondDebouncer.calculate(
-        //     armCurrentStopFirstDebouncer.calculate(
-        //         armMotor.getOutputCurrent() > ARM_CURRENT_LIMIT
-        //     )
-        // );
-        boolean armCurrentLimitTripped = false;
+        boolean armCurrentLimitTripped = armCurrentStopSecondDebouncer.calculate(
+            armCurrentStopFirstDebouncer.calculate(
+                armMotor.getOutputCurrent() > ARM_CURRENT_LIMIT
+            )
+        );
         
         if (!armCurrentLimitTripped) {
             if ((input >= 0 && armDegrees < ARM_MAX_ANGLE_DEGREES) || (input < 0 && armDegrees > ARM_MIN_ANGLE_DEGREES)) {
