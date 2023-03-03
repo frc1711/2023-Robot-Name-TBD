@@ -92,7 +92,7 @@ public class RobotContainer {
     }
     
     private void configAutonChooser () {
-        autonChooser.addOption("Balance", () -> new BalanceCommandAuton());
+        autonChooser.addOption("Balance", () -> new BalanceCommandAuton(swerveSubsystem));
         autonChooser.addOption("Taxi only", () -> new TaxiAuton(swerveSubsystem));
         autonChooser.addOption("Place Item", () -> new PlaceItemAuton());
         autonChooser.addOption("Place and Balance", () -> new PlaceAndBalanceAuton());

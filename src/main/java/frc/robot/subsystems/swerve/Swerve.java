@@ -221,7 +221,7 @@ public class Swerve extends SubsystemBase {
     }
     
     public double getRobotPitch () {
-        return gyro.getRoll();
+        return gyro.getRoll() + 3.36;
     }
     
     public double getRobotYaw () {
