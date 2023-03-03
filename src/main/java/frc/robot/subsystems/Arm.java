@@ -11,6 +11,7 @@ import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 import claw.CLAWRobot;
 import claw.Setting;
 import claw.hardware.Device;
+import claw.logs.CLAWLogger;
 import claw.math.InputTransform;
 import claw.math.Transform;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -61,14 +62,14 @@ public class Arm extends SubsystemBase {
         this.armMotor = armMotor;
         armMotor.setIdleMode(IdleMode.kBrake);
         
-        XboxController controller = new XboxController(1);
+        XboxController controller = new XboxController(2);
         Transform transform = InputTransform.getInputTransform(
             InputTransform.SQUARE_CURVE,
             0.2
         );
         
         LiveCommandTester tester = new LiveCommandTester(
-            "Use controller 1. Y button enables arm control, move the arm using the left joystick. " +
+            "Use controller 2. Y button enables arm control, move the arm using the left joystick. " +
             "Use the A button to enable the claw homing sequence. Use left and right bumpers to " +
             "release and grab using the claw.\n\nHold both triggers and press X to configure the arm down position. " +
             "Hold both triggers and press B to configure the arm up position.",

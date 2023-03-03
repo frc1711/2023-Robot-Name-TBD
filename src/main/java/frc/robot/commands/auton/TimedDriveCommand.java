@@ -2,7 +2,6 @@ package frc.robot.commands.auton;
 
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.util.WPIUtilJNI;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.subsystems.swerve.Swerve;
 
@@ -30,7 +29,7 @@ public class TimedDriveCommand extends CommandBase {
         givenXSpeed = xSpeed;
         givenYSpeed = ySpeed;
         
-        double maxDirectionalSpeed = Math.max(xSpeed, ySpeed);
+        double maxDirectionalSpeed = Math.max(Math.abs(xSpeed), Math.abs(ySpeed));
         double rampDownDuration = maxDirectionalSpeed / rampRate;
         
         totalDuration = duration;
@@ -38,6 +37,8 @@ public class TimedDriveCommand extends CommandBase {
         
         this.xLimiter = new SlewRateLimiter(rampRate, -rampRate, 0);
         this.yLimiter = new SlewRateLimiter(rampRate, -rampRate, 0);
+        
+        addRequirements(swerve);
     }
     
     @Override
@@ -47,11 +48,11 @@ public class TimedDriveCommand extends CommandBase {
     }
     
     private double getCurrentTime () {
-        return WPIUtilJNI.getSystemTime() * 1.0e-6;
+        return System.currentTimeMillis() / 1000.;
     }
     
     private double getRampedSpeed (SlewRateLimiter speedLimiter, double givenSpeed) {
-        double preRampSpeed = (getCurrentTime() > startTime + durationBeforeRampDown) ? givenSpeed : 0;
+        double preRampSpeed = (getCurrentTime() < startTime + durationBeforeRampDown) ? givenSpeed : 0;
         return speedLimiter.calculate(preRampSpeed);
     }
     

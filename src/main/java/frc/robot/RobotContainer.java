@@ -8,10 +8,10 @@ import frc.robot.commands.ArmControlCommand;
 import frc.robot.commands.DriveCommand;
 import frc.robot.commands.TeleopIntake;
 import frc.robot.commands.auton.BalanceCommandAuton;
-import frc.robot.commands.auton.DriveIntakeAuton;
 import frc.robot.commands.auton.PlaceAndBalanceAuton;
 import frc.robot.commands.auton.PlaceGamePieceTest;
 import frc.robot.commands.auton.PlaceItemAuton;
+import frc.robot.commands.auton.TaxiAuton;
 import frc.robot.subsystems.Arm;
 import frc.robot.subsystems.Claw;
 import frc.robot.subsystems.Conveyor;
@@ -91,7 +91,7 @@ public class RobotContainer {
     
     private void configAutonChooser () {
         autonChooser.addOption("Balance", () -> new BalanceCommandAuton());
-        autonChooser.addOption("Drive Intake", () -> new DriveIntakeAuton(swerveSubsystem));
+        autonChooser.addOption("Taxi only", () -> new TaxiAuton(swerveSubsystem));
         autonChooser.addOption("Place Item", () -> new PlaceItemAuton());
         autonChooser.addOption("Place and Balance", () -> new PlaceAndBalanceAuton());
         autonChooser.addOption("TEST", () -> new PlaceGamePieceTest(armSubsystem, clawSubsystem, swerveSubsystem, ArmPosition.MIDDLE));
@@ -109,7 +109,9 @@ public class RobotContainer {
      */
     
     public Command getAutonomousCommand () {
-        return autonChooser.getSelected().get();
+        Supplier<Command> selectedAuton = autonChooser.getSelected();
+        if (selectedAuton == null) selectedAuton = () -> null;
+        return selectedAuton.get();
         // return new PlaceGamePieceTest(armSubsystem, clawSubsystem, swerveSubsystem, ArmPosition.MIDDLE);
         // return swerveSubsystem.getControllerCommand(new Trajectory(Arrays.asList(
         //     new State(0, 0, 1, new Pose2d(), 0),
