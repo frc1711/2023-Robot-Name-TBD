@@ -78,8 +78,8 @@ public class Arm extends SubsystemBase {
         "DIO.ENCODER.ARM.ARM_ENCODER",
         id -> {
             return new DigitalInputEncoder(
-                new DutyCycle(new DigitalInput(id)),
-                true,
+                new DutyCycle(new DigitalInput(2)),
+                false,
                 new AnglePoint(0, ARM_ENCODER_ZERO.get()),
                 new AnglePoint(90, ARM_ENCODER_NINETY.get())
             );
