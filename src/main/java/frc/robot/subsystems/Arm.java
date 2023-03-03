@@ -24,6 +24,7 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.LiveCommandTester;
 import frc.robot.RobotContainer;
+import frc.robot.subsystems.DigitalInputEncoder.AnglePoint;
 
 public class Arm extends SubsystemBase {
     
@@ -70,12 +71,17 @@ public class Arm extends SubsystemBase {
     
     private final CANSparkMax armMotor, clawMotor;
     
-    private final Device<DutyCycle> armEncoder = new Device<>(
+    private final Device<DigitalInputEncoder> armEncoder = new Device<>(
         "DIO.ENCODER.ARM.ARM_ENCODER",
         id -> {
-            return new DutyCycle(new DigitalInput(id));
+            return new DigitalInputEncoder(
+                new DutyCycle(new DigitalInput(id)),
+                true,
+                new AnglePoint(0, ARM_ENCODER_ZERO.),
+                new AnglePoint(90, 1)
+            );
         },
-        DutyCycle::close
+        DigitalInputEncoder::close
     );
     
     private final Debouncer clawGrabDebouncer = new Debouncer(.3, DebounceType.kRising);
@@ -138,9 +144,9 @@ public class Arm extends SubsystemBase {
                 
                 if (controller.getLeftTriggerAxis() > 0.8 && controller.getRightTriggerAxis() > 0.8) {
                     if (controller.getXButton())
-                        ARM_ENCODER_ZERO.set(armEncoder.get().getOutput());
+                        ARM_ENCODER_ZERO.set(armEncoder.get().getRawDutyCycleValue());
                     else if (controller.getBButton())
-                        ARM_ENCODER_NINETY.set(armEncoder.get().getOutput());
+                        ARM_ENCODER_NINETY.set(armEncoder.get().getRawDutyCycleValue());
                 }
                 
                 liveValues.setField("Claw can release", clawCanExtend());

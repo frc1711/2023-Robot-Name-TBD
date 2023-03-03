@@ -20,7 +20,7 @@ public class DigitalInputEncoder implements AutoCloseable {
      * @param source
      * @param hasPositiveRelationship    Whether or not, when the value of the duty cycle increases, the output angle should increase as a result
      */
-    public DigitalInputEncoder (DutyCycle input, boolean hasPositiveRelationship, double dutyCycleValue1, AnglePoint p1, AnglePoint p2) {
+    public DigitalInputEncoder (DutyCycle input, boolean hasPositiveRelationship, AnglePoint p1, AnglePoint p2) {
         this.input = input;
         this.hasPositiveRelationship = hasPositiveRelationship;
         
