@@ -23,6 +23,7 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.LiveCommandTester;
 import frc.robot.RobotContainer;
+import frc.robot.subsystems.DigitalInputEncoder.AnglePoint;
 
 public class Arm extends SubsystemBase {
     
@@ -30,7 +31,7 @@ public class Arm extends SubsystemBase {
         ARM_MIN_ANGLE_DEGREES = -7,
         ARM_MAX_ANGLE_DEGREES = 99;
     
-    private static final double ARM_CURRENT_LIMIT = 25;
+    private static final double ARM_CURRENT_LIMIT = 35;
     
     private static Arm armInstance;
     
@@ -45,20 +46,25 @@ public class Arm extends SubsystemBase {
     
     private final CANSparkMax armMotor;
     
-    private final Device<DutyCycle> armEncoder = new Device<>(
+    private static final Setting<Double> ARM_ENCODER_ZERO = new Setting<>("ARM_ENCODER_CONFIG.ZERO", () -> 0.);
+    private static final Setting<Double> ARM_ENCODER_NINETY = new Setting<>("ARM_ENCODER_CONFIG.NINETY", () -> 1.);
+    
+    private final Device<DigitalInputEncoder> armEncoder = new Device<>(
         "DIO.ENCODER.ARM.ARM_ENCODER",
         id -> {
-            return new DutyCycle(new DigitalInput(id));
+            return new DigitalInputEncoder(
+                new DutyCycle(new DigitalInput(2)),
+                false,
+                new AnglePoint(0, ARM_ENCODER_ZERO.get()),
+                new AnglePoint(90, ARM_ENCODER_NINETY.get())
+            );
         },
-        DutyCycle::close
+        DigitalInputEncoder::close
     );
     
     private final Debouncer
         armCurrentStopFirstDebouncer = new Debouncer(0.23, DebounceType.kRising),
         armCurrentStopSecondDebouncer = new Debouncer(1.4, DebounceType.kFalling);
-    
-    private static final Setting<Double> ARM_ENCODER_ZERO = new Setting<>("ARM_ENCODER_CONFIG.ZERO", () -> 0.);
-    private static final Setting<Double> ARM_ENCODER_NINETY = new Setting<>("ARM_ENCODER_CONFIG.NINETY", () -> 1.);
     
     private final Transform armDegreesOffsetToSpeed =
         ((Transform)(deg -> deg/8.))
@@ -83,13 +89,15 @@ public class Arm extends SubsystemBase {
                 
                 if (controller.getLeftTriggerAxis() > 0.8 && controller.getRightTriggerAxis() > 0.8) {
                     if (controller.getXButton())
-                        ARM_ENCODER_ZERO.set(armEncoder.get().getOutput());
+                        ARM_ENCODER_ZERO.set(armEncoder.get().getRawDutyCycleValue());
                     else if (controller.getBButton())
-                        ARM_ENCODER_NINETY.set(armEncoder.get().getOutput());
+                        ARM_ENCODER_NINETY.set(armEncoder.get().getRawDutyCycleValue());
                 }
                 
                 liveValues.setField("Arm position", getArmRotation().getDegrees() + " deg");
                 liveValues.setField("Arm current", armMotor.getOutputCurrent());
+                
+                liveValues.setField("Arm encoder duty cycle input", armEncoder.get().getRawDutyCycleValue());
                 
                 if (controller.getYButton()) {
                     double armVoltage = transform.apply(controller.getLeftY());
@@ -108,9 +116,10 @@ public class Arm extends SubsystemBase {
     }
     
     public Rotation2d getArmRotation () {
-        // xProp is the proportion from 0 to 90 degrees
-        double xProp = (armEncoder.get().getOutput() - ARM_ENCODER_ZERO.get()) / (ARM_ENCODER_NINETY.get() - ARM_ENCODER_ZERO.get());
-        return Rotation2d.fromDegrees(xProp * 90);
+        return armEncoder.get().getRotation();
+        // // xProp is the proportion from 0 to 90 degrees
+        // double xProp = (armEncoder.get().getOutput() - ARM_ENCODER_ZERO.get()) / (ARM_ENCODER_NINETY.get() - ARM_ENCODER_ZERO.get());
+        // return Rotation2d.fromDegrees(xProp * 90);
     }
     
     /**
@@ -146,11 +155,12 @@ public class Arm extends SubsystemBase {
     public void setArmSpeed (double input) {
         
         double armDegrees = getArmRotation().getDegrees();
-        boolean armCurrentLimitTripped = armCurrentStopSecondDebouncer.calculate(
-            armCurrentStopFirstDebouncer.calculate(
-                armMotor.getOutputCurrent() > ARM_CURRENT_LIMIT
-            )
-        );
+        // boolean armCurrentLimitTripped = armCurrentStopSecondDebouncer.calculate(
+        //     armCurrentStopFirstDebouncer.calculate(
+        //         armMotor.getOutputCurrent() > ARM_CURRENT_LIMIT
+        //     )
+        // );
+        boolean armCurrentLimitTripped = false;
         
         if (!armCurrentLimitTripped) {
             if ((input >= 0 && armDegrees < ARM_MAX_ANGLE_DEGREES) || (input < 0 && armDegrees > ARM_MIN_ANGLE_DEGREES)) {
