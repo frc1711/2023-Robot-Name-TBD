@@ -43,7 +43,9 @@ public class RobotContainer {
         conveyorSubsystem,
         intakeSubsystem,
         () -> driveController.getLeftBumper(),
-        () -> driveController.getRightBumper()
+        () -> driveController.getRightBumper(),
+        () -> systemController.getRightY() < -0.5,
+        () -> systemController.getRightY() > 0.5
     );
     
     private final ArmControlCommand armCommand = new ArmControlCommand(
