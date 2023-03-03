@@ -91,10 +91,11 @@ public class RobotContainer {
     
     private void configAutonChooser () {
         autonChooser.addOption("Balance", () -> new BalanceCommandAuton());
-        autonChooser.addOption("Drive Intake", () -> new DriveIntakeAuton());
+        autonChooser.addOption("Drive Intake", () -> new DriveIntakeAuton(swerveSubsystem));
         autonChooser.addOption("Place Item", () -> new PlaceItemAuton());
         autonChooser.addOption("Place and Balance", () -> new PlaceAndBalanceAuton());
         autonChooser.addOption("TEST", () -> new PlaceGamePieceTest(armSubsystem, clawSubsystem, swerveSubsystem, ArmPosition.MIDDLE));
+        putConfigSendable("AUTON SELECT", autonChooser);
     }
     
     /**

@@ -1,7 +1,5 @@
 package frc.robot.commands.auton;
 
-import java.util.function.BooleanSupplier;
-
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ParallelDeadlineGroup;
@@ -21,7 +19,7 @@ public class PlaceGamePieceTest extends SequentialCommandGroup {
             new InstantCommand(claw::homeAsFullyOpen, claw),
             
             // Grab the game piece
-            controlClaw(claw, ClawMovement.GRAB)
+            new ControlClawCommand(claw, ClawMovement.GRAB)
             
             // // Move the arm to the correct position to score
             // ,withControlClaw(
@@ -44,7 +42,7 @@ public class PlaceGamePieceTest extends SequentialCommandGroup {
             // // )
             
             // // Release the game piece
-            // controlClaw(claw, ClawMovement.RELEASE),
+            // new ControlClawCommand(claw, ClawMovement.RELEASE),
             
             // // // Move swerve backwards
             // // withControlClaw(
@@ -74,20 +72,6 @@ public class PlaceGamePieceTest extends SequentialCommandGroup {
             command,
             new RunCommand(() -> claw.operateClaw(clawControl), claw)
         );
-    }
-    
-    private static Command controlClaw (Claw claw, ClawMovement clawControl) {
-        BooleanSupplier hasFinished;
-        
-        if (clawControl == ClawMovement.GRAB) {
-            hasFinished = claw::isFullyGrabbing;
-        } else if (clawControl == ClawMovement.RELEASE) {
-            hasFinished = claw::isFullyReleased;
-        } else {
-            hasFinished = () -> true;
-        }
-        
-        return new RunCommand(() -> claw.operateClaw(clawControl), claw).until(hasFinished);
     }
     
 }
