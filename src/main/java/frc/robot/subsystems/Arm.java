@@ -71,14 +71,17 @@ public class Arm extends SubsystemBase {
     
     private final CANSparkMax armMotor, clawMotor;
     
+    private static final Setting<Double> ARM_ENCODER_ZERO = new Setting<>("ARM_ENCODER_CONFIG.ZERO", () -> 0.);
+    private static final Setting<Double> ARM_ENCODER_NINETY = new Setting<>("ARM_ENCODER_CONFIG.NINETY", () -> 1.);
+    
     private final Device<DigitalInputEncoder> armEncoder = new Device<>(
         "DIO.ENCODER.ARM.ARM_ENCODER",
         id -> {
             return new DigitalInputEncoder(
                 new DutyCycle(new DigitalInput(id)),
                 true,
-                new AnglePoint(0, ARM_ENCODER_ZERO.),
-                new AnglePoint(90, 1)
+                new AnglePoint(0, ARM_ENCODER_ZERO.get()),
+                new AnglePoint(90, ARM_ENCODER_NINETY.get())
             );
         },
         DigitalInputEncoder::close
@@ -88,9 +91,6 @@ public class Arm extends SubsystemBase {
     private final Debouncer
         armCurrentStopFirstDebouncer = new Debouncer(0.23, DebounceType.kRising),
         armCurrentStopSecondDebouncer = new Debouncer(1.4, DebounceType.kFalling);
-    
-    private static final Setting<Double> ARM_ENCODER_ZERO = new Setting<>("ARM_ENCODER_CONFIG.ZERO", () -> 0.);
-    private static final Setting<Double> ARM_ENCODER_NINETY = new Setting<>("ARM_ENCODER_CONFIG.NINETY", () -> 1.);
     
     private final Transform armDegreesOffsetToSpeed =
         ((Transform)(deg -> deg/8.))
@@ -156,6 +156,8 @@ public class Arm extends SubsystemBase {
                 liveValues.setField("Arm position", getArmRotation().getDegrees() + " deg");
                 liveValues.setField("Arm current", armMotor.getOutputCurrent());
                 
+                liveValues.setField("Arm encoder duty cycle input", armEncoder.get().getRawDutyCycleValue());
+                
                 if (controller.getYButton()) {
                     double armVoltage = transform.apply(controller.getLeftY());
                     setArmSpeedOverride(armVoltage);
@@ -173,9 +175,10 @@ public class Arm extends SubsystemBase {
     }
     
     private Rotation2d getArmRotation () {
-        // xProp is the proportion from 0 to 90 degrees
-        double xProp = (armEncoder.get().getOutput() - ARM_ENCODER_ZERO.get()) / (ARM_ENCODER_NINETY.get() - ARM_ENCODER_ZERO.get());
-        return Rotation2d.fromDegrees(xProp * 90);
+        return armEncoder.get().getRotation();
+        // // xProp is the proportion from 0 to 90 degrees
+        // double xProp = (armEncoder.get().getOutput() - ARM_ENCODER_ZERO.get()) / (ARM_ENCODER_NINETY.get() - ARM_ENCODER_ZERO.get());
+        // return Rotation2d.fromDegrees(xProp * 90);
     }
     
     /**
