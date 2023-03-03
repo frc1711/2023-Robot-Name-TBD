@@ -190,6 +190,7 @@ public class Swerve extends SubsystemBase {
             gyro.getRotation2d().minus(
                 Rotation2d.fromDegrees(gyroTeleopYawOffset)
             )
+            .minus(Rotation2d.fromDegrees(90))
         );
         
         moveRobotRelative(robotRelativeSpeeds);
