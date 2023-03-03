@@ -7,6 +7,7 @@ package frc.robot.subsystems.swerve;
 import com.kauailabs.navx.frc.AHRS;
 
 import claw.CLAWRobot;
+import claw.Setting;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -39,18 +40,22 @@ public class Swerve extends SubsystemBase {
     
     private final SwerveModule
         flModule = new SwerveModule(
+            new Setting<>("FL_MODULE_ENCODER_OFFSET", ()->0.),
             IDMap.FRONT_LEFT_MODULE_DRIVE_SPARK_ID,
             IDMap.FRONT_LEFT_MODULE_STEER_SPARK_ID,
             IDMap.FRONT_LEFT_MODULE_STEER_CANCODER_ID),
         frModule = new SwerveModule(
+            new Setting<>("FR_MODULE_ENCODER_OFFSET", ()->0.),
             IDMap.FRONT_RIGHT_MODULE_DRIVE_SPARK_ID,
             IDMap.FRONT_RIGHT_MODULE_STEER_SPARK_ID,
             IDMap.FRONT_RIGHT_MODULE_STEER_CANCODER_ID),
         rlModule = new SwerveModule(
+            new Setting<>("RL_MODULE_ENCODER_OFFSET", ()->0.),
             IDMap.REAR_LEFT_MODULE_DRIVE_SPARK_ID,
             IDMap.REAR_LEFT_MODULE_STEER_SPARK_ID,
             IDMap.REAR_LEFT_MODULE_STEER_CANCODER_ID),
         rrModule = new SwerveModule(
+            new Setting<>("RR_MODULE_ENCODER_OFFSET", ()->0.),
             IDMap.REAR_RIGHT_MODULE_DRIVE_SPARK_ID,
             IDMap.REAR_RIGHT_MODULE_STEER_SPARK_ID,
             IDMap.REAR_RIGHT_MODULE_STEER_CANCODER_ID);

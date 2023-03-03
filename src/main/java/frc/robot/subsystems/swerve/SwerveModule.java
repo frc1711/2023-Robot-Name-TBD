@@ -4,6 +4,7 @@ import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
+import claw.Setting;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
@@ -53,13 +54,13 @@ class SwerveModule implements Sendable {
      */
     private final RotationalPID steerPID;
     
-    public SwerveModule (int driveSparkId, int steerSparkId, int steerCANCoderId) {
+    public SwerveModule (Setting<Double> encoderOffsetSetting, int driveSparkId, int steerSparkId, int steerCANCoderId) {
         steerPID = new RotationalPID(6/90., 0, 0, 6);
         
         driveMotor = initializeMotor(driveSparkId);
         steerMotor = initializeMotor(steerSparkId);
         
-        steerEncoder = new ResettableEncoder(steerCANCoderId);
+        steerEncoder = new ResettableEncoder(encoderOffsetSetting, steerCANCoderId);
     }
     
     /**
