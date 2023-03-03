@@ -53,6 +53,8 @@ public class Arm extends SubsystemBase {
         ARM_MIN_ANGLE_DEGREES = -7,
         ARM_MAX_ANGLE_DEGREES = 99;
     
+    private static final double ARM_CURRENT_LIMIT = 20;
+    
     private static Arm armInstance;
     
     public static Arm getInstance () {
@@ -76,6 +78,7 @@ public class Arm extends SubsystemBase {
     );
     
     private final Debouncer clawGrabDebouncer = new Debouncer(.3, DebounceType.kRising);
+    private final Debouncer armCurrentStopDebouncer = new Debouncer(.4, DebounceType.kFalling);
     
     private static final Setting<Double> ARM_ENCODER_ZERO = new Setting<>("ARM_ENCODER_CONFIG.ZERO", () -> 0.);
     private static final Setting<Double> ARM_ENCODER_NINETY = new Setting<>("ARM_ENCODER_CONFIG.NINETY", () -> 1.);
@@ -96,16 +99,15 @@ public class Arm extends SubsystemBase {
         this.clawMotor = clawMotor;
         clawMotor.setIdleMode(IdleMode.kBrake);
         
-        XboxController controller = new XboxController(1);
+        XboxController controller = new XboxController(2);
         Transform transform = InputTransform.getInputTransform(
             InputTransform.SQUARE_CURVE,
             0.2
         );
         
         LiveCommandTester tester = new LiveCommandTester(
-            "Use controller 1. Y button enables arm control, move the arm using the left joystick. " +
-            "Use the A button to enable the claw homing sequence. Use left and right bumpers to " +
-            "release and grab using the claw.\n\nHold both triggers and press X to configure the arm down position. " +
+            "Use controller 2. Left joystick to control the arm. " +
+            "\n\nHold both triggers and press X to configure the arm down position. " +
             "Hold both triggers and press B to configure the arm up position.",
             liveValues -> {
                 
@@ -143,6 +145,7 @@ public class Arm extends SubsystemBase {
                 liveValues.setField("Output current", clawMotor.getAppliedOutput());
                 liveValues.setField("Encoder reading", clawMotor.getEncoder().getPosition());
                 liveValues.setField("Arm position", getArmRotation().getDegrees() + " deg");
+                liveValues.setField("Arm current", armMotor.getOutputCurrent());
                 
                 if (controller.getYButton()) {
                     double armVoltage = transform.apply(controller.getLeftY());
@@ -198,9 +201,13 @@ public class Arm extends SubsystemBase {
     public void setArmSpeed (double input) {
         
         double armDegrees = getArmRotation().getDegrees();
-        if ((input >= 0 && armDegrees < ARM_MAX_ANGLE_DEGREES) || (input < 0 && armDegrees > ARM_MIN_ANGLE_DEGREES)) {
-            setArmSpeedOverride(input);
-        } else stopArm();
+        boolean armCurrentLimitTripped = armCurrentStopDebouncer.calculate(armMotor.getOutputCurrent() > ARM_CURRENT_LIMIT);
+        
+        if (armCurrentLimitTripped) {
+            if ((input >= 0 && armDegrees < ARM_MAX_ANGLE_DEGREES) || (input < 0 && armDegrees > ARM_MIN_ANGLE_DEGREES)) {
+                setArmSpeedOverride(input);
+            } else stopArm();
+        } stopArm();
         
     }
     
