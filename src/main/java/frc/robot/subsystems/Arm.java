@@ -15,6 +15,7 @@ import claw.logs.CLAWLogger;
 import claw.math.InputTransform;
 import claw.math.Transform;
 import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.util.sendable.SendableBuilder;
@@ -166,7 +167,7 @@ public class Arm extends SubsystemBase {
         RobotContainer.putConfigSendable("Arm Subsystem", this);
     }
     
-    private Rotation2d getArmRotation () {
+    public Rotation2d getArmRotation () {
         // xProp is the proportion from 0 to 90 degrees
         double xProp = (armEncoder.get().getOutput() - ARM_ENCODER_ZERO.get()) / (ARM_ENCODER_NINETY.get() - ARM_ENCODER_ZERO.get());
         return Rotation2d.fromDegrees(xProp * 90);
@@ -186,19 +187,10 @@ public class Arm extends SubsystemBase {
         MIDDLE  (Rotation2d.fromDegrees(70)),
         LOW     (Rotation2d.fromDegrees(35));
         
-        private final Rotation2d rotation;
+        public final Rotation2d rotation;
         private ArmPosition (Rotation2d rotation) {
             this.rotation = rotation;
         }
-    }
-    
-    public void moveArmToPosition (ArmPosition position) {
-        moveArmToRotation(position.rotation);
-    }
-    
-    public void moveArmToRotation (Rotation2d rotation) {
-        double degreesOffset = getArmRotation().minus(rotation).getDegrees();
-        setArmSpeed(armDegreesOffsetToSpeed.apply(degreesOffset));
     }
     
     public void setArmSpeed (double input) {

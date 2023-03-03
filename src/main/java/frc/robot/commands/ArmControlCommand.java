@@ -5,6 +5,7 @@ import java.util.function.DoubleSupplier;
 
 import claw.math.InputTransform;
 import claw.math.Transform;
+import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.subsystems.Arm;
 import frc.robot.subsystems.Arm.ArmPosition;
@@ -16,7 +17,16 @@ public class ArmControlCommand extends CommandBase {
     private final DoubleSupplier armControl;
     private final BooleanSupplier armToLow, armToMid, armToHigh, grabControl, releaseControl;
     
-    private final Transform armVoltageTransform = InputTransform.getInputTransform(InputTransform.THREE_HALVES_CURVE, 0.1);
+    private final SlewRateLimiter armSpeedFilter = new SlewRateLimiter(1, -1, 0);
+    private final Transform armSpeedTransform =
+        InputTransform.getInputTransform(InputTransform.THREE_HALVES_CURVE, 0.1)
+        .then(armSpeedFilter::calculate);
+    
+    private final Transform armOffsetFromSetpointToInputSpeed =
+        Transform.NEGATE
+        .then((Transform)(x -> x/40))
+        .then(Transform.clamp(-1, 1))
+        .then((Transform)(x -> 9*x));
     
     public ArmControlCommand (
         Arm arm,
@@ -59,23 +69,29 @@ public class ArmControlCommand extends CommandBase {
         }
         
         // Set arm movement
-        if (armToLow.getAsBoolean()) {
+        double armInputSpeed = 0;
+        if (armToLow.getAsBoolean() || armToMid.getAsBoolean() || armToHigh.getAsBoolean()) {
             
-            arm.moveArmToPosition(ArmPosition.LOW);
+            ArmPosition armSetPosition;
+            if (armToLow.getAsBoolean()) {
+                armSetPosition = ArmPosition.LOW;
+            } else if (armToMid.getAsBoolean()) {
+                armSetPosition = ArmPosition.MIDDLE;
+            } else {
+                armSetPosition = ArmPosition.HIGH;
+            }
             
-        } else if (armToMid.getAsBoolean()) {
-            
-            arm.moveArmToPosition(ArmPosition.MIDDLE);
-            
-        } else if (armToHigh.getAsBoolean()) {
-            
-            arm.moveArmToPosition(ArmPosition.HIGH);
+            armInputSpeed = armOffsetFromSetpointToInputSpeed.apply(
+                arm.getArmRotation().minus(armSetPosition.rotation).getDegrees()
+            );
             
         } else {
             
-            arm.setArmSpeed(armVoltageTransform.apply(armControl.getAsDouble()));
+            armInputSpeed = armControl.getAsDouble();
             
         }
+        
+        arm.setArmSpeed(armSpeedTransform.apply(armInputSpeed));
         
     }
     
