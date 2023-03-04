@@ -1,6 +1,7 @@
 package frc.robot.commands.auton;
 
 import edu.wpi.first.math.filter.SlewRateLimiter;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.subsystems.swerve.Swerve;
@@ -19,12 +20,16 @@ public class TimedDriveCommand extends CommandBase {
     private final double totalDuration, durationBeforeRampDown;
     private double startTime = 0;
     
+    private final SwerveTurnCorrector turnCorrector = new SwerveTurnCorrector();
+    private final boolean withTurnCorrection;
+    private Rotation2d initialRobotRotation;
+    
     /**
      * Create a new timed drive command for the swerve drive which drives it at the given speeds for a provided duration.
      * The speeds also ramp up at the given rampRate, measured in units/second where the provided units are the measurement
      * of speed for x and y. +x is forward, +y is to the left
      */
-    public TimedDriveCommand (Swerve swerve, double xSpeed, double ySpeed, double rampRate, double duration) {
+    public TimedDriveCommand (Swerve swerve, double xSpeed, double ySpeed, double rampRate, double duration, boolean withTurnCorrection) {
         this.swerve = swerve;
         givenXSpeed = xSpeed;
         givenYSpeed = ySpeed;
@@ -38,13 +43,15 @@ public class TimedDriveCommand extends CommandBase {
         this.xLimiter = new SlewRateLimiter(rampRate, -rampRate, 0);
         this.yLimiter = new SlewRateLimiter(rampRate, -rampRate, 0);
         
+        this.withTurnCorrection = withTurnCorrection;
+        
         addRequirements(swerve);
     }
     
     @Override
     public void initialize () {
         startTime = getCurrentTime();
-        
+        initialRobotRotation = swerve.getRobotRotation();
     }
     
     private double getCurrentTime () {
@@ -60,7 +67,13 @@ public class TimedDriveCommand extends CommandBase {
     public void execute () {
         double xSpeed = getRampedSpeed(xLimiter, givenXSpeed);
         double ySpeed = getRampedSpeed(yLimiter, givenYSpeed);
-        swerve.moveRobotRelative(new ChassisSpeeds(xSpeed, ySpeed, 0));
+        swerve.moveRobotRelative(
+            new ChassisSpeeds(
+                xSpeed,
+                ySpeed,
+                withTurnCorrection ? turnCorrector.getCorrectionSpeed(swerve.getRobotRotation(), initialRobotRotation) : 0
+            )
+        );
     }
     
     @Override
