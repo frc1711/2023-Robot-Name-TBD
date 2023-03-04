@@ -23,7 +23,7 @@ public class BalanceSlowCommand extends CommandBase {
     
     private final Swerve swerveDrive;
     
-    private final PIDController drivePID = new PIDController(-0.05, 0, -0.002);
+    private final PIDController drivePID = new PIDController(-0.06, 0, -0.002);
     
     private final Debouncer balancedDebouncer = new Debouncer(1, DebounceType.kRising);
     

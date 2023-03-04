@@ -111,6 +111,7 @@ public class Swerve extends SubsystemBase {
     private final Field2d sendableField = new Field2d();
     
     private Rotation2d gyroTeleopYawOffset = Rotation2d.fromDegrees(0);
+    private double gyroZeroPitchOffset = 0;
     
     
     private double measurementOffset = 0;
@@ -164,6 +165,8 @@ public class Swerve extends SubsystemBase {
         CLAWRobot.getExtensibleCommandInterpreter().addCommandProcessor(
             tester.toCommandProcessor("swervetest")
         );
+        
+        gyroZeroPitchOffset = getRobotPitchRaw();
     }
     
     /**
@@ -224,7 +227,11 @@ public class Swerve extends SubsystemBase {
     }
     
     public double getRobotPitch () {
-        return gyro.getRoll() + 3.36;
+        return getRobotPitchRaw() - gyroZeroPitchOffset;
+    }
+    
+    private double getRobotPitchRaw () {
+        return gyro.getRoll();
     }
     
     public Rotation2d getRobotRotation () {
