@@ -4,6 +4,7 @@ import claw.math.Transform;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.subsystems.swerve.Swerve;
@@ -26,7 +27,7 @@ public class BalanceSlowCommand extends CommandBase {
     
     private final Debouncer balancedDebouncer = new Debouncer(1, DebounceType.kRising);
     
-    private double initialRobotYaw = 0;
+    private Rotation2d initialRobotYaw;
     
     private final Transform yawOffsetToCorrectionTurn =
         // Wrap degrees from -180 to +180
@@ -36,7 +37,7 @@ public class BalanceSlowCommand extends CommandBase {
             return deg;
         }))
         
-        // .then(Transform.NEGATE)
+        .then(Transform.NEGATE)
         
         // Apply the corrective turn
         .then(offsetDeg -> offsetDeg / 30.)
@@ -51,7 +52,7 @@ public class BalanceSlowCommand extends CommandBase {
     @Override
     public void initialize () {
         swerveDrive.stop();
-        initialRobotYaw = swerveDrive.getRobotYaw();
+        initialRobotYaw = swerveDrive.getRobotRotation();
         
         drivePID.reset();
         
@@ -65,7 +66,7 @@ public class BalanceSlowCommand extends CommandBase {
         double speed = drivePID.calculate(pitch);
         if (Math.abs(pitch) < PITCH_SETPOINT_ERROR_DEG) speed = 0;
         
-        double turnSpeed = yawOffsetToCorrectionTurn.apply(swerveDrive.getRobotYaw() - initialRobotYaw);
+        double turnSpeed = yawOffsetToCorrectionTurn.apply(swerveDrive.getRobotRotation().minus(initialRobotYaw).getDegrees());
         
         swerveDrive.moveRobotRelative(new ChassisSpeeds(speed, 0, turnSpeed));
     }

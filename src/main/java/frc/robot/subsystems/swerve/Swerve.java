@@ -105,7 +105,7 @@ public class Swerve extends SubsystemBase {
     
     private final Field2d sendableField = new Field2d();
     
-    private double gyroTeleopYawOffset = 0;
+    private Rotation2d gyroTeleopYawOffset = Rotation2d.fromDegrees(0);
     
     
     private double measurementOffset = 0;
@@ -187,10 +187,7 @@ public class Swerve extends SubsystemBase {
     public void moveFieldRelativeTeleop (ChassisSpeeds speeds) {
         ChassisSpeeds robotRelativeSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
             speeds,
-            gyro.getRotation2d().minus(
-                Rotation2d.fromDegrees(gyroTeleopYawOffset)
-            )
-            .minus(Rotation2d.fromDegrees(90))
+            getRobotRotation().minus(gyroTeleopYawOffset)
         );
         
         moveRobotRelative(robotRelativeSpeeds);
@@ -218,15 +215,15 @@ public class Swerve extends SubsystemBase {
      * "starting orientation".
      */
     public void zeroGyroTeleop () {
-        gyroTeleopYawOffset = getRobotYaw();
+        gyroTeleopYawOffset = getRobotRotation();
     }
     
     public double getRobotPitch () {
         return gyro.getRoll() + 3.36;
     }
     
-    public double getRobotYaw () {
-        return gyro.getYaw();
+    public Rotation2d getRobotRotation () {
+        return gyro.getRotation2d();
     }
     
     /**
@@ -241,8 +238,11 @@ public class Swerve extends SubsystemBase {
     
     @Override
     public void initSendable (SendableBuilder builder) {
-        builder.addDoubleProperty("Yaw", this::getRobotYaw, null);
+        builder.addDoubleProperty("Absolute Yaw", () -> getRobotRotation().getDegrees(), null);
         builder.addDoubleProperty("Pitch", this::getRobotPitch, null);
+        builder.addDoubleProperty("Teleop Yaw", () -> {
+            return getRobotRotation().minus(gyroTeleopYawOffset).getDegrees();
+        }, null);
     }
     
     public Command getControllerCommand (Pose2d... waypoints) {
