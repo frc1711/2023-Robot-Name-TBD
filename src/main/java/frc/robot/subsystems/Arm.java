@@ -52,7 +52,7 @@ public class Arm extends SubsystemBase {
         CLAW_HOMING_VOLTAGE = 1.8;
     
     private static final double
-        ARM_MIN_ANGLE_DEGREES = -7,
+        ARM_MIN_ANGLE_DEGREES = -9.8,
         ARM_MAX_ANGLE_DEGREES = 99;
     
     private static final double ARM_CURRENT_LIMIT = 25;
@@ -86,6 +86,8 @@ public class Arm extends SubsystemBase {
     
     private static final Setting<Double> ARM_ENCODER_ZERO = new Setting<>("ARM_ENCODER_CONFIG.ZERO", () -> 0.);
     private static final Setting<Double> ARM_ENCODER_NINETY = new Setting<>("ARM_ENCODER_CONFIG.NINETY", () -> 1.);
+    
+    private final SlewRateLimiter armSpeedLimiter = new SlewRateLimiter(12, -12, 0);
     
     private final Transform armDegreesOffsetToSpeed =
         ((Transform)(deg -> deg/8.))
@@ -179,7 +181,7 @@ public class Arm extends SubsystemBase {
      * @param input
      */
     public void setArmSpeedOverride (double input) {
-        armMotor.setVoltage(input * 12);
+        armMotor.setVoltage(armSpeedLimiter.calculate(input * 12));
     }
     
     public enum ArmPosition {
@@ -211,7 +213,8 @@ public class Arm extends SubsystemBase {
     }
     
     public void stopArm() {
-        armMotor.setVoltage(0);
+        armSpeedLimiter.reset(0);
+        setArmSpeedOverride(0);
     }
     
     private final Debouncer homingSequenceDebouncer = new Debouncer(0.1, DebounceType.kRising);
