@@ -129,6 +129,17 @@ public class Arm extends SubsystemBase {
         armMotor.setVoltage(armSpeedLimiter.calculate(input * 12));
     }
     
+    private final Transform degreesOffsetToMovement =
+        ((Transform)(deg -> deg/25))
+        .then(InputTransform.THREE_HALVES_CURVE)
+        .then(Transform.clamp(-1, 1))
+        .then(v -> v*0.6)
+        .then(Transform.NEGATE);
+    
+    public double getSpeedToMoveToRotation (Rotation2d targetRotation) {
+        return degreesOffsetToMovement.apply(getArmRotation().minus(targetRotation).getDegrees());
+    }
+    
     public enum ArmPosition {
         HIGH    (Rotation2d.fromDegrees(95)),
         MIDDLE  (Rotation2d.fromDegrees(70)),

@@ -5,7 +5,6 @@ import java.util.function.DoubleSupplier;
 
 import claw.math.InputTransform;
 import claw.math.Transform;
-import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.subsystems.Arm;
 import frc.robot.subsystems.Claw;
@@ -19,16 +18,9 @@ public class ArmControlCommand extends CommandBase {
     private final DoubleSupplier armControl;
     private final BooleanSupplier armToLow, armToMid, armToHigh, grabControl, releaseControl;
     
-    private final SlewRateLimiter armSpeedFilter = new SlewRateLimiter(1, -1, 0);
     private final Transform armSpeedTransform =
-        InputTransform.getInputTransform(InputTransform.THREE_HALVES_CURVE, 0.1)
-        .then(armSpeedFilter::calculate);
+        InputTransform.getInputTransform(InputTransform.THREE_HALVES_CURVE, 0.1);
     
-    private final Transform armOffsetFromSetpointToInputSpeed =
-        Transform.NEGATE
-        .then((Transform)(x -> x/40))
-        .then(Transform.clamp(-1, 1))
-        .then((Transform)(x -> 9*x));
     
     public ArmControlCommand (
         Arm arm,
@@ -85,9 +77,7 @@ public class ArmControlCommand extends CommandBase {
                 armSetPosition = ArmPosition.HIGH;
             }
             
-            armInputSpeed = armOffsetFromSetpointToInputSpeed.apply(
-                arm.getArmRotation().minus(armSetPosition.rotation).getDegrees()
-            );
+            armInputSpeed = arm.getSpeedToMoveToRotation(armSetPosition.rotation);
             
         } else {
             

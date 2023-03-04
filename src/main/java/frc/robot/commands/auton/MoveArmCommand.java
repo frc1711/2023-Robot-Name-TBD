@@ -27,7 +27,7 @@ public class MoveArmCommand extends CommandBase {
     
     @Override
     public void execute () {
-        arm.moveArmToRotation(targetRotation);
+        arm.setArmSpeed(arm.getSpeedToMoveToRotation(targetRotation));
     }
     
     @Override
