@@ -28,7 +28,7 @@ public class Claw extends SubsystemBase {
     // TODO: Add javadocs
     private static final double
         GRAB_OUTPUT_CURRENT = 20,
-        HOME_OUTPUT_CURRENT = 13;
+        HOME_OUTPUT_CURRENT = 20;
     
     private static final double
         CLAW_MOVE_VOLTAGE = 4,
