@@ -14,6 +14,7 @@ import claw.hardware.Device;
 import claw.math.InputTransform;
 import claw.math.Transform;
 import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.util.sendable.SendableBuilder;
@@ -28,7 +29,7 @@ import frc.robot.subsystems.DigitalInputEncoder.AnglePoint;
 public class Arm extends SubsystemBase {
     
     private static final double
-        ARM_MIN_ANGLE_DEGREES = -7,
+        ARM_MIN_ANGLE_DEGREES = -9.8,
         ARM_MAX_ANGLE_DEGREES = 99;
     
     private static final double ARM_CURRENT_LIMIT = 25;
@@ -66,10 +67,7 @@ public class Arm extends SubsystemBase {
         armCurrentStopFirstDebouncer = new Debouncer(0.23, DebounceType.kRising),
         armCurrentStopSecondDebouncer = new Debouncer(1.4, DebounceType.kFalling);
     
-    private final Transform armDegreesOffsetToSpeed =
-        ((Transform)(deg -> deg/8.))
-        .then(Transform.clamp(-0.5, 0.5))
-        .then(Transform.NEGATE);
+    private final SlewRateLimiter armSpeedLimiter = new SlewRateLimiter(12, -12, 0);
     
     public Arm(CANSparkMax armMotor) {
         this.armMotor = armMotor;
@@ -128,7 +126,7 @@ public class Arm extends SubsystemBase {
      * @param input
      */
     public void setArmSpeedOverride (double input) {
-        armMotor.setVoltage(input * 12);
+        armMotor.setVoltage(armSpeedLimiter.calculate(input * 12));
     }
     
     public enum ArmPosition {
@@ -141,15 +139,6 @@ public class Arm extends SubsystemBase {
         private ArmPosition (Rotation2d rotation) {
             this.rotation = rotation;
         }
-    }
-    
-    public void moveArmToPosition (ArmPosition position) {
-        moveArmToRotation(position.rotation);
-    }
-    
-    public void moveArmToRotation (Rotation2d rotation) {
-        double degreesOffset = getArmRotation().minus(rotation).getDegrees();
-        setArmSpeed(armDegreesOffsetToSpeed.apply(degreesOffset));
     }
     
     public void setArmSpeed (double input) {
@@ -170,7 +159,8 @@ public class Arm extends SubsystemBase {
     }
     
     public void stop () {
-        armMotor.stopMotor();
+        armSpeedLimiter.reset(0);
+        setArmSpeedOverride(0);
     }
     
     @Override
