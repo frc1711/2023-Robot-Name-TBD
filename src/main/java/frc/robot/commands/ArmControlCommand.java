@@ -42,7 +42,7 @@ public class ArmControlCommand extends CommandBase {
         
         this.grabControl = grabControl;
         this.releaseControl = releaseControl;
-        addRequirements(arm);
+        addRequirements(arm, claw);
     }
     
     @Override
