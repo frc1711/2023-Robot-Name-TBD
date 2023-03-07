@@ -56,7 +56,7 @@ class SwerveModule implements Sendable {
     private final RotationalPID steerPID;
     
     public SwerveModule (Setting<Double> encoderOffsetSetting, int driveSparkId, int steerSparkId, int steerCANCoderId) {
-        steerPID = new RotationalPID(6/90., 0, 0, 6);
+        steerPID = new RotationalPID(3/90., 0, 0, 3);
         
         driveMotor = initializeMotor(driveSparkId);
         steerMotor = initializeMotor(steerSparkId);

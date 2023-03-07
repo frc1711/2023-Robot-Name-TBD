@@ -3,12 +3,12 @@ package frc.robot.commands;
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 
-import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.commands.InputCurve.Input2D;
 import frc.robot.subsystems.swerve.Swerve;
+import frc.robot.subsystems.swerve.SwerveTeleopAccelerationConstraints;
 
 public class DriveCommand extends CommandBase {
     
@@ -16,10 +16,7 @@ public class DriveCommand extends CommandBase {
         ROTATE_CURVE = InputCurve.THREE_HALVES_CURVE.withDeadband(0.14),
         STRAFE_CURVE = InputCurve.THREE_HALVES_CURVE.withDeadband(0.14);
     
-    private final SlewRateLimiter
-        strafeXLimiter = new SlewRateLimiter(16, -16, 0),
-        strafeYLimiter = new SlewRateLimiter(16, -16, 0),
-        rotateLimiter = new SlewRateLimiter(32, -32, 0);
+    private final SwerveTeleopAccelerationConstraints accelerationConstraints = new SwerveTeleopAccelerationConstraints(14, 32);
     
     private final Swerve swerve;
     private final BooleanSupplier xModeInput, turboModeControl, resetGyro;
@@ -54,6 +51,7 @@ public class DriveCommand extends CommandBase {
     @Override
     public void initialize () {
         swerve.stop();
+        accelerationConstraints.reset();
     }
     
     @Override
@@ -80,10 +78,6 @@ public class DriveCommand extends CommandBase {
         }
         double rotateSpeed = -InputCurve.apply(ROTATE_CURVE, rotateInputRaw) * 5;
         
-        double strafeX = strafeXLimiter.calculate(-strafeSpeeds.y());
-        double strafeY = strafeYLimiter.calculate(-strafeSpeeds.x());
-        rotateSpeed = rotateLimiter.calculate(rotateSpeed);
-        
         DS_strafeX = strafeInputRaw.x();
         DS_strafeY = strafeInputRaw.y();
         DS_rotate = rotateInputRaw;
@@ -91,7 +85,10 @@ public class DriveCommand extends CommandBase {
         // Robot orientation and ChassisSpeeds is based on the idea that +x is the front of the robot,
         // +y is the left side of the robot, etc.
         // Axes, of course, do not work like this
-        swerve.moveFieldRelativeTeleop(new ChassisSpeeds(strafeX, strafeY, rotateSpeed));
+        ChassisSpeeds desiredSpeeds = new ChassisSpeeds(-strafeSpeeds.y(), -strafeSpeeds.x(), rotateSpeed);
+        
+        // Apply the final acceleration constraints to the desired speeds
+        swerve.moveFieldRelativeTeleop(accelerationConstraints.applyToSpeeds(desiredSpeeds));
     }
     
     @Override
