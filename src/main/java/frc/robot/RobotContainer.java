@@ -11,6 +11,7 @@ import frc.robot.commands.auton.BalanceCommand;
 // import frc.robot.subsystems.Arm;
 import frc.robot.subsystems.Conveyor;
 import frc.robot.subsystems.Intake;
+import edu.wpi.first.cameraserver.CameraServer;
 // import frc.robot.subsystems.Intake;
 // import frc.robot.subsystems.swerve.Swerve;
 import edu.wpi.first.util.sendable.Sendable;
@@ -34,19 +35,21 @@ public class RobotContainer {
     //     driveController::getLeftY,
     //     driveController::getRightX);
     
-    private final TeleopIntake intakeCommand = new TeleopIntake(
-        conveyorSubsystem,
-        intakeSubsystem,
-        () -> driveController.getRightBumper(), 
-        () -> driveController.getBButton()
-        );
+    // private final TeleopIntake intakeCommand = new TeleopIntake(
+    //     conveyorSubsystem,
+    //     intakeSubsystem,
+    //     () -> driveController.getRightBumper(), 
+    //     () -> driveController.getBButton()
+    //     );
 
     public RobotContainer () {
-        conveyorSubsystem.setDefaultCommand(intakeCommand);
+        CameraServer.startAutomaticCapture(0);
+        // conveyorSubsystem.setDefaultCommand(intakeCommand);
+
         // putConfigSendable("Swerve Subsystem", swerveSubsystem);
         // swerveSubsystem.setDefaultCommand(driveCommand);
     }
-    
+
     public static void putConfigSendable (String title, Sendable sendable) {
         // TODO: A temporary solution for adding sendables to the shuffleboard
         Shuffleboard.getTab("Config Board").add(title, sendable);
