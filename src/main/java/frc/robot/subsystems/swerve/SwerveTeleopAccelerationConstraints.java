@@ -1,6 +1,5 @@
 package frc.robot.subsystems.swerve;
 
-import claw.logs.CLAWLogger;
 import claw.math.Transform;
 import claw.math.Vector;
 import edu.wpi.first.math.Nat;
@@ -15,8 +14,6 @@ public class SwerveTeleopAccelerationConstraints {
     
     private double lastApplicationTime = 0;
     private Vector<N2> lastStrafeVelocity = new Vector<>(Nat.N2(), 0, 0);
-    
-    private static final CLAWLogger LOG = CLAWLogger.getLogger("accelconstraint");
     
     public SwerveTeleopAccelerationConstraints (double maxStrafeAcceleration, double maxTurnAcceleration) {
         this.maxStrafeAcceleration = maxStrafeAcceleration;
@@ -41,10 +38,6 @@ public class SwerveTeleopAccelerationConstraints {
         turningAccelerationLimiter.reset(0);
     }
     
-    private String getVectorString (Vector<N2> vector) {
-        return "<" + vector.components[0] + ", " + vector.components[1] + ">";
-    }
-    
     public ChassisSpeeds applyToSpeeds (ChassisSpeeds givenChassisSpeeds) {
         // Adjust strafe speeds
         Vector<N2> requestedStrafeVelocity = new Vector<>(Nat.N2(), givenChassisSpeeds.vxMetersPerSecond, givenChassisSpeeds.vyMetersPerSecond);
@@ -61,13 +54,7 @@ public class SwerveTeleopAccelerationConstraints {
             lastStrafeVelocity.components[1] + adjustedDeltaSpeeds.components[1]
         );
         
-        // lastStrafeVelocity.add(adjustedDeltaSpeeds);
         lastStrafeVelocity = adjustedStrafeVelocity;
-        
-        LOG.out("Req Delta Speeds = "+getVectorString(requestedDeltaSpeeds));
-        LOG.out("Adj Delta Speeds = "+getVectorString(adjustedDeltaSpeeds));
-        LOG.out("Req Strafe = "+getVectorString(requestedStrafeVelocity));
-        LOG.out("Adj Strafe = "+getVectorString(adjustedStrafeVelocity));
         
         // Apply a limiter to the turning
         double adjustedTurnSpeed = turningAccelerationLimiter.calculate(givenChassisSpeeds.omegaRadiansPerSecond);
