@@ -18,6 +18,7 @@ import frc.robot.subsystems.Conveyor;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Arm.ArmPosition;
 import frc.robot.subsystems.swerve.Swerve;
+import frc.robot.vision.Cameras;
 
 import java.util.function.Supplier;
 
@@ -75,7 +76,7 @@ public class RobotContainer {
     );
     
     public RobotContainer () {
-        CameraServer.startAutomaticCapture(0);
+        Cameras.getInstance();
         
         swerveSubsystem.setDefaultCommand(driveCommand);
         intakeSubsystem.setDefaultCommand(intakeCommand);
