@@ -21,6 +21,7 @@ import frc.robot.subsystems.swerve.Swerve;
 
 import java.util.function.Supplier;
 
+import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
@@ -74,6 +75,8 @@ public class RobotContainer {
     );
     
     public RobotContainer () {
+        CameraServer.startAutomaticCapture(0);
+        
         swerveSubsystem.setDefaultCommand(driveCommand);
         intakeSubsystem.setDefaultCommand(intakeCommand);
         conveyorSubsystem.setDefaultCommand(intakeCommand);
