@@ -1,9 +1,12 @@
 package frc.robot.commands.auton;
 
+import claw.math.InputTransform;
 import claw.math.Transform;
 import edu.wpi.first.math.geometry.Rotation2d;
 
 public class SwerveTurnCorrector {
+    
+    private static final double OFFSET_MIN = 1;
     
     private final Transform yawOffsetToCorrectionTurn =
         // Wrap degrees from -180 to +180
@@ -12,6 +15,8 @@ public class SwerveTurnCorrector {
             while (deg < -180) deg += 360;
             return deg;
         }))
+        
+        .then(offsetDeg -> (Math.abs(offsetDeg) > OFFSET_MIN ? offsetDeg : 0))
         
         .then(Transform.NEGATE)
         
