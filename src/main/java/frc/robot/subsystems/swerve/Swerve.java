@@ -195,7 +195,7 @@ public class Swerve extends SubsystemBase {
     public void moveFieldRelativeTeleop (ChassisSpeeds speeds) {
         ChassisSpeeds robotRelativeSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
             speeds,
-            getRobotRotation().minus(gyroTeleopYawOffset)
+            getTeleopDriveRobotRotation()
         );
         
         moveRobotRelative(robotRelativeSpeeds);
@@ -238,6 +238,10 @@ public class Swerve extends SubsystemBase {
         return gyro.getRotation2d();
     }
     
+    public Rotation2d getTeleopDriveRobotRotation () {
+        return getRobotRotation().minus(gyroTeleopYawOffset);
+    }
+    
     /**
      * Stop all swerve modules immediately.
      */
@@ -253,7 +257,7 @@ public class Swerve extends SubsystemBase {
         builder.addDoubleProperty("Absolute Yaw", () -> getRobotRotation().getDegrees(), null);
         builder.addDoubleProperty("Pitch", this::getRobotPitch, null);
         builder.addDoubleProperty("Teleop Yaw", () -> {
-            return getRobotRotation().minus(gyroTeleopYawOffset).getDegrees();
+            return getTeleopDriveRobotRotation().getDegrees();
         }, null);
     }
     

@@ -20,6 +20,7 @@ import frc.robot.subsystems.Arm.ArmPosition;
 import frc.robot.subsystems.swerve.Swerve;
 
 import java.util.function.Supplier;
+import java.util.Optional;
 
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.wpilibj.XboxController;
@@ -49,7 +50,11 @@ public class RobotContainer {
         driveController::getLeftY,
         driveController::getRightX,
         driveController::getLeftStickButton,
-        () -> driveController.getLeftTriggerAxis() > 0.8 && driveController.getRightTriggerAxis() > 0.8
+        () -> driveController.getLeftTriggerAxis() > 0.8 && driveController.getRightTriggerAxis() > 0.8,
+        () -> {
+            int povRead = driveController.getPOV();
+            return povRead == -1 ? Optional.empty() : Optional.of(Double.valueOf(povRead));
+        }
     );
     
     private final TeleopIntake intakeCommand = new TeleopIntake(
