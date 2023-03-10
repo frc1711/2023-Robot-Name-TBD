@@ -20,7 +20,7 @@ public class DriveCommand extends CommandBase {
         ROTATE_CURVE = InputCurve.THREE_HALVES_CURVE.withDeadband(0.14),
         STRAFE_CURVE = InputCurve.THREE_HALVES_CURVE.withDeadband(0.14);
     
-    private final SwerveTeleopAccelerationConstraints accelerationConstraints = new SwerveTeleopAccelerationConstraints(14, 32);
+    private final SwerveTeleopAccelerationConstraints accelerationConstraints = new SwerveTeleopAccelerationConstraints(14.7, 54);
     
     private final Swerve swerve;
     private final BooleanSupplier xModeInput, turboModeControl, resetGyro;
@@ -104,7 +104,7 @@ public class DriveCommand extends CommandBase {
             return turnCorrector.getCorrectionSpeed(swerve.getTeleopDriveRobotRotation(), Rotation2d.fromDegrees(-lockInRotation.get()));
         } else {
             // Otherwise, turn according to user input
-            return userSuppliedSpeed * 5;
+            return userSuppliedSpeed * 6.5;
         }
     }
     
