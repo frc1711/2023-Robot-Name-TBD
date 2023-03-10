@@ -38,14 +38,14 @@ public class Arm extends SubsystemBase {
     
     public static Arm getInstance () {
         if (armInstance == null) {
-            armInstance = new Arm(
-                new CANSparkMax(15, MotorType.kBrushless)
-            );
+            armInstance = new Arm();
         }
         return armInstance;
     }
     
-    private final CANSparkMax armMotor;
+    private final CANSparkMax
+        leftArmMotor = new CANSparkMax(15, MotorType.kBrushless),
+        rightArmMotor = new CANSparkMax(20, MotorType.kBrushless);
     
     private static final Setting<Double> ARM_ENCODER_ZERO = new Setting<>("ARM_ENCODER_CONFIG.ZERO", () -> 0.);
     private static final Setting<Double> ARM_ENCODER_NINETY = new Setting<>("ARM_ENCODER_CONFIG.NINETY", () -> 1.);
@@ -69,9 +69,9 @@ public class Arm extends SubsystemBase {
     
     private final SlewRateLimiter armSpeedLimiter = new SlewRateLimiter(12, -12, 0);
     
-    public Arm(CANSparkMax armMotor) {
-        this.armMotor = armMotor;
-        armMotor.setIdleMode(IdleMode.kBrake);
+    public Arm () {
+        leftArmMotor.setIdleMode(IdleMode.kBrake);
+        rightArmMotor.setIdleMode(IdleMode.kBrake);
         
         XboxController controller = new XboxController(2);
         Transform transform = InputTransform.getInputTransform(
@@ -93,7 +93,8 @@ public class Arm extends SubsystemBase {
                 }
                 
                 liveValues.setField("Arm position", getArmRotation().getDegrees() + " deg");
-                liveValues.setField("Arm current", armMotor.getOutputCurrent());
+                liveValues.setField("Left arm current", leftArmMotor.getOutputCurrent());
+                liveValues.setField("Right arm current", rightArmMotor.getOutputCurrent());
                 
                 liveValues.setField("Arm encoder duty cycle input", armEncoder.get().getRawDutyCycleValue());
                 
@@ -126,7 +127,9 @@ public class Arm extends SubsystemBase {
      * @param input
      */
     public void setArmSpeedOverride (double input) {
-        armMotor.setVoltage(armSpeedLimiter.calculate(input * 12));
+        double armVoltage = armSpeedLimiter.calculate(input * 12);
+        leftArmMotor.setVoltage(armVoltage);
+        rightArmMotor.setVoltage(-armVoltage);
     }
     
     private final Transform degreesOffsetToMovement =
@@ -155,9 +158,11 @@ public class Arm extends SubsystemBase {
     public void setArmSpeed (double input) {
         
         double armDegrees = getArmRotation().getDegrees();
+        
+        // TODO: Right arm motor current limiter separate from left arm motor
         boolean armCurrentLimitTripped = armCurrentStopSecondDebouncer.calculate(
             armCurrentStopFirstDebouncer.calculate(
-                armMotor.getOutputCurrent() > ARM_CURRENT_LIMIT
+                leftArmMotor.getOutputCurrent() > ARM_CURRENT_LIMIT
             )
         );
         
@@ -177,7 +182,8 @@ public class Arm extends SubsystemBase {
     @Override
     public void initSendable (SendableBuilder builder) {
         builder.addDoubleProperty("Arm position", () -> getArmRotation().getDegrees(), null);
-        builder.addDoubleProperty("Arm output current", () -> armMotor.getOutputCurrent(), null);
+        builder.addDoubleProperty("Left arm output current", () -> leftArmMotor.getOutputCurrent(), null);
+        builder.addDoubleProperty("Right arm output current", () -> rightArmMotor.getOutputCurrent(), null);
     }
     
 }
