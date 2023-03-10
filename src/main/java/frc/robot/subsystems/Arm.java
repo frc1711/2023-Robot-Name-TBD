@@ -127,16 +127,25 @@ public class Arm extends SubsystemBase {
      * @param input
      */
     public void setArmSpeedOverride (double input) {
-        double armVoltage = armSpeedLimiter.calculate(input * 12);
+        double armVoltage = armSpeedLimiter.calculate(Transform.clamp(-1, 1).apply(input) * 12);
+        
         leftArmMotor.setVoltage(armVoltage);
         rightArmMotor.setVoltage(-armVoltage);
     }
     
     private final Transform degreesOffsetToMovement =
-        ((Transform)(deg -> deg/25))
+        ((Transform)(deg -> Math.abs(deg) > 2 ? deg : 0))
+        .then(deg -> deg/25)
         .then(InputTransform.THREE_HALVES_CURVE)
         .then(Transform.clamp(-1, 1))
-        .then(v -> v*0.6)
+        .then(speed -> {
+            if (speed == 0) {
+                return 0;
+            } else if (Math.abs(speed) < 0.2) {
+                return speed * (0.2 / Math.abs(speed));
+            } else return speed;
+        })
+        .then(speed -> speed*0.6)
         .then(Transform.NEGATE);
     
     public double getSpeedToMoveToRotation (Rotation2d targetRotation) {

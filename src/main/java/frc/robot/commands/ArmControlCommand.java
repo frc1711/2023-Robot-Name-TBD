@@ -1,10 +1,12 @@
 package frc.robot.commands;
 
+import java.util.Optional;
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 
 import claw.math.InputTransform;
 import claw.math.Transform;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.subsystems.Arm;
 import frc.robot.subsystems.Claw;
@@ -16,7 +18,9 @@ public class ArmControlCommand extends CommandBase {
     private final Arm arm;
     private final Claw claw;
     private final DoubleSupplier armControl;
-    private final BooleanSupplier armToLow, armToMid, armToHigh, grabControl, releaseControl;
+    private final BooleanSupplier armToLow, armToMid, armToHigh, grabControl, releaseControl, stabilizeArmControl;
+    
+    private Optional<Rotation2d> armSetPosition = Optional.empty();
     
     private final Transform armSpeedTransform =
         InputTransform.getInputTransform(InputTransform.THREE_HALVES_CURVE, 0.1);
@@ -31,7 +35,9 @@ public class ArmControlCommand extends CommandBase {
         BooleanSupplier armToHigh,
         
         BooleanSupplier grabControl,
-        BooleanSupplier releaseControl
+        BooleanSupplier releaseControl,
+        
+        BooleanSupplier stablizeArmControl
     ) {
         this.arm = arm;
         this.claw = claw;
@@ -42,6 +48,8 @@ public class ArmControlCommand extends CommandBase {
         
         this.grabControl = grabControl;
         this.releaseControl = releaseControl;
+        
+        this.stabilizeArmControl = stablizeArmControl;
         addRequirements(arm, claw);
     }
     
@@ -65,24 +73,23 @@ public class ArmControlCommand extends CommandBase {
         }
         
         // Set arm movement
+        if (armControl.getAsDouble() != 0) {
+            armSetPosition = Optional.empty();
+        } else if (armToLow.getAsBoolean()) {
+            armSetPosition = Optional.of(ArmPosition.LOW.rotation);
+        } else if (armToMid.getAsBoolean()) {
+            armSetPosition = Optional.of(ArmPosition.MIDDLE.rotation);
+        } else if (armToHigh.getAsBoolean()) {
+            armSetPosition = Optional.of(ArmPosition.HIGH.rotation);
+        } else if (stabilizeArmControl.getAsBoolean()) {
+            armSetPosition = Optional.of(arm.getArmRotation());
+        }
+        
         double armInputSpeed = 0;
-        if (armToLow.getAsBoolean() || armToMid.getAsBoolean() || armToHigh.getAsBoolean()) {
-            
-            ArmPosition armSetPosition;
-            if (armToLow.getAsBoolean()) {
-                armSetPosition = ArmPosition.LOW;
-            } else if (armToMid.getAsBoolean()) {
-                armSetPosition = ArmPosition.MIDDLE;
-            } else {
-                armSetPosition = ArmPosition.HIGH;
-            }
-            
-            armInputSpeed = arm.getSpeedToMoveToRotation(armSetPosition.rotation);
-            
+        if (armSetPosition.isPresent()) {
+            armInputSpeed = arm.getSpeedToMoveToRotation(armSetPosition.get());
         } else {
-            
             armInputSpeed = armControl.getAsDouble();
-            
         }
         
         arm.setArmSpeed(armSpeedTransform.apply(armInputSpeed));
