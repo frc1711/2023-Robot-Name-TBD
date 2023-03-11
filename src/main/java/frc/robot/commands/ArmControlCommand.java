@@ -18,11 +18,11 @@ public class ArmControlCommand extends CommandBase {
     private final Arm arm;
     private final Claw claw;
     private final DoubleSupplier armControl;
-    private final BooleanSupplier armToLow, armToMid, armToHigh, grabControl, releaseControl, stabilizeArmControl;
+    private final BooleanSupplier armToLow, armToMid, armToHigh, grabControl, releaseControl;
     
     private Optional<Rotation2d> armSetPosition = Optional.empty();
     
-    private final Transform armSpeedTransform =
+    private final Transform armControlInputTransform =
         InputTransform.getInputTransform(InputTransform.THREE_HALVES_CURVE, 0.1);
     
     
@@ -35,9 +35,7 @@ public class ArmControlCommand extends CommandBase {
         BooleanSupplier armToHigh,
         
         BooleanSupplier grabControl,
-        BooleanSupplier releaseControl,
-        
-        BooleanSupplier stablizeArmControl
+        BooleanSupplier releaseControl
     ) {
         this.arm = arm;
         this.claw = claw;
@@ -49,7 +47,6 @@ public class ArmControlCommand extends CommandBase {
         this.grabControl = grabControl;
         this.releaseControl = releaseControl;
         
-        this.stabilizeArmControl = stablizeArmControl;
         addRequirements(arm, claw);
     }
     
@@ -72,8 +69,10 @@ public class ArmControlCommand extends CommandBase {
             claw.operateClaw(ClawMovement.NONE);
         }
         
+        double armControlInput = armControlInputTransform.apply(armControl.getAsDouble());
+        
         // Set arm movement
-        if (armControl.getAsDouble() != 0) {
+        if (armControlInput != 0) {
             armSetPosition = Optional.empty();
         } else if (armToLow.getAsBoolean()) {
             armSetPosition = Optional.of(ArmPosition.LOW.rotation);
@@ -81,18 +80,16 @@ public class ArmControlCommand extends CommandBase {
             armSetPosition = Optional.of(ArmPosition.MIDDLE.rotation);
         } else if (armToHigh.getAsBoolean()) {
             armSetPosition = Optional.of(ArmPosition.HIGH.rotation);
-        } else if (stabilizeArmControl.getAsBoolean() && armSetPosition.isEmpty()) {
-            armSetPosition = Optional.of(arm.getArmRotation());
         }
         
         double armInputSpeed = 0;
         if (armSetPosition.isPresent()) {
             armInputSpeed = arm.getSpeedToMoveToRotation(armSetPosition.get());
         } else {
-            armInputSpeed = armControl.getAsDouble();
+            armInputSpeed = armControlInput;
         }
         
-        arm.setArmSpeed(armSpeedTransform.apply(armInputSpeed));
+        arm.setArmSpeed(armInputSpeed);
         
     }
     

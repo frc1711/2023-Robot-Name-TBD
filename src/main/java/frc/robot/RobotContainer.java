@@ -70,9 +70,7 @@ public class RobotContainer {
         systemController::getYButton,
         
         systemController::getLeftBumper,
-        systemController::getRightBumper,
-        
-        () -> systemController.getRightTriggerAxis() > 0.6
+        systemController::getRightBumper
     );
     
     public RobotContainer () {

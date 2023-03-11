@@ -120,9 +120,9 @@ public class Arm extends SubsystemBase {
         // return Rotation2d.fromDegrees(xProp * 90);
     }
     
-    private final SlewRateLimiter armSpeedFilter = new SlewRateLimiter(1, -1, 0);
+    private final SlewRateLimiter armSpeedFilter = new SlewRateLimiter(1.5, -1.5, 0);
     private final SimpleMotorFeedforward armSpeedFeedforward = new SimpleMotorFeedforward(0.05, 0.95);
-    private static final double ARM_GRAVITY_ACCEL = 0.02;
+    private static final double ARM_GRAVITY_ACCEL = 0.025;
     
     private final Transform armSpeedToVoltage =
         Transform.clamp(-1, 1)
