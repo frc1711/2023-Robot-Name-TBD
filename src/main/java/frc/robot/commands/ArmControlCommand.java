@@ -81,7 +81,7 @@ public class ArmControlCommand extends CommandBase {
             armSetPosition = Optional.of(ArmPosition.MIDDLE.rotation);
         } else if (armToHigh.getAsBoolean()) {
             armSetPosition = Optional.of(ArmPosition.HIGH.rotation);
-        } else if (stabilizeArmControl.getAsBoolean()) {
+        } else if (stabilizeArmControl.getAsBoolean() && armSetPosition.isEmpty()) {
             armSetPosition = Optional.of(arm.getArmRotation());
         }
         
