@@ -18,7 +18,7 @@ public class ArmControlCommand extends CommandBase {
     private final Arm arm;
     private final Claw claw;
     private final DoubleSupplier armControl;
-    private final BooleanSupplier armToLow, armToMid, armToHigh, grabControl, releaseControl;
+    private final BooleanSupplier armToLow, armToMid, armToHigh, armToStow, grabControl, releaseControl;
     
     private Optional<Rotation2d> armSetPosition = Optional.empty();
     
@@ -42,9 +42,11 @@ public class ArmControlCommand extends CommandBase {
         Arm arm,
         Claw claw,
         DoubleSupplier armControl,
+        
         BooleanSupplier armToLow,
         BooleanSupplier armToMid,
         BooleanSupplier armToHigh,
+        BooleanSupplier armToStow,
         
         BooleanSupplier grabControl,
         BooleanSupplier releaseControl
@@ -55,6 +57,7 @@ public class ArmControlCommand extends CommandBase {
         this.armToLow = armToLow;
         this.armToMid = armToMid;
         this.armToHigh = armToHigh;
+        this.armToStow = armToStow;
         
         this.grabControl = grabControl;
         this.releaseControl = releaseControl;
@@ -96,6 +99,8 @@ public class ArmControlCommand extends CommandBase {
             armSetPosition = Optional.of(ArmPosition.MIDDLE.rotation);
         } else if (armToHigh.getAsBoolean()) {
             armSetPosition = Optional.of(ArmPosition.HIGH.rotation);
+        } else if (armToStow.getAsBoolean()) {
+            armSetPosition = Optional.of(ArmPosition.STOWED.rotation);
         }
         
         double armInputSpeed = 0;
@@ -112,6 +117,7 @@ public class ArmControlCommand extends CommandBase {
     @Override
     public void end (boolean interrupted) {
         arm.stop();
+        armSetPosition = Optional.empty();
     }
     
 }

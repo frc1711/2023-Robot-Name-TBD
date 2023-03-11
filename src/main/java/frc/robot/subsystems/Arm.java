@@ -30,7 +30,7 @@ import frc.robot.subsystems.DigitalInputEncoder.AnglePoint;
 public class Arm extends SubsystemBase {
     
     public static final double
-        ARM_MIN_ANGLE_DEGREES = -9.8,
+        ARM_MIN_ANGLE_DEGREES = -9,
         ARM_MAX_ANGLE_DEGREES = 99;
     
     private static final double ARM_CURRENT_LIMIT = 25;
