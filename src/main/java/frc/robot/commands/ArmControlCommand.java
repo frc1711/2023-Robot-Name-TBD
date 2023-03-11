@@ -22,9 +22,21 @@ public class ArmControlCommand extends CommandBase {
     
     private Optional<Rotation2d> armSetPosition = Optional.empty();
     
+    private static Transform getBoundSpeedLimitTransform (DoubleSupplier limitOffsetSupplier, double limitApplicationRange, boolean isPositiveLimit) {
+        Transform limitOffsetToSpeedProp =
+            ((Transform)Math::abs)
+            .then(offset -> offset / limitApplicationRange)
+            .then(Transform.clamp(0, 1));
+        
+        return (speed) -> ((speed > 0) == isPositiveLimit)
+            ? limitOffsetToSpeedProp.apply(limitOffsetSupplier.getAsDouble()) * speed
+            : speed;
+    }
+    
     private final Transform armControlInputTransform =
         InputTransform.getInputTransform(InputTransform.THREE_HALVES_CURVE, 0.1);
     
+    private final Transform boundSpeedLimitsTransform;
     
     public ArmControlCommand (
         Arm arm,
@@ -46,6 +58,10 @@ public class ArmControlCommand extends CommandBase {
         
         this.grabControl = grabControl;
         this.releaseControl = releaseControl;
+        
+        boundSpeedLimitsTransform =
+            getBoundSpeedLimitTransform(() -> arm.getArmRotation().getDegrees() - Arm.ARM_MAX_ANGLE_DEGREES, 30, true)
+            .then(getBoundSpeedLimitTransform(() -> arm.getArmRotation().getDegrees() - Arm.ARM_MIN_ANGLE_DEGREES, 40, false));
         
         addRequirements(arm, claw);
     }
@@ -86,7 +102,7 @@ public class ArmControlCommand extends CommandBase {
         if (armSetPosition.isPresent()) {
             armInputSpeed = arm.getSpeedToMoveToRotation(armSetPosition.get());
         } else {
-            armInputSpeed = armControlInput;
+            armInputSpeed = boundSpeedLimitsTransform.apply(armControlInput);
         }
         
         arm.setArmSpeed(armInputSpeed);
