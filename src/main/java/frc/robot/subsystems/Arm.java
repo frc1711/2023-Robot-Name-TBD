@@ -13,6 +13,7 @@ import claw.Setting;
 import claw.hardware.Device;
 import claw.math.InputTransform;
 import claw.math.Transform;
+import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
@@ -67,8 +68,6 @@ public class Arm extends SubsystemBase {
         armCurrentStopFirstDebouncer = new Debouncer(0.23, DebounceType.kRising),
         armCurrentStopSecondDebouncer = new Debouncer(1.4, DebounceType.kFalling);
     
-    private final SlewRateLimiter armSpeedLimiter = new SlewRateLimiter(12, -12, 0);
-    
     public Arm () {
         leftArmMotor.setIdleMode(IdleMode.kBrake);
         rightArmMotor.setIdleMode(IdleMode.kBrake);
@@ -121,13 +120,23 @@ public class Arm extends SubsystemBase {
         // return Rotation2d.fromDegrees(xProp * 90);
     }
     
+    private final SlewRateLimiter armSpeedFilter = new SlewRateLimiter(1, -1, 0);
+    private final SimpleMotorFeedforward armSpeedFeedforward = new SimpleMotorFeedforward(0.05, 0.95);
+    private static final double ARM_GRAVITY_ACCEL = 0.1;
+    
+    private final Transform armSpeedToVoltage =
+        Transform.clamp(-1, 1)
+        .then(armSpeedFilter::calculate)
+        .then(V -> armSpeedFeedforward.calculate(V) + ARM_GRAVITY_ACCEL * getArmRotation().getSin())
+        .then(speed -> speed*7);
+    
     /**
      * Move the arm forward at a given speed on the interval [-1, 1],
      * ignoring the position of the arm (overriding safety stops).
      * @param input
      */
     public void setArmSpeedOverride (double input) {
-        double armVoltage = armSpeedLimiter.calculate(Transform.clamp(-1, 1).apply(input) * 12);
+        double armVoltage = armSpeedToVoltage.apply(input);
         
         leftArmMotor.setVoltage(armVoltage);
         rightArmMotor.setVoltage(-armVoltage);
@@ -184,7 +193,7 @@ public class Arm extends SubsystemBase {
     }
     
     public void stop () {
-        armSpeedLimiter.reset(0);
+        armSpeedFilter.reset(0);
         setArmSpeedOverride(0);
     }
     
