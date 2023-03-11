@@ -147,13 +147,6 @@ public class Arm extends SubsystemBase {
         .then(deg -> deg/25)
         .then(InputTransform.THREE_HALVES_CURVE)
         .then(Transform.clamp(-1, 1))
-        .then(speed -> {
-            if (speed == 0) {
-                return 0;
-            } else if (Math.abs(speed) < 0.2) {
-                return speed * (0.2 / Math.abs(speed));
-            } else return speed;
-        })
         .then(speed -> speed*0.6)
         .then(Transform.NEGATE);
     
