@@ -122,7 +122,7 @@ public class Arm extends SubsystemBase {
     
     private final SlewRateLimiter armSpeedFilter = new SlewRateLimiter(1, -1, 0);
     private final SimpleMotorFeedforward armSpeedFeedforward = new SimpleMotorFeedforward(0.05, 0.95);
-    private static final double ARM_GRAVITY_ACCEL = 0.1;
+    private static final double ARM_GRAVITY_ACCEL = 0.02;
     
     private final Transform armSpeedToVoltage =
         Transform.clamp(-1, 1)
