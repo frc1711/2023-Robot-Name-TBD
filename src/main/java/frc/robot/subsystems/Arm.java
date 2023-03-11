@@ -13,6 +13,7 @@ import claw.Setting;
 import claw.hardware.Device;
 import claw.math.InputTransform;
 import claw.math.Transform;
+import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
@@ -28,8 +29,8 @@ import frc.robot.subsystems.DigitalInputEncoder.AnglePoint;
 
 public class Arm extends SubsystemBase {
     
-    private static final double
-        ARM_MIN_ANGLE_DEGREES = -9.8,
+    public static final double
+        ARM_MIN_ANGLE_DEGREES = -9,
         ARM_MAX_ANGLE_DEGREES = 99;
     
     private static final double ARM_CURRENT_LIMIT = 25;
@@ -38,14 +39,14 @@ public class Arm extends SubsystemBase {
     
     public static Arm getInstance () {
         if (armInstance == null) {
-            armInstance = new Arm(
-                new CANSparkMax(15, MotorType.kBrushless)
-            );
+            armInstance = new Arm();
         }
         return armInstance;
     }
     
-    private final CANSparkMax armMotor;
+    private final CANSparkMax
+        leftArmMotor = new CANSparkMax(15, MotorType.kBrushless),
+        rightArmMotor = new CANSparkMax(20, MotorType.kBrushless);
     
     private static final Setting<Double> ARM_ENCODER_ZERO = new Setting<>("ARM_ENCODER_CONFIG.ZERO", () -> 0.);
     private static final Setting<Double> ARM_ENCODER_NINETY = new Setting<>("ARM_ENCODER_CONFIG.NINETY", () -> 1.);
@@ -67,11 +68,9 @@ public class Arm extends SubsystemBase {
         armCurrentStopFirstDebouncer = new Debouncer(0.23, DebounceType.kRising),
         armCurrentStopSecondDebouncer = new Debouncer(1.4, DebounceType.kFalling);
     
-    private final SlewRateLimiter armSpeedLimiter = new SlewRateLimiter(12, -12, 0);
-    
-    public Arm(CANSparkMax armMotor) {
-        this.armMotor = armMotor;
-        armMotor.setIdleMode(IdleMode.kBrake);
+    public Arm () {
+        leftArmMotor.setIdleMode(IdleMode.kBrake);
+        rightArmMotor.setIdleMode(IdleMode.kBrake);
         
         XboxController controller = new XboxController(2);
         Transform transform = InputTransform.getInputTransform(
@@ -93,7 +92,8 @@ public class Arm extends SubsystemBase {
                 }
                 
                 liveValues.setField("Arm position", getArmRotation().getDegrees() + " deg");
-                liveValues.setField("Arm current", armMotor.getOutputCurrent());
+                liveValues.setField("Left arm current", leftArmMotor.getOutputCurrent());
+                liveValues.setField("Right arm current", rightArmMotor.getOutputCurrent());
                 
                 liveValues.setField("Arm encoder duty cycle input", armEncoder.get().getRawDutyCycleValue());
                 
@@ -120,20 +120,34 @@ public class Arm extends SubsystemBase {
         // return Rotation2d.fromDegrees(xProp * 90);
     }
     
+    private final SlewRateLimiter armSpeedFilter = new SlewRateLimiter(1.5, -1.5, 0);
+    private final SimpleMotorFeedforward armSpeedFeedforward = new SimpleMotorFeedforward(0.05, 0.95);
+    private static final double ARM_GRAVITY_ACCEL = 0.025;
+    
+    private final Transform armSpeedToVoltage =
+        Transform.clamp(-1, 1)
+        .then(armSpeedFilter::calculate)
+        .then(V -> armSpeedFeedforward.calculate(V) + ARM_GRAVITY_ACCEL * getArmRotation().getSin())
+        .then(speed -> speed*7);
+    
     /**
      * Move the arm forward at a given speed on the interval [-1, 1],
      * ignoring the position of the arm (overriding safety stops).
      * @param input
      */
     public void setArmSpeedOverride (double input) {
-        armMotor.setVoltage(armSpeedLimiter.calculate(input * 12));
+        double armVoltage = armSpeedToVoltage.apply(input);
+        
+        leftArmMotor.setVoltage(armVoltage);
+        rightArmMotor.setVoltage(-armVoltage);
     }
     
     private final Transform degreesOffsetToMovement =
-        ((Transform)(deg -> deg/25))
+        ((Transform)(deg -> Math.abs(deg) > 2 ? deg : 0))
+        .then(deg -> deg/25)
         .then(InputTransform.THREE_HALVES_CURVE)
         .then(Transform.clamp(-1, 1))
-        .then(v -> v*0.6)
+        .then(speed -> speed*0.6)
         .then(Transform.NEGATE);
     
     public double getSpeedToMoveToRotation (Rotation2d targetRotation) {
@@ -155,9 +169,11 @@ public class Arm extends SubsystemBase {
     public void setArmSpeed (double input) {
         
         double armDegrees = getArmRotation().getDegrees();
+        
+        // TODO: Right arm motor current limiter separate from left arm motor
         boolean armCurrentLimitTripped = armCurrentStopSecondDebouncer.calculate(
             armCurrentStopFirstDebouncer.calculate(
-                armMotor.getOutputCurrent() > ARM_CURRENT_LIMIT
+                leftArmMotor.getOutputCurrent() > ARM_CURRENT_LIMIT
             )
         );
         
@@ -170,14 +186,15 @@ public class Arm extends SubsystemBase {
     }
     
     public void stop () {
-        armSpeedLimiter.reset(0);
+        armSpeedFilter.reset(0);
         setArmSpeedOverride(0);
     }
     
     @Override
     public void initSendable (SendableBuilder builder) {
         builder.addDoubleProperty("Arm position", () -> getArmRotation().getDegrees(), null);
-        builder.addDoubleProperty("Arm output current", () -> armMotor.getOutputCurrent(), null);
+        builder.addDoubleProperty("Left arm output current", () -> leftArmMotor.getOutputCurrent(), null);
+        builder.addDoubleProperty("Right arm output current", () -> rightArmMotor.getOutputCurrent(), null);
     }
     
 }

@@ -73,6 +73,7 @@ public class RobotContainer {
         systemController::getAButton,
         systemController::getXButton,
         systemController::getYButton,
+        systemController::getBButton,
         
         systemController::getLeftBumper,
         systemController::getRightBumper
