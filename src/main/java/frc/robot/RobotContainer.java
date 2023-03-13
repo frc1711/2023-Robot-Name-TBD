@@ -9,7 +9,6 @@ import frc.robot.commands.DriveCommand;
 import frc.robot.commands.TeleopIntake;
 import frc.robot.commands.auton.BalanceCommandAuton;
 import frc.robot.commands.auton.PlaceAndBalanceAuton;
-import frc.robot.commands.auton.PlaceGamePieceTest;
 import frc.robot.commands.auton.PlaceItemAuton;
 import frc.robot.commands.auton.TaxiAuton;
 import frc.robot.subsystems.Arm;
@@ -99,11 +98,10 @@ public class RobotContainer {
     }
     
     private void configAutonChooser () {
-        autonChooser.addOption("Balance", () -> new BalanceCommandAuton(swerveSubsystem));
+        autonChooser.addOption("Balance", () -> new BalanceCommandAuton(swerveSubsystem, false));
         autonChooser.addOption("Taxi only", () -> new TaxiAuton(swerveSubsystem));
         autonChooser.addOption("Place Item", () -> new PlaceItemAuton());
-        autonChooser.addOption("Place and Balance", () -> new PlaceAndBalanceAuton());
-        autonChooser.addOption("TEST", () -> new PlaceGamePieceTest(armSubsystem, clawSubsystem, swerveSubsystem, ArmPosition.MIDDLE));
+        autonChooser.addOption("Place and Balance", () -> new PlaceAndBalanceAuton(swerveSubsystem, armSubsystem, clawSubsystem, ArmPosition.HIGH));
         putConfigSendable("AUTON SELECT", autonChooser);
     }
     

@@ -6,9 +6,9 @@ import frc.robot.subsystems.swerve.Swerve;
 
 public class BalanceCommandAuton extends SequentialCommandGroup {
     
-    public BalanceCommandAuton (Swerve swerve) {
+    public BalanceCommandAuton (Swerve swerve, boolean reverse) {
         super(
-            new DriveStraightCommand(swerve, true, 3.5, 1.2, true),
+            new DriveStraightCommand(swerve, !reverse, 3.5, 1.2, true),
             new BalanceSlowCommand(swerve),
             new RunCommand(swerve::xMode, swerve).withTimeout(2)
         );
