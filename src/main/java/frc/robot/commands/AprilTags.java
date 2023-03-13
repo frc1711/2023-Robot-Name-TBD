@@ -54,8 +54,7 @@ public class AprilTags extends CommandBase {
 
     if (targetRotationDegrees.isPresent()) {
       Rotation2d targetRotation = Rotation2d.fromDegrees(targetRotationDegrees.get());
-      Rotation2d robotRotation = Rotation2d.fromDegrees(swerveDrive.getRobotYaw());
-      turnSpeed = rotationPID.calculate(robotRotation, targetRotation);
+      turnSpeed = rotationPID.calculate(swerveDrive.getRobotRotation(), targetRotation);
     } else {
       turnSpeed = 0;
     }
@@ -76,7 +75,7 @@ public class AprilTags extends CommandBase {
     Optional<Double> targetDistance;
 
     if (vision.seesTarget()) {
-      Rotation2d tagAbsRotation = Rotation2d.fromDegrees(swerveDrive.getRobotYaw() + vision.getHorizontalOffset());
+      Rotation2d tagAbsRotation = swerveDrive.getRobotRotation().plus(Rotation2d.fromDegrees(vision.getHorizontalOffset()));
       targetRotation = rotationMeasurement.calculate(Optional.of(tagAbsRotation.getDegrees()));
       targetDistance = distanceMeasurement.calculate(Optional.of(vision.getDistance()));
     } else {

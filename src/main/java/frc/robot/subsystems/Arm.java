@@ -5,122 +5,179 @@
 package frc.robot.subsystems;
 
 import com.revrobotics.CANSparkMax;
-import com.revrobotics.RelativeEncoder;
+import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
+import claw.CLAWRobot;
+import claw.Setting;
+import claw.hardware.Device;
+import claw.math.InputTransform;
+import claw.math.Transform;
 import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.DutyCycle;
+import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.IDMap;
+import frc.robot.LiveCommandTester;
+import frc.robot.RobotContainer;
+import frc.robot.subsystems.DigitalInputEncoder.AnglePoint;
 
 public class Arm extends SubsystemBase {
     
-    /**
-     * An offset in the claw's relative encoder's reading from the homing spot (fully collapsed) to the maximum
-     * extension of the claw (fully released). This offset helps to prevent the claw from extending too far and
-     * breaking itself.
-     */
-    private static final double CLAW_MAX_REACH_OFFSET = 30;
-    
-    /**
-     * An offset in the claw's relative encoder's reading from the homing spot (fully collapsed) to the minimum
-     * extension of the claw (almost fully grabbing). This offset helps to prevent the claw from contracting too
-     * much and breaking itself.
-     */
-    private static final double CLAW_MIN_REACH_OFFSET = 2;
-    
-    // TODO: Add javadocs
-    private static final double GRAB_OUTPUT_CURRENT = 5;
-    
     private static final double
-        CLAW_MOVE_VOLTAGE = 0.3,
-        CLAW_HOMING_VOLTAGE = 0.1;
+        ARM_MIN_ANGLE_DEGREES = -9.8,
+        ARM_MAX_ANGLE_DEGREES = 99;
+    
+    private static final double ARM_CURRENT_LIMIT = 25;
     
     private static Arm armInstance;
     
     public static Arm getInstance () {
         if (armInstance == null) {
             armInstance = new Arm(
-                new CANSparkMax(IDMap.ARM, MotorType.kBrushless), 
-                new CANSparkMax(IDMap.CLAW, MotorType.kBrushless), 
-                new DigitalInput(IDMap.ARM_LIMIT_SWITCH)
+                new CANSparkMax(15, MotorType.kBrushless)
             );
         }
         return armInstance;
     }
     
-    private final CANSparkMax armMotor, clawMotor;
-    private final DigitalInput armLimitSwitch;
-    private final RelativeEncoder clawEncoder;
+    private final CANSparkMax armMotor;
     
-    private final Debouncer clawGrabDebouncer = new Debouncer(.2, DebounceType.kRising);
-    private double clawEncoderOffset = 0;
+    private static final Setting<Double> ARM_ENCODER_ZERO = new Setting<>("ARM_ENCODER_CONFIG.ZERO", () -> 0.);
+    private static final Setting<Double> ARM_ENCODER_NINETY = new Setting<>("ARM_ENCODER_CONFIG.NINETY", () -> 1.);
     
-    public Arm(CANSparkMax armMotor, CANSparkMax clawMotor, DigitalInput armLimitSwitch) {
+    private final Device<DigitalInputEncoder> armEncoder = new Device<>(
+        "DIO.ENCODER.ARM.ARM_ENCODER",
+        id -> {
+            return new DigitalInputEncoder(
+                new DutyCycle(new DigitalInput(2)),
+                false,
+                new AnglePoint(0, ARM_ENCODER_ZERO.get()),
+                new AnglePoint(90, ARM_ENCODER_NINETY.get())
+            );
+        },
+        DigitalInputEncoder::close
+    );
+    
+    private final Debouncer
+        armCurrentStopFirstDebouncer = new Debouncer(0.23, DebounceType.kRising),
+        armCurrentStopSecondDebouncer = new Debouncer(1.4, DebounceType.kFalling);
+    
+    private final SlewRateLimiter armSpeedLimiter = new SlewRateLimiter(12, -12, 0);
+    
+    public Arm(CANSparkMax armMotor) {
         this.armMotor = armMotor;
-        this.clawMotor = clawMotor;
-        this.armLimitSwitch = armLimitSwitch;
-        clawEncoder = clawMotor.getEncoder();
+        armMotor.setIdleMode(IdleMode.kBrake);
+        
+        XboxController controller = new XboxController(2);
+        Transform transform = InputTransform.getInputTransform(
+            InputTransform.SQUARE_CURVE,
+            0.2
+        );
+        
+        LiveCommandTester tester = new LiveCommandTester(
+            "Use controller 2. Left joystick to control the arm. " +
+            "\n\nHold both triggers and press X to configure the arm down position. " +
+            "Hold both triggers and press B to configure the arm up position.",
+            liveValues -> {
+                
+                if (controller.getLeftTriggerAxis() > 0.8 && controller.getRightTriggerAxis() > 0.8) {
+                    if (controller.getXButton())
+                        ARM_ENCODER_ZERO.set(armEncoder.get().getRawDutyCycleValue());
+                    else if (controller.getBButton())
+                        ARM_ENCODER_NINETY.set(armEncoder.get().getRawDutyCycleValue());
+                }
+                
+                liveValues.setField("Arm position", getArmRotation().getDegrees() + " deg");
+                liveValues.setField("Arm current", armMotor.getOutputCurrent());
+                
+                liveValues.setField("Arm encoder duty cycle input", armEncoder.get().getRawDutyCycleValue());
+                
+                if (controller.getYButton()) {
+                    double armVoltage = transform.apply(controller.getLeftY());
+                    setArmSpeedOverride(armVoltage);
+                } else stop();
+            },
+            this::stop,
+            this
+        );
+        
+        CLAWRobot.getExtensibleCommandInterpreter().addCommandProcessor(
+            tester.toCommandProcessor("armtest")
+        );
+        
+        RobotContainer.putConfigSendable("Arm Subsystem", this);
     }
     
-    public void setArmSpeed(double input) {
-        // TODO: Find a decent speed multiplier
-        if (armLimitSwitch.get())
-            stopArm();
-        else
-            armMotor.setVoltage(0);
+    public Rotation2d getArmRotation () {
+        return armEncoder.get().getRotation();
+        // // xProp is the proportion from 0 to 90 degrees
+        // double xProp = (armEncoder.get().getOutput() - ARM_ENCODER_ZERO.get()) / (ARM_ENCODER_NINETY.get() - ARM_ENCODER_ZERO.get());
+        // return Rotation2d.fromDegrees(xProp * 90);
     }
     
-    public void stopArm() {
-        armMotor.setVoltage(0);
+    /**
+     * Move the arm forward at a given speed on the interval [-1, 1],
+     * ignoring the position of the arm (overriding safety stops).
+     * @param input
+     */
+    public void setArmSpeedOverride (double input) {
+        armMotor.setVoltage(armSpeedLimiter.calculate(input * 12));
     }
     
-    public boolean runClawHomingSequence () {
-        if (clawMotor.getOutputCurrent() > GRAB_OUTPUT_CURRENT) {
-            clawEncoderOffset = clawEncoder.getPosition();
-            clawMotor.setVoltage(0);
-            return true;
-        } else {
-            clawMotor.setVoltage(CLAW_HOMING_VOLTAGE);
-            return false;
+    private final Transform degreesOffsetToMovement =
+        ((Transform)(deg -> deg/25))
+        .then(InputTransform.THREE_HALVES_CURVE)
+        .then(Transform.clamp(-1, 1))
+        .then(v -> v*0.6)
+        .then(Transform.NEGATE);
+    
+    public double getSpeedToMoveToRotation (Rotation2d targetRotation) {
+        return degreesOffsetToMovement.apply(getArmRotation().minus(targetRotation).getDegrees());
+    }
+    
+    public enum ArmPosition {
+        HIGH    (Rotation2d.fromDegrees(95)),
+        MIDDLE  (Rotation2d.fromDegrees(70)),
+        LOW     (Rotation2d.fromDegrees(35)),
+        STOWED  (Rotation2d.fromDegrees(-6.5));
+        
+        public final Rotation2d rotation;
+        private ArmPosition (Rotation2d rotation) {
+            this.rotation = rotation;
         }
     }
     
-    private boolean clawCanContract () {
-        return clawEncoder.getPosition() - clawEncoderOffset > CLAW_MIN_REACH_OFFSET;
+    public void setArmSpeed (double input) {
+        
+        double armDegrees = getArmRotation().getDegrees();
+        boolean armCurrentLimitTripped = armCurrentStopSecondDebouncer.calculate(
+            armCurrentStopFirstDebouncer.calculate(
+                armMotor.getOutputCurrent() > ARM_CURRENT_LIMIT
+            )
+        );
+        
+        if (!armCurrentLimitTripped) {
+            if ((input >= 0 && armDegrees < ARM_MAX_ANGLE_DEGREES) || (input < 0 && armDegrees > ARM_MIN_ANGLE_DEGREES)) {
+                setArmSpeedOverride(input);
+            } else stop();
+        } else stop();
+        
     }
     
-    private boolean clawCanExtend () {
-        return clawEncoder.getPosition() - clawEncoderOffset < CLAW_MAX_REACH_OFFSET;
+    public void stop () {
+        armSpeedLimiter.reset(0);
+        setArmSpeedOverride(0);
     }
     
-    public void operateClaw (ClawMovement move) {
-        boolean isHoldingObject = clawGrabDebouncer.calculate(clawMotor.getOutputCurrent() > GRAB_OUTPUT_CURRENT);
-        switch (move) {
-            case NONE:
-                clawMotor.stopMotor();
-                break;
-            case GRAB:
-                if (isHoldingObject || !clawCanContract()) clawMotor.stopMotor();
-                else clawMotor.setVoltage(CLAW_MOVE_VOLTAGE);
-                break;
-            case RELEASE:
-                if (!clawCanExtend()) clawMotor.stopMotor();
-                else clawMotor.setVoltage(-CLAW_MOVE_VOLTAGE);
-                break;
-        }
-    }
-    
-    public enum ClawMovement {
-        NONE,
-        GRAB,
-        RELEASE;
-    }
-    
-    public void stop() {
-        stopArm();
-        operateClaw(ClawMovement.NONE);
+    @Override
+    public void initSendable (SendableBuilder builder) {
+        builder.addDoubleProperty("Arm position", () -> getArmRotation().getDegrees(), null);
+        builder.addDoubleProperty("Arm output current", () -> armMotor.getOutputCurrent(), null);
     }
     
 }

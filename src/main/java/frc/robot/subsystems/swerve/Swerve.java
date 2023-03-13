@@ -4,17 +4,34 @@
 
 package frc.robot.subsystems.swerve;
 
+import java.util.List;
+
 import com.kauailabs.navx.frc.AHRS;
 
 import claw.CLAWRobot;
-import claw.logs.CLAWLogger;
+import edu.wpi.first.math.controller.HolonomicDriveController;
+import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.ProfiledPIDController;
+import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
+import edu.wpi.first.math.geometry.Pose2d;
+import claw.Setting;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.math.trajectory.Trajectory;
+import edu.wpi.first.math.trajectory.TrajectoryConfig;
+import edu.wpi.first.math.trajectory.TrajectoryGenerator;
+import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
+import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
 import frc.robot.IDMap;
 import frc.robot.LiveCommandTester;
 import frc.robot.RobotContainer;
@@ -30,27 +47,31 @@ public class Swerve extends SubsystemBase {
     }
     
     private static final Translation2d
-        FRONT_LEFT_MODULE_TRANSLATION = new Translation2d(0.5, 0.5),
-        FRONT_RIGHT_MODULE_TRANSLATION = new Translation2d(0.5, -0.5),
-        REAR_LEFT_MODULE_TRANSLATION = new Translation2d(-0.5, 0.5),
-        REAR_RIGHT_MODULE_TRANSLATION = new Translation2d(-0.5, -0.5);
+        FRONT_LEFT_MODULE_TRANSLATION = new Translation2d(0.404, 0.404),
+        FRONT_RIGHT_MODULE_TRANSLATION = new Translation2d(0.404, -0.404),
+        REAR_LEFT_MODULE_TRANSLATION = new Translation2d(-0.404, 0.404),
+        REAR_RIGHT_MODULE_TRANSLATION = new Translation2d(-0.404, -0.404);
     
     private final AHRS gyro = new AHRS();
     
     private final SwerveModule
         flModule = new SwerveModule(
+            new Setting<>("FL_MODULE_ENCODER_OFFSET", ()->0.),
             IDMap.FRONT_LEFT_MODULE_DRIVE_SPARK_ID,
             IDMap.FRONT_LEFT_MODULE_STEER_SPARK_ID,
             IDMap.FRONT_LEFT_MODULE_STEER_CANCODER_ID),
         frModule = new SwerveModule(
+            new Setting<>("FR_MODULE_ENCODER_OFFSET", ()->0.),
             IDMap.FRONT_RIGHT_MODULE_DRIVE_SPARK_ID,
             IDMap.FRONT_RIGHT_MODULE_STEER_SPARK_ID,
             IDMap.FRONT_RIGHT_MODULE_STEER_CANCODER_ID),
         rlModule = new SwerveModule(
+            new Setting<>("RL_MODULE_ENCODER_OFFSET", ()->0.),
             IDMap.REAR_LEFT_MODULE_DRIVE_SPARK_ID,
             IDMap.REAR_LEFT_MODULE_STEER_SPARK_ID,
             IDMap.REAR_LEFT_MODULE_STEER_CANCODER_ID),
         rrModule = new SwerveModule(
+            new Setting<>("RR_MODULE_ENCODER_OFFSET", ()->0.),
             IDMap.REAR_RIGHT_MODULE_DRIVE_SPARK_ID,
             IDMap.REAR_RIGHT_MODULE_STEER_SPARK_ID,
             IDMap.REAR_RIGHT_MODULE_STEER_CANCODER_ID);
@@ -62,10 +83,46 @@ public class Swerve extends SubsystemBase {
         REAR_RIGHT_MODULE_TRANSLATION
     );
     
-    public Swerve () {
+    private final SwerveDrivePoseEstimator poseEstimator = new SwerveDrivePoseEstimator(
+        kinematics,
+        gyro.getRotation2d(),
+        new SwerveModulePosition[]{
+            flModule.getPosition(),
+            frModule.getPosition(),
+            rlModule.getPosition(),
+            rrModule.getPosition(),
+        },
+        new Pose2d()
+    );
+    
+    private final Constraints robotConstraints = new Constraints(8, 8);
+    
+    private final PIDController
+        autonDriveXController = new PIDController(1, 0, 0),
+        autonDriveYController = new PIDController(1, 0, 0);
+    
+    private final ProfiledPIDController autonDriveThetaController = new ProfiledPIDController(
+        1,
+        0,
+        0,
+        robotConstraints
+    );
+    
+    private final Field2d sendableField = new Field2d();
+    
+    private Rotation2d gyroTeleopYawOffset = Rotation2d.fromDegrees(0);
+    private double gyroZeroPitchOffset = 0;
+    
+    
+    private double measurementOffset = 0;
+    
+    private Swerve () {
+        RobotContainer.putConfigSendable("Swerve Subsystem", this);
+        RobotContainer.putConfigSendable("Position", sendableField);
+        
         // Add configuration buttons to the shuffleboard
-        RobotContainer.putConfigCommand("Zero Swerve Modules", new InstantCommand(() -> this.zeroModules(), this).ignoringDisable(true), true);
-        RobotContainer.putConfigCommand("Zero Gyro", new InstantCommand(() -> this.zeroGyro(), this).ignoringDisable(true), true);
+        RobotContainer.putConfigCommand("Zero Swerve Modules", new InstantCommand(this::zeroModules, this).ignoringDisable(true), true);
+        RobotContainer.putConfigCommand("Teleop Zero Gyro", new InstantCommand(this::zeroGyroTeleop, this).ignoringDisable(true), true);
         
         // Add modules to the shuffleboard
         RobotContainer.putConfigSendable("fl-module", flModule);
@@ -73,33 +130,43 @@ public class Swerve extends SubsystemBase {
         RobotContainer.putConfigSendable("rl-module", rlModule);
         RobotContainer.putConfigSendable("rr-module", rrModule);
         
-        XboxController controller = new XboxController(0);
+        XboxController controller = new XboxController(3);
         
-        LiveCommandTester<XboxController> tester = new LiveCommandTester<>(
-            () -> controller,
-            c -> {
-                flModule.updateSteerMotor(c.getLeftX()*4);
-                flModule.updateDriveMotor(0);
+        LiveCommandTester tester = new LiveCommandTester(
+            "No special usage. Fully automatic.",
+            liveValues -> {
                 
-                frModule.updateSteerMotor(c.getLeftX()*4);
-                frModule.updateDriveMotor(0);
+                SwerveModuleState desiredState;
+                double measurement = 0;
+                // double measurement =
+                //     (flModule.getDisplacementMeters() +
+                //     frModule.getDisplacementMeters() +
+                //     rlModule.getDisplacementMeters() +
+                //     rrModule.getDisplacementMeters()) / 4;
                 
-                rlModule.updateSteerMotor(c.getLeftX()*4);
-                rlModule.updateDriveMotor(0);
+                if (controller.getAButton()) {
+                    desiredState = new SwerveModuleState(1, Rotation2d.fromDegrees(0));
+                    liveValues.setField("measurement", (measurement - measurementOffset) + " m");
+                } else {
+                    desiredState = new SwerveModuleState(0, Rotation2d.fromDegrees(0));
+                    measurementOffset = measurement;
+                }
                 
-                rrModule.updateSteerMotor(c.getLeftX()*4);
-                rrModule.updateDriveMotor(0);
+                flModule.update(desiredState);
+                frModule.update(desiredState);
+                rlModule.update(desiredState);
+                rrModule.update(desiredState);
                 
-                CLAWLogger.getLogger("test").out("hello there");
             },
             this::stop,
             this
         );
         
-        RobotContainer.putConfigCommand("test command", tester.new TestCommand(), false);
         CLAWRobot.getExtensibleCommandInterpreter().addCommandProcessor(
             tester.toCommandProcessor("swervetest")
         );
+        
+        gyroZeroPitchOffset = getRobotPitchRaw();
     }
     
     /**
@@ -109,20 +176,28 @@ public class Swerve extends SubsystemBase {
      */
     public void moveRobotRelative (ChassisSpeeds speeds) {
         SwerveModuleState[] moduleStates = kinematics.toSwerveModuleStates(speeds);
-        SwerveDriveKinematics.desaturateWheelSpeeds(moduleStates, SwerveModule.getMaxDriveSpeedMetersPerSec());
-        flModule.update(moduleStates[0]);
-        frModule.update(moduleStates[1]);
-        rlModule.update(moduleStates[2]);
-        rrModule.update(moduleStates[3]);
+        SwerveModule.desaturateWheelSpeeds(moduleStates);
+        setModuleStates(moduleStates);
+    }
+    
+    private void setModuleStates (SwerveModuleState[] states) {
+        flModule.update(states[0]);
+        frModule.update(states[1]);
+        rlModule.update(states[2]);
+        rrModule.update(states[3]);
     }
     
     /**
      * Update all the swerve drive motor controllers to try to match the given field-relative {@link ChassisSpeeds}.
-     * This method must be called periodically.
+     * This method must be called periodically. The movement will be relative to the last zeroGyroTeleop reset.
      * @param speeds The {@code ChassisSpeeds} to try to match with the swerve drive.
      */
-    public void moveFieldRelative (ChassisSpeeds speeds) {
-        ChassisSpeeds robotRelativeSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(speeds, gyro.getRotation2d());
+    public void moveFieldRelativeTeleop (ChassisSpeeds speeds) {
+        ChassisSpeeds robotRelativeSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
+            speeds,
+            getRobotRotation().minus(gyroTeleopYawOffset)
+        );
+        
         moveRobotRelative(robotRelativeSpeeds);
     }
     
@@ -147,18 +222,20 @@ public class Swerve extends SubsystemBase {
      * Zeroes the gyro's yaw so that field-relative robot driving will see the current robot position as the
      * "starting orientation".
      */
-    public void zeroGyro () {
-        gyro.zeroYaw();
+    public void zeroGyroTeleop () {
+        gyroTeleopYawOffset = getRobotRotation();
     }
     
     public double getRobotPitch () {
-        // The gyro is oriented 90 degrees to the right, so to get the robot's pitch you actually need the gyro's roll
+        return getRobotPitchRaw() - gyroZeroPitchOffset;
+    }
+    
+    private double getRobotPitchRaw () {
         return gyro.getRoll();
     }
     
-    public double getRobotYaw () {
-        // The gyro is oriented 90 degrees to the right, so to get the robot's pitch you actually need the gyro's roll
-        return gyro.getYaw();
+    public Rotation2d getRobotRotation () {
+        return gyro.getRotation2d();
     }
     
     /**
@@ -169,6 +246,52 @@ public class Swerve extends SubsystemBase {
         frModule.stop();
         rlModule.stop();
         rrModule.stop();
+    }
+    
+    @Override
+    public void initSendable (SendableBuilder builder) {
+        builder.addDoubleProperty("Absolute Yaw", () -> getRobotRotation().getDegrees(), null);
+        builder.addDoubleProperty("Pitch", this::getRobotPitch, null);
+        builder.addDoubleProperty("Teleop Yaw", () -> {
+            return getRobotRotation().minus(gyroTeleopYawOffset).getDegrees();
+        }, null);
+    }
+    
+    public Command getControllerCommand (Pose2d... waypoints) {
+        Trajectory trajectory = TrajectoryGenerator.generateTrajectory(List.of(waypoints), new TrajectoryConfig(4, 4));
+        
+        return new SwerveControllerCommand(
+            trajectory,
+            poseEstimator::getEstimatedPosition,
+            kinematics,
+            new HolonomicDriveController(
+                autonDriveXController,
+                autonDriveYController,
+                autonDriveThetaController
+            ),
+            this::setModuleStates,
+            this
+        );
+    }
+    
+    @Override
+    public void periodic () {
+        poseEstimator.update(gyro.getRotation2d(), new SwerveModulePosition[]{
+            flModule.getPosition(),
+            frModule.getPosition(),
+            rlModule.getPosition(),
+            rrModule.getPosition(),
+        });
+        
+        // Optional<AprilTagData> tag = Limelight.getAprilTag();
+        // if (tag.isPresent()) {
+        //     // TODO: make more robust to bad vision data, figure out why we're not seeing the apriltag in the limelight NT API
+        //     AprilTagData data = tag.get();
+        //     double time = Timer.getFPGATimestamp();
+        //     poseEstimator.addVisionMeasurement(data.robotPose().toPose2d(), time);
+        // }
+        
+        sendableField.setRobotPose(poseEstimator.getEstimatedPosition());
     }
     
 }
