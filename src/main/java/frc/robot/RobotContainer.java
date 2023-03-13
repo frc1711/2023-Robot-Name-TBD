@@ -9,7 +9,6 @@ import frc.robot.commands.DriveCommand;
 import frc.robot.commands.TeleopIntake;
 import frc.robot.commands.auton.BalanceCommandAuton;
 import frc.robot.commands.auton.PlaceAndBalanceAuton;
-import frc.robot.commands.auton.PlaceGamePieceTest;
 import frc.robot.commands.auton.PlaceItemAuton;
 import frc.robot.commands.auton.TaxiAuton;
 import frc.robot.subsystems.Arm;
@@ -28,6 +27,7 @@ import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandBase;
+import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 
 public class RobotContainer {
     
@@ -98,11 +98,10 @@ public class RobotContainer {
     }
     
     private void configAutonChooser () {
-        autonChooser.addOption("Balance", () -> new BalanceCommandAuton(swerveSubsystem));
+        autonChooser.addOption("Balance", () -> new BalanceCommandAuton(swerveSubsystem, false));
         autonChooser.addOption("Taxi only", () -> new TaxiAuton(swerveSubsystem));
         autonChooser.addOption("Place Item", () -> new PlaceItemAuton());
-        autonChooser.addOption("Place and Balance", () -> new PlaceAndBalanceAuton());
-        autonChooser.addOption("TEST", () -> new PlaceGamePieceTest(armSubsystem, clawSubsystem, swerveSubsystem, ArmPosition.MIDDLE));
+        autonChooser.addOption("Place and Balance", () -> new PlaceAndBalanceAuton(swerveSubsystem, armSubsystem, clawSubsystem, ArmPosition.HIGH));
         putConfigSendable("AUTON SELECT", autonChooser);
     }
     
@@ -118,8 +117,8 @@ public class RobotContainer {
     
     public Command getAutonomousCommand () {
         Supplier<Command> selectedAuton = autonChooser.getSelected();
-        if (selectedAuton == null) selectedAuton = () -> null;
-        return selectedAuton.get();
+        if (selectedAuton == null) return null;
+        return selectedAuton.get().withInterruptBehavior(InterruptionBehavior.kCancelIncoming);
         // return new PlaceGamePieceTest(armSubsystem, clawSubsystem, swerveSubsystem, ArmPosition.MIDDLE);
         // return swerveSubsystem.getControllerCommand(new Trajectory(Arrays.asList(
         //     new State(0, 0, 1, new Pose2d(), 0),
