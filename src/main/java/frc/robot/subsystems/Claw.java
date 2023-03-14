@@ -48,12 +48,6 @@ public class Claw extends SubsystemBase {
         20,     1
     ).then(Transform.clamp(0, 1));
     
-    private final Transform clawPositionToReleaseSpeed = new LinearInterpolator(
-        0,      1,
-        0.5,    0.7,
-        1,      0
-    ).then(Transform.clamp(0, 1));
-    
     private final SlewRateLimiter clawVoltageFilter = new SlewRateLimiter(120, -120, 0);
     
     private double clawEncoderOffset = 0;
@@ -131,11 +125,11 @@ public class Claw extends SubsystemBase {
     }
     
     public boolean isFullyReleased (Rotation2d armRotation) {
-        return getClawOffsetFromUpperLimit(armRotation) > -0.04;
+        return getClawOffsetFromUpperLimit(armRotation) > 0;
     }
     
     private boolean isBeyondReleaseLimit (Rotation2d armRotation) {
-        return getClawOffsetFromUpperLimit(armRotation) > 0;
+        return getClawOffsetFromUpperLimit(armRotation) > 0.1;
     }
     
     public boolean isFullyGrabbing () {
@@ -177,7 +171,7 @@ public class Claw extends SubsystemBase {
                 if (isFullyReleased(armRotation))
                     setClawVoltageSmooth(0);
                 else
-                    setClawVoltageSmooth(-CLAW_MOVE_VOLTAGE * clawPositionToReleaseSpeed.apply(getClawPosition()));
+                    setClawVoltageSmooth(-CLAW_MOVE_VOLTAGE);
                 isHoldingObject = false;
                 break;
         }
