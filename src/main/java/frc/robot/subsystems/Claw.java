@@ -8,6 +8,7 @@ import claw.CLAWRobot;
 import claw.rct.commands.CommandProcessor;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -95,12 +96,16 @@ public class Claw extends SubsystemBase {
         return getClawEncoder() - clawEncoderOffset > 0;
     }
     
-    private boolean isClawUnderUpperLimit () {
-        return getClawEncoder() - clawEncoderOffset < CLAW_MAX_REACH_OFFSET;
+    private double getClawOffsetFromUpperLimit () {
+        return getClawEncoder() - clawEncoderOffset - CLAW_MAX_REACH_OFFSET;
     }
     
     public boolean isFullyReleased () {
-        return !isClawUnderUpperLimit();
+        return getClawOffsetFromUpperLimit() > -2;
+    }
+    
+    private boolean isBeyondReleaseLimit () {
+        return getClawOffsetFromUpperLimit() > 0;
     }
     
     public boolean isFullyGrabbing () {
@@ -108,6 +113,13 @@ public class Claw extends SubsystemBase {
     }
     
     public void operateClaw (ClawMovement move) {
+        
+        // Bring claw within size limits before doing anything else when operating the claw
+        if (isBeyondReleaseLimit()) {
+            clawMotor.setVoltage(CLAW_MOVE_VOLTAGE);
+            return;
+        }
+        
         switch (move) {
             case NONE:
                 clawMotor.stopMotor();
