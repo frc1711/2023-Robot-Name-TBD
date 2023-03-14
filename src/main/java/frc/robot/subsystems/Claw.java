@@ -48,6 +48,8 @@ public class Claw extends SubsystemBase {
         20,     1
     ).then(Transform.clamp(0, 1));
     
+    private final SlewRateLimiter clawVoltageFilter = new SlewRateLimiter(120, -120, 0);
+    
     private double clawEncoderOffset = 0;
     private boolean hasBeenHomed = false;
     private boolean isHoldingObject = false;
@@ -81,10 +83,10 @@ public class Claw extends SubsystemBase {
     public void runClawHomingSequence () {
         if (homingSequenceDebouncer.calculate(clawMotor.getOutputCurrent() > HOME_OUTPUT_CURRENT)) {
             clawEncoderOffset = getClawEncoder();
-            clawMotor.setVoltage(0);
+            setClawVoltageSmooth(0);
             hasBeenHomed = true;
         } else {
-            clawMotor.setVoltage(CLAW_HOMING_VOLTAGE);
+            setClawVoltageSmooth(CLAW_HOMING_VOLTAGE);
         }
     }
     
@@ -115,7 +117,7 @@ public class Claw extends SubsystemBase {
     }
     
     public boolean isFullyReleased (Rotation2d armRotation) {
-        return getClawOffsetFromUpperLimit(armRotation) > -2;
+        return getClawOffsetFromUpperLimit(armRotation) > -3.5;
     }
     
     private boolean isBeyondReleaseLimit (Rotation2d armRotation) {
@@ -126,17 +128,22 @@ public class Claw extends SubsystemBase {
         return isHoldingObject || !isClawOverLowerLimit();
     }
     
+    private void setClawVoltageSmooth (double desiredVoltage) {
+        clawMotor.setVoltage(clawVoltageFilter.calculate(desiredVoltage));
+    }
+    
     public void operateClaw (ClawMovement move, Rotation2d armRotation) {
         
         // Bring claw within size limits before doing anything else when operating the claw
         if (isBeyondReleaseLimit(armRotation)) {
-            clawMotor.setVoltage(CLAW_MOVE_VOLTAGE);
+            setClawVoltageSmooth(CLAW_MOVE_VOLTAGE);
             return;
         }
         
         switch (move) {
             case NONE:
-                clawMotor.stopMotor();
+                clawMotor.setVoltage(0);
+                clawVoltageFilter.reset(0);
                 break;
             case GRAB:
                 
@@ -146,17 +153,17 @@ public class Claw extends SubsystemBase {
                 // entirely once it first detects that it's grabbing an object with isHoldingObject
                 
                 if (isFullyGrabbing()) {
-                    clawMotor.stopMotor();
+                    setClawVoltageSmooth(0);
                 } else {
-                    clawMotor.setVoltage(CLAW_MOVE_VOLTAGE);
+                    setClawVoltageSmooth(CLAW_MOVE_VOLTAGE);
                     isHoldingObject = clawGrabDebouncer.calculate(clawMotor.getOutputCurrent() > GRAB_OUTPUT_CURRENT);
                 }
                 break;
             case RELEASE:
                 if (isFullyReleased(armRotation))
-                    clawMotor.stopMotor();
+                    setClawVoltageSmooth(0);
                 else
-                    clawMotor.setVoltage(-CLAW_MOVE_VOLTAGE);
+                    setClawVoltageSmooth(-CLAW_MOVE_VOLTAGE);
                 isHoldingObject = false;
                 break;
         }
