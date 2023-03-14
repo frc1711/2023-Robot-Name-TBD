@@ -9,6 +9,7 @@ import frc.robot.commands.DriveCommand;
 import frc.robot.commands.TeleopIntake;
 import frc.robot.commands.auton.BalanceCommandAuton;
 import frc.robot.commands.auton.PlaceAndBalanceAuton;
+import frc.robot.commands.auton.PlaceAndTaxi;
 import frc.robot.commands.auton.TaxiAuton;
 import frc.robot.subsystems.Arm;
 import frc.robot.subsystems.Claw;
@@ -21,6 +22,7 @@ import java.util.function.Supplier;
 import java.util.Optional;
 
 import edu.wpi.first.util.sendable.Sendable;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -100,6 +102,7 @@ public class RobotContainer {
         autonChooser.addOption("Balance", () -> new BalanceCommandAuton(swerveSubsystem, false));
         autonChooser.addOption("Taxi only", () -> new TaxiAuton(swerveSubsystem));
         autonChooser.addOption("Place and Balance", () -> new PlaceAndBalanceAuton(swerveSubsystem, armSubsystem, clawSubsystem, ArmPosition.HIGH));
+        autonChooser.addOption("Place and Taxi (Octopus)", () -> new PlaceAndTaxi(swerveSubsystem, armSubsystem, clawSubsystem, ArmPosition.HIGH, DriverStation.getAlliance()));
         putConfigSendable("AUTON SELECT", autonChooser);
     }
     
