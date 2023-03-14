@@ -33,7 +33,7 @@ public class PlaceGamePieceSimple extends SequentialCommandGroup {
             new WaitCommand(0.2),
             
             // Drive away from grid
-            new DriveStraightCommand(swerve, false, 1, 0.8, true),
+            new DriveStraightCommand(swerve, false, 1.1, 0.8, true),
             
             // Move the arm back in
             new MoveArmCommand(arm, claw, ArmPosition.STOWED, ClawMovement.GRAB)
