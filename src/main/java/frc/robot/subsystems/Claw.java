@@ -4,7 +4,8 @@ import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
-import claw.Setting;
+import claw.CLAWRobot;
+import claw.rct.commands.CommandProcessor;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.util.sendable.SendableBuilder;
@@ -19,7 +20,7 @@ public class Claw extends SubsystemBase {
      * extension of the claw (fully released). This offset helps to prevent the claw from extending too far and
      * breaking itself.
      */
-    private static final Setting<Double> CLAW_MAX_REACH_OFFSET = new Setting<>("CLAW_MAX_REACH_OFFSET", () -> 24.);
+    private static final double CLAW_MAX_REACH_OFFSET = 39.78;
     
     // TODO: Add javadocs
     private static final double
@@ -41,16 +42,26 @@ public class Claw extends SubsystemBase {
     public Claw () {
         clawMotor.setIdleMode(IdleMode.kBrake);
         
-        // XboxController controller = new XboxController(3);
-        // new LiveCommandTester(
-        //     "Use controller 3. A and B will move the claw in opposite directions. There are no protections " +
-        //     "on the claw's movement.",
-        //     values -> {
-        //         if (contr)
-        //     },
-        //     () -> operateClaw(ClawMovement.NONE),
-        //     this
-        // );
+        XboxController controller = new XboxController(3);
+        CommandProcessor processor = new LiveCommandTester(
+            "Use controller 3. A and B will move the claw in opposite directions. A is typically grab and B is typically release, " +
+            "but it depends on the initial orientation of the claw. There are no protections on the claw's movement.",
+            values -> {
+                values.setField("Encoder reading", getClawEncoder() - clawEncoderOffset);
+                
+                if (controller.getAButton()) {
+                    clawMotor.setVoltage(CLAW_MOVE_VOLTAGE);
+                } else if (controller.getBButton()) {
+                    clawMotor.setVoltage(-CLAW_MOVE_VOLTAGE);
+                } else {
+                    clawMotor.stopMotor();
+                }
+            },
+            () -> operateClaw(ClawMovement.NONE),
+            this
+        ).toCommandProcessor("clawtest");
+        
+        CLAWRobot.getExtensibleCommandInterpreter().addCommandProcessor(processor);
         
     }
     
@@ -65,7 +76,7 @@ public class Claw extends SubsystemBase {
     }
     
     public void homeAsFullyOpen () {
-        clawEncoderOffset = getClawEncoder() - CLAW_MAX_REACH_OFFSET.get();
+        clawEncoderOffset = getClawEncoder() - CLAW_MAX_REACH_OFFSET;
         hasBeenHomed = true;
     }
     
@@ -85,7 +96,7 @@ public class Claw extends SubsystemBase {
     }
     
     private boolean isClawUnderUpperLimit () {
-        return getClawEncoder() - clawEncoderOffset < CLAW_MAX_REACH_OFFSET.get();
+        return getClawEncoder() - clawEncoderOffset < CLAW_MAX_REACH_OFFSET;
     }
     
     public boolean isFullyReleased () {
