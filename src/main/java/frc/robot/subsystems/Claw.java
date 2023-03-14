@@ -5,8 +5,11 @@ import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
 import claw.CLAWRobot;
+import claw.math.LinearInterpolator;
+import claw.math.Transform;
 import claw.rct.commands.CommandProcessor;
 import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.util.sendable.SendableBuilder;
@@ -22,8 +25,7 @@ public class Claw extends SubsystemBase {
      * breaking itself.
      */
     private static final double
-        CLAW_MAX_REACH_OFFSET = 39.78,
-        PAN_PASSTHROUGH_RELEASE_PROPORTION = 0.9;
+        CLAW_MAX_REACH_OFFSET = 39.78;
     
     // TODO: Add javadocs
     private static final double
@@ -37,6 +39,14 @@ public class Claw extends SubsystemBase {
     private final CANSparkMax clawMotor = new CANSparkMax(14, MotorType.kBrushless);
     private final Debouncer clawGrabDebouncer = new Debouncer(.3, DebounceType.kRising);
     private final Debouncer homingSequenceDebouncer = new Debouncer(0.1, DebounceType.kRising);
+    private final Transform armRotationToMaxReleaseProportion = new LinearInterpolator(
+    // Arm rotation
+    //        Max release (as a proportion)
+        -3.5,   1,
+        -1,     0.55,
+        11,     0.55,
+        20,     1
+    ).then(Transform.clamp(0, 1));
     
     private double clawEncoderOffset = 0;
     private boolean hasBeenHomed = false;
@@ -99,10 +109,9 @@ public class Claw extends SubsystemBase {
     }
     
     private double getClawOffsetFromUpperLimit (Rotation2d armRotation) {
+        double maxReleaseProp = armRotationToMaxReleaseProportion.apply(armRotation.getDegrees());
         
-        // -1 to 11 degrees it must be limited
-        
-        return getClawEncoder() - clawEncoderOffset - CLAW_MAX_REACH_OFFSET;
+        return getClawEncoder() - clawEncoderOffset - CLAW_MAX_REACH_OFFSET * maxReleaseProp;
     }
     
     public boolean isFullyReleased (Rotation2d armRotation) {
