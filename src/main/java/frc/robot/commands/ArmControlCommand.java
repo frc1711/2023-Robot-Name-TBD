@@ -4,7 +4,7 @@ import java.util.Optional;
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 
-import claw.math.InputTransform;
+import claw.math.input.InputTransform;
 import claw.math.Transform;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.CommandBase;
@@ -34,7 +34,7 @@ public class ArmControlCommand extends CommandBase {
     }
     
     private final Transform armControlInputTransform =
-        InputTransform.getInputTransform(InputTransform.THREE_HALVES_CURVE, 0.1);
+        new InputTransform(InputTransform.THREE_HALVES_CURVE, 0.1);
     
     private final Transform boundSpeedLimitsTransform;
     

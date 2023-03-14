@@ -1,6 +1,6 @@
 package frc.robot.commands.auton;
 
-import claw.math.InputTransform;
+import claw.math.input.InputTransform;
 import claw.math.Transform;
 import edu.wpi.first.math.geometry.Rotation2d;
 
