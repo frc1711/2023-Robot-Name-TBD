@@ -48,6 +48,12 @@ public class Claw extends SubsystemBase {
         20,     1
     ).then(Transform.clamp(0, 1));
     
+    private final Transform clawReleasePropToSpeed = new LinearInterpolator(
+        0,      1,
+        0.7,    1,
+        1,      0
+    );
+    
     private final SlewRateLimiter clawVoltageFilter = new SlewRateLimiter(120, -120, 0);
     
     private double clawEncoderOffset = 0;
@@ -62,7 +68,8 @@ public class Claw extends SubsystemBase {
             "Use controller 3. A and B will move the claw in opposite directions. A is typically grab and B is typically release, " +
             "but it depends on the initial orientation of the claw. There are no protections on the claw's movement.",
             values -> {
-                values.setField("Encoder reading", getClawEncoder() - clawEncoderOffset);
+                values.setField("Raw encoder reading", getRawClawEncoder());
+                values.setField("Claw position", getClawPosition());
                 
                 if (controller.getAButton()) {
                     clawMotor.setVoltage(CLAW_MOVE_VOLTAGE);
@@ -82,7 +89,7 @@ public class Claw extends SubsystemBase {
     
     public void runClawHomingSequence () {
         if (homingSequenceDebouncer.calculate(clawMotor.getOutputCurrent() > HOME_OUTPUT_CURRENT)) {
-            clawEncoderOffset = getClawEncoder();
+            clawEncoderOffset = getRawClawEncoder();
             setClawVoltageSmooth(0);
             hasBeenHomed = true;
         } else {
@@ -91,7 +98,7 @@ public class Claw extends SubsystemBase {
     }
     
     public void homeAsFullyOpen () {
-        clawEncoderOffset = getClawEncoder() - CLAW_MAX_REACH_OFFSET;
+        clawEncoderOffset = getRawClawEncoder() - CLAW_MAX_REACH_OFFSET;
         hasBeenHomed = true;
     }
     
@@ -102,22 +109,29 @@ public class Claw extends SubsystemBase {
     /**
      * A greater encoder value indicates that the claw is more open
      */
-    private double getClawEncoder () {
+    private double getRawClawEncoder () {
         return -clawMotor.getEncoder().getPosition();
     }
     
+    /**
+     * Claw position normalized to [0, 1]. 0 is fully closed, 1 is released
+     */
+    private double getClawPosition () {
+        return (getRawClawEncoder() - clawEncoderOffset) / CLAW_MAX_REACH_OFFSET;
+    }
+    
     private boolean isClawOverLowerLimit () {
-        return getClawEncoder() - clawEncoderOffset > 0;
+        return getClawPosition() > 0;
     }
     
     private double getClawOffsetFromUpperLimit (Rotation2d armRotation) {
         double maxReleaseProp = armRotationToMaxReleaseProportion.apply(armRotation.getDegrees());
         
-        return getClawEncoder() - clawEncoderOffset - CLAW_MAX_REACH_OFFSET * maxReleaseProp;
+        return getClawPosition() - maxReleaseProp;
     }
     
     public boolean isFullyReleased (Rotation2d armRotation) {
-        return getClawOffsetFromUpperLimit(armRotation) > -3.5;
+        return getClawOffsetFromUpperLimit(armRotation) > -0.1;
     }
     
     private boolean isBeyondReleaseLimit (Rotation2d armRotation) {
