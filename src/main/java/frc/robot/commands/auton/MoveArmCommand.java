@@ -29,19 +29,19 @@ public class MoveArmCommand extends CommandBase {
     @Override
     public void initialize () {
         arm.stop();
-        claw.operateClaw(ClawMovement.NONE);
+        claw.operateClaw(ClawMovement.NONE, arm.getArmRotation());
     }
     
     @Override
     public void execute () {
         arm.setArmSpeed(arm.getSpeedToMoveToRotation(targetRotation));
-        claw.operateClaw(clawMovement);
+        claw.operateClaw(clawMovement, arm.getArmRotation());
     }
     
     @Override
     public void end (boolean interrupted) {
         arm.stop();
-        claw.operateClaw(ClawMovement.NONE);
+        claw.operateClaw(ClawMovement.NONE, arm.getArmRotation());
     }
     
     @Override

@@ -4,7 +4,7 @@ import java.util.Optional;
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 
-import claw.math.InputTransform;
+import claw.math.input.InputTransform;
 import claw.math.Transform;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.CommandBase;
@@ -34,7 +34,7 @@ public class ArmControlCommand extends CommandBase {
     }
     
     private final Transform armControlInputTransform =
-        InputTransform.getInputTransform(InputTransform.THREE_HALVES_CURVE, 0.1);
+        new InputTransform(InputTransform.THREE_HALVES_CURVE, 0.1);
     
     private final Transform boundSpeedLimitsTransform;
     
@@ -81,11 +81,11 @@ public class ArmControlCommand extends CommandBase {
         if (!claw.hasBeenHomed()) {
             claw.runClawHomingSequence();
         } else if (grabControl.getAsBoolean()) {
-            claw.operateClaw(ClawMovement.GRAB);
+            claw.operateClaw(ClawMovement.GRAB, arm.getArmRotation());
         } else if (releaseControl.getAsBoolean()) {
-            claw.operateClaw(ClawMovement.RELEASE);
+            claw.operateClaw(ClawMovement.RELEASE, arm.getArmRotation());
         } else {
-            claw.operateClaw(ClawMovement.NONE);
+            claw.operateClaw(ClawMovement.NONE, arm.getArmRotation());
         }
         
         double armControlInput = armControlInputTransform.apply(armControl.getAsDouble());
