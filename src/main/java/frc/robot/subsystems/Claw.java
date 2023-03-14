@@ -4,10 +4,13 @@ import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
+import claw.Setting;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.util.sendable.SendableBuilder;
+import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.LiveCommandTester;
 
 public class Claw extends SubsystemBase {
     
@@ -16,14 +19,7 @@ public class Claw extends SubsystemBase {
      * extension of the claw (fully released). This offset helps to prevent the claw from extending too far and
      * breaking itself.
      */
-    private static final double CLAW_MAX_REACH_OFFSET = 24;
-    
-    /**
-     * An offset in the claw's relative encoder's reading from the homing spot (fully collapsed) to the minimum
-     * extension of the claw (almost fully grabbing). This offset helps to prevent the claw from contracting too
-     * much and breaking itself.
-     */
-    private static final double CLAW_MIN_REACH_OFFSET = 0;
+    private static final Setting<Double> CLAW_MAX_REACH_OFFSET = new Setting<>("CLAW_MAX_REACH_OFFSET", () -> 24.);
     
     // TODO: Add javadocs
     private static final double
@@ -44,6 +40,18 @@ public class Claw extends SubsystemBase {
     
     public Claw () {
         clawMotor.setIdleMode(IdleMode.kBrake);
+        
+        // XboxController controller = new XboxController(3);
+        // new LiveCommandTester(
+        //     "Use controller 3. A and B will move the claw in opposite directions. There are no protections " +
+        //     "on the claw's movement.",
+        //     values -> {
+        //         if (contr)
+        //     },
+        //     () -> operateClaw(ClawMovement.NONE),
+        //     this
+        // );
+        
     }
     
     public void runClawHomingSequence () {
@@ -57,7 +65,7 @@ public class Claw extends SubsystemBase {
     }
     
     public void homeAsFullyOpen () {
-        clawEncoderOffset = getClawEncoder() - CLAW_MAX_REACH_OFFSET;
+        clawEncoderOffset = getClawEncoder() - CLAW_MAX_REACH_OFFSET.get();
         hasBeenHomed = true;
     }
     
@@ -73,11 +81,11 @@ public class Claw extends SubsystemBase {
     }
     
     private boolean isClawOverLowerLimit () {
-        return getClawEncoder() - clawEncoderOffset > CLAW_MIN_REACH_OFFSET;
+        return getClawEncoder() - clawEncoderOffset > 0;
     }
     
     private boolean isClawUnderUpperLimit () {
-        return getClawEncoder() - clawEncoderOffset < CLAW_MAX_REACH_OFFSET;
+        return getClawEncoder() - clawEncoderOffset < CLAW_MAX_REACH_OFFSET.get();
     }
     
     public boolean isFullyReleased () {
