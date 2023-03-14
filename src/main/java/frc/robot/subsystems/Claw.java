@@ -21,7 +21,9 @@ public class Claw extends SubsystemBase {
      * extension of the claw (fully released). This offset helps to prevent the claw from extending too far and
      * breaking itself.
      */
-    private static final double CLAW_MAX_REACH_OFFSET = 39.78;
+    private static final double
+        CLAW_MAX_REACH_OFFSET = 39.78,
+        PAN_PASSTHROUGH_RELEASE_PROPORTION = 0.9;
     
     // TODO: Add javadocs
     private static final double
@@ -58,7 +60,7 @@ public class Claw extends SubsystemBase {
                     clawMotor.stopMotor();
                 }
             },
-            () -> operateClaw(ClawMovement.NONE),
+            clawMotor::stopMotor,
             this
         ).toCommandProcessor("clawtest");
         
@@ -96,26 +98,29 @@ public class Claw extends SubsystemBase {
         return getClawEncoder() - clawEncoderOffset > 0;
     }
     
-    private double getClawOffsetFromUpperLimit () {
+    private double getClawOffsetFromUpperLimit (Rotation2d armRotation) {
+        
+        // -1 to 11 degrees it must be limited
+        
         return getClawEncoder() - clawEncoderOffset - CLAW_MAX_REACH_OFFSET;
     }
     
-    public boolean isFullyReleased () {
-        return getClawOffsetFromUpperLimit() > -2;
+    public boolean isFullyReleased (Rotation2d armRotation) {
+        return getClawOffsetFromUpperLimit(armRotation) > -2;
     }
     
-    private boolean isBeyondReleaseLimit () {
-        return getClawOffsetFromUpperLimit() > 0;
+    private boolean isBeyondReleaseLimit (Rotation2d armRotation) {
+        return getClawOffsetFromUpperLimit(armRotation) > 0;
     }
     
     public boolean isFullyGrabbing () {
         return isHoldingObject || !isClawOverLowerLimit();
     }
     
-    public void operateClaw (ClawMovement move) {
+    public void operateClaw (ClawMovement move, Rotation2d armRotation) {
         
         // Bring claw within size limits before doing anything else when operating the claw
-        if (isBeyondReleaseLimit()) {
+        if (isBeyondReleaseLimit(armRotation)) {
             clawMotor.setVoltage(CLAW_MOVE_VOLTAGE);
             return;
         }
@@ -139,7 +144,7 @@ public class Claw extends SubsystemBase {
                 }
                 break;
             case RELEASE:
-                if (isFullyReleased())
+                if (isFullyReleased(armRotation))
                     clawMotor.stopMotor();
                 else
                     clawMotor.setVoltage(-CLAW_MOVE_VOLTAGE);

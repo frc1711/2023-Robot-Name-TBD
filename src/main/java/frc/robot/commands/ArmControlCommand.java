@@ -81,11 +81,11 @@ public class ArmControlCommand extends CommandBase {
         if (!claw.hasBeenHomed()) {
             claw.runClawHomingSequence();
         } else if (grabControl.getAsBoolean()) {
-            claw.operateClaw(ClawMovement.GRAB);
+            claw.operateClaw(ClawMovement.GRAB, arm.getArmRotation());
         } else if (releaseControl.getAsBoolean()) {
-            claw.operateClaw(ClawMovement.RELEASE);
+            claw.operateClaw(ClawMovement.RELEASE, arm.getArmRotation());
         } else {
-            claw.operateClaw(ClawMovement.NONE);
+            claw.operateClaw(ClawMovement.NONE, arm.getArmRotation());
         }
         
         double armControlInput = armControlInputTransform.apply(armControl.getAsDouble());

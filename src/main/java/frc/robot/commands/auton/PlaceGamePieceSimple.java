@@ -18,7 +18,7 @@ public class PlaceGamePieceSimple extends SequentialCommandGroup {
             new InstantCommand(claw::homeAsFullyOpen, claw),
             
             // Grab the game piece
-            new ControlClawCommand(claw, ClawMovement.GRAB),
+            new ControlClawCommand(claw, ClawMovement.GRAB, arm::getArmRotation),
             
             // Move the arm
             new MoveArmCommand(arm, claw, armScorePosition, ClawMovement.GRAB),
@@ -27,7 +27,7 @@ public class PlaceGamePieceSimple extends SequentialCommandGroup {
             new DriveStraightCommand(swerve, true, 1, 0.8, true),
             
             // Release the game piece
-            new ControlClawCommand(claw, ClawMovement.RELEASE),
+            new ControlClawCommand(claw, ClawMovement.RELEASE, arm::getArmRotation),
             
             // Wait just a moment before coming back
             new WaitCommand(0.2),
