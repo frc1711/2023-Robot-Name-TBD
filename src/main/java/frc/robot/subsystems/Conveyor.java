@@ -4,7 +4,6 @@ import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
-import claw.hardware.Device;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Conveyor extends SubsystemBase{
@@ -15,18 +14,11 @@ public class Conveyor extends SubsystemBase{
 		return conveyorInstance;
 	}
 
-	private final Device<CANSparkMax> conveyorMotor = new Device<>(
-		"CAN.MOTOR_CONTROLLER.CONVEYOR.CONVEYOR_MOTOR", 
-		id -> {
-			CANSparkMax motor = new CANSparkMax(id, MotorType.kBrushless);
-			motor.setIdleMode(IdleMode.kBrake);
-			return motor;
-		},
-		motor -> {
-			motor.stopMotor();
-			motor.close();
-		}
-	);
+	private final CANSparkMax conveyorMotor = new CANSparkMax(13, MotorType.kBrushless);
+    
+    public Conveyor () {
+        conveyorMotor.setIdleMode(IdleMode.kBrake);
+    }
     
     public enum ConveyorMode {
         FORWARD (4),
@@ -40,7 +32,7 @@ public class Conveyor extends SubsystemBase{
     }
     
 	public void setMode (ConveyorMode mode) {
-		conveyorMotor.get().setVoltage(mode.voltage);
+		conveyorMotor.setVoltage(mode.voltage);
 	}
     
 }
