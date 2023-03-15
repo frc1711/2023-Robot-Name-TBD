@@ -42,8 +42,8 @@ public class Claw extends SubsystemBase {
     private final Transform armRotationToMaxReleaseProportion = new LinearInterpolator(
     // Arm rotation
     //        Max release (as a proportion)
-        -3.5,   1,
-        -1,     0.55,
+        -4.5,   1,
+        -3,     0.55,
         11,     0.55,
         20,     1
     ).then(Transform.clamp(0, 1));
