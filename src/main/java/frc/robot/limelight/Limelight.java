@@ -9,8 +9,11 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 
 public class Limelight {
+
+    private static final ArrayList<Limelight> allLimelights = new ArrayList<>();
 
     public static final Limelight
         INTAKE_LIMELIGHT = new Limelight("intake", "10.17.11.17", 0), //TODO: ADD PORT NUMBERS
@@ -48,8 +51,6 @@ public class Limelight {
         ENTRY_STREAM_MODE,
         ENTRY_SNAPSHOT,
         ENTRY_CROP_RECTANGLE;
-
-    private static final ArrayList<Limelight> allLimelights = new ArrayList<>();
 
     public Limelight (String cameraAddress, String cameraIP, int port) {
         TABLE = NetworkTableInstance.getDefault().getTable("limelight-" + cameraAddress);
