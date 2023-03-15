@@ -3,6 +3,7 @@ package frc.robot.limelight;
 import java.util.ArrayList;
 import java.util.Optional;
 
+import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.cscore.MjpegServer;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
@@ -16,8 +17,8 @@ public class Limelight {
     private static final ArrayList<Limelight> allLimelights = new ArrayList<>();
 
     public static final Limelight
-        INTAKE_LIMELIGHT = new Limelight("intake", "10.17.11.17", 0), //TODO: ADD PORT NUMBERS
-        ARM_LIMELIGHT = new Limelight("arm", "10.17.11.16", 0); 
+        INTAKE_LIMELIGHT = new Limelight("intake", "10.17.11.17"),
+        ARM_LIMELIGHT = new Limelight("arm", "10.17.11.16"); 
 
     private NetworkTable TABLE;
     private static final long SNAPSHOT_RESET_MILLIS = 1000;
@@ -52,7 +53,7 @@ public class Limelight {
         ENTRY_SNAPSHOT,
         ENTRY_CROP_RECTANGLE;
 
-    public Limelight (String cameraAddress, String cameraIP, int port) {
+    public Limelight (String cameraAddress, String cameraIP) {
         TABLE = NetworkTableInstance.getDefault().getTable("limelight-" + cameraAddress);
         ENTRY_TV =      TABLE.getEntry("tv");
         ENTRY_TX =      TABLE.getEntry("tx");
@@ -78,7 +79,8 @@ public class Limelight {
         ENTRY_SNAPSHOT          = TABLE.getEntry("snapshot");
         ENTRY_CROP_RECTANGLE    = TABLE.getEntry("crop");
 
-        cameraServer = new MjpegServer("limelight", "http://" + cameraIP + ":5800", port);
+        cameraServer = new MjpegServer("limelight", "http://" + cameraIP, 5800);
+        CameraServer.addCamera(cameraServer.getSource());
 
         allLimelights.add(this);
     }
