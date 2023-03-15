@@ -36,7 +36,6 @@ public class Robot extends TimedRobot {
 
   @Override
   public void disabledInit() {
-    Limelight.setLEDMode(LEDMode.PIPELINE_DEFAULT);
   }
 
   @Override
@@ -69,8 +68,6 @@ public class Robot extends TimedRobot {
   @Override
   public void testInit() {
     CommandScheduler.getInstance().cancelAll();
-    Limelight.takeSnapshot();
-    Limelight.setLEDMode(LEDMode.FORCE_BLINK);
   }
 
   @Override

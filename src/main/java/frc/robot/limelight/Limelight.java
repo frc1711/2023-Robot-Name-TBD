@@ -1,5 +1,6 @@
 package frc.robot.limelight;
 
+import java.util.ArrayList;
 import java.util.Optional;
 
 import edu.wpi.first.math.geometry.Pose3d;
@@ -9,38 +10,83 @@ import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 
 public class Limelight {
-    
-    private static final NetworkTable TABLE = NetworkTableInstance.getDefault().getTable("limelight");
+
+    public static final Limelight
+        INTAKE_LIMELIGHT = new Limelight("intake"),
+        ARM_LIMELIGHT = new Limelight("arm");
+
+    private NetworkTable TABLE;
     private static final long SNAPSHOT_RESET_MILLIS = 1000;
     
     /**
      * Basic targeting data
      */
-    private static final NetworkTableEntry
-        ENTRY_TV =      TABLE.getEntry("tv"),                   // Whether the limelight has any valid targets (0 or 1)
-        ENTRY_TX =      TABLE.getEntry("tx"),                   // Horizontal offset from crosshair to target
-        ENTRY_TY =      TABLE.getEntry("ty"),                   // Vertical offset from crosshair to target
-        ENTRY_TA =      TABLE.getEntry("ta"),                   // Target area of image (percentage)
-        ENTRY_TL =      TABLE.getEntry("tl"),                   // Pipeline's latency contribution (ms)
-        ENTRY_TSHORT =  TABLE.getEntry("tshort"),               // Sidelength of shortest side of the fitted bounding box (pixels)
-        ENTRY_TLONG =   TABLE.getEntry("tlong"),                // Sidelength of longest side of the fitted bounding box (pixels)
-        ENTRY_THOR =    TABLE.getEntry("thor"),                 // Horizontal sidelength of the rough bounding box (pixels)
-        ENTRY_TVERT =   TABLE.getEntry("tvert"),                // Vertical sidelength of the rough bounding box (pixels)
-        ENTRY_GETPIPE = TABLE.getEntry("getpipe"),              // True active pipeline index of the camera (0 .. 9)
-        ENTRY_JSON =    TABLE.getEntry("json"),                 // Full JSON dump of targeting results
-        ENTRY_TCLASS =  TABLE.getEntry("tclass"),               // Class ID of primary neural detector result or neural classifier result
-        ENTRY_TC =      TABLE.getEntry("tc"),                   // Get the average HSV color underneath the crosshair region as a NumberArray
-        ENTRY_TPOSE =   TABLE.getEntry("targetpose_robotspace"),// Get the pose of the target relative to the robot in an array of 6 doubles
-        ENTRY_RPOSE =   TABLE.getEntry("botpose"),              // The robot pose in fieldspace
-        ENTRY_TID =     TABLE.getEntry("tid");                  // Get the ID of the tag identified (Only effective for AprilTags)
+    private final NetworkTableEntry
+        ENTRY_TV,                   // Whether the limelight has any valid targets (0 or 1)
+        ENTRY_TX,                   // Horizontal offset from crosshair to target
+        ENTRY_TY,                   // Vertical offset from crosshair to target
+        ENTRY_TA,                   // Target area of image (percentage)
+        ENTRY_TL,                   // Pipeline's latency contribution (ms)
+        ENTRY_TSHORT,               // Sidelength of shortest side of the fitted bounding box (pixels)
+        ENTRY_TLONG,                // Sidelength of longest side of the fitted bounding box (pixels)
+        ENTRY_THOR,                 // Horizontal sidelength of the rough bounding box (pixels)
+        ENTRY_TVERT,                // Vertical sidelength of the rough bounding box (pixels)
+        ENTRY_GETPIPE,              // True active pipeline index of the camera (0 .. 9)
+        ENTRY_JSON,                 // Full JSON dump of targeting results
+        ENTRY_TCLASS,               // Class ID of primary neural detector result or neural classifier result
+        ENTRY_TC,                   // Get the average HSV color underneath the crosshair region as a NumberArray
+        ENTRY_TPOSE,                // Get the pose of the target relative to the robot in an array of 6 doubles
+        ENTRY_RPOSE,                // The robot pose in fieldspace
+        ENTRY_TID;                  // Get the ID of the tag identified (Only effective for AprilTags)
+
+    private final NetworkTableEntry
+        ENTRY_LED_MODE,
+        ENTRY_CAMERA_MODE,
+        ENTRY_PIPELINE_SELECT,
+        ENTRY_STREAM_MODE,
+        ENTRY_SNAPSHOT,
+        ENTRY_CROP_RECTANGLE;
+
+    private static final ArrayList<Limelight> allLimelights = new ArrayList<>();
+
+    public Limelight (String cameraAddress) {
+        TABLE = NetworkTableInstance.getDefault().getTable("limelight-" + cameraAddress);
+        ENTRY_TV =      TABLE.getEntry("tv");
+        ENTRY_TX =      TABLE.getEntry("tx");
+        ENTRY_TY =      TABLE.getEntry("ty");
+        ENTRY_TA =      TABLE.getEntry("ta");
+        ENTRY_TL =      TABLE.getEntry("tl");
+        ENTRY_TSHORT =  TABLE.getEntry("tshort");
+        ENTRY_TLONG =   TABLE.getEntry("tlong");
+        ENTRY_THOR =    TABLE.getEntry("thor");
+        ENTRY_TVERT =   TABLE.getEntry("tvert");
+        ENTRY_GETPIPE = TABLE.getEntry("getpipe");
+        ENTRY_JSON =    TABLE.getEntry("json");
+        ENTRY_TCLASS =  TABLE.getEntry("tclass");
+        ENTRY_TC =      TABLE.getEntry("tc");
+        ENTRY_TPOSE =   TABLE.getEntry("targetpose_robotspace");
+        ENTRY_RPOSE =   TABLE.getEntry("botpose");
+        ENTRY_TID =     TABLE.getEntry("tid");
+
+        ENTRY_LED_MODE          = TABLE.getEntry("ledMode");
+        ENTRY_CAMERA_MODE       = TABLE.getEntry("camMode");
+        ENTRY_PIPELINE_SELECT   = TABLE.getEntry("pipeline");
+        ENTRY_STREAM_MODE       = TABLE.getEntry("stream");
+        ENTRY_SNAPSHOT          = TABLE.getEntry("snapshot");
+        ENTRY_CROP_RECTANGLE    = TABLE.getEntry("crop");
+
+        allLimelights.add(this);
+    }
+
     
     // Basic target recognition
-    
-    public static boolean hasValidTarget () {
+   
+
+    public boolean hasValidTarget () {
         return ENTRY_TV.getInteger(0) == 1;
     }
     
-    public static Optional<TargetData> getTarget () {
+    public Optional<TargetData> getTarget () {
         if (!hasValidTarget()) {
             return Optional.empty();
         } else {
@@ -58,7 +104,9 @@ public class Limelight {
         }
     }
     
-    public static boolean hasAprilTag() {
+
+
+    public boolean hasAprilTag() {
         return ENTRY_TID.getDouble(0) != 0;
     }
     
@@ -73,7 +121,7 @@ public class Limelight {
         );
     }
     
-    public static Optional<AprilTagData> getAprilTag () {
+    public Optional<AprilTagData> getAprilTag () {
         if (hasAprilTag()) {
             return Optional.of(new AprilTagData(
                 ENTRY_TID.getDouble(0),
@@ -109,37 +157,31 @@ public class Limelight {
     
     // Misc. data
     
-    public static double getPipelineLatency () {
+    public double getPipelineLatency () {
         return ENTRY_TL.getDouble(0);
     }
     
-    public static String getJSONDump () {
+    public String getJSONDump () {
         return ENTRY_JSON.getString("{}");
     }
 
-    public static int getTargetID () {
+    public int getTargetID () {
         return (int)ENTRY_TID.getInteger(0);
     }
     
-    public static int getActivePipeline () {
+    public int getActivePipeline () {
         return (int)ENTRY_GETPIPE.getInteger(-1);
     }
     
     // Camera controls
     
-    private static final NetworkTableEntry
-        ENTRY_LED_MODE          = TABLE.getEntry("ledMode"),
-        ENTRY_CAMERA_MODE       = TABLE.getEntry("camMode"),
-        ENTRY_PIPELINE_SELECT   = TABLE.getEntry("pipeline"),
-        ENTRY_STREAM_MODE       = TABLE.getEntry("stream"),
-        ENTRY_SNAPSHOT          = TABLE.getEntry("snapshot"),
-        ENTRY_CROP_RECTANGLE    = TABLE.getEntry("crop");
     
-    public static void setLEDMode (LEDMode mode) {
+    
+    public void setLEDMode (LEDMode mode) {
         ENTRY_LED_MODE.setDouble(mode.mode);
     }
     
-    public static enum LEDMode {
+    public enum LEDMode {
         PIPELINE_DEFAULT    (0),
         FORCE_OFF           (1),
         FORCE_BLINK         (2),
@@ -152,11 +194,11 @@ public class Limelight {
         
     }
     
-    public static void setCameraMode (CameraMode mode) {
+    public void setCameraMode (CameraMode mode) {
         ENTRY_CAMERA_MODE.setDouble(mode.mode);
     }
     
-    public static enum CameraMode {
+    public enum CameraMode {
         VISION_PROCESSOR    (0),
         DRIVER_CAMERA       (1);
         
@@ -167,15 +209,20 @@ public class Limelight {
         
     }
     
-    public static void setPipeline (int pipelineIndex) {
+    /**
+     * Takes in @param pipelineIndex
+     * Pipeline 0 is AprilTags
+     * Pipeline 1 is Retroreflective tape 
+     */
+    public void setPipeline (int pipelineIndex) {
         ENTRY_PIPELINE_SELECT.setDouble(pipelineIndex);
     }
     
-    public static void setStreamMode (StreamMode mode) {
+    public void setStreamMode (StreamMode mode) {
         ENTRY_STREAM_MODE.setDouble(mode.mode);
     }
     
-    public static enum StreamMode {
+    public enum StreamMode {
         STANDARD        (0),
         PiP_MAIN        (1),
         PiP_SECONDARY   (2);
@@ -187,41 +234,47 @@ public class Limelight {
         
     }
     
-    private static long lastSnapshotActionTime = 0;
+    private long lastSnapshotActionTime = 0;
     
-    private static boolean canTakeSnapshotAction () {
+    private boolean canTakeSnapshotAction () {
         return lastSnapshotActionTime + SNAPSHOT_RESET_MILLIS < System.currentTimeMillis();
     }
     
-    private static boolean canResetSnapshot () {
+    private boolean canResetSnapshot () {
         return canTakeSnapshotAction() && ENTRY_SNAPSHOT.getDouble(0) == 1;
     }
     
-    public static boolean canTakeSnapshot () {
+    public boolean canTakeSnapshot () {
         return canTakeSnapshotAction() && ENTRY_SNAPSHOT.getDouble(1) == 0;
     }
     
-    public static void takeSnapshot () {
+    public void takeSnapshot () {
         if (canTakeSnapshot()) {
             lastSnapshotActionTime = System.currentTimeMillis();
             ENTRY_SNAPSHOT.setDouble(1);
         }
     }
     
-    private static void resetSnapshot () {
+    private void resetSnapshot () {
         if (canResetSnapshot()) {
             lastSnapshotActionTime = System.currentTimeMillis();
             ENTRY_SNAPSHOT.setDouble(0);
         }
     }
     
-    public static void setCropRectangle (double minX, double minY, double maxX, double maxY) {
+    public void setCropRectangle (double minX, double minY, double maxX, double maxY) {
         ENTRY_CROP_RECTANGLE.setDoubleArray(new double[]{ minX, minY, maxX, maxY });
     }
     
-    public static void update () {
+    private void updateInstance () {
         if (canResetSnapshot())
             resetSnapshot();
+    }
+
+    public static void update () {
+        for (Limelight limelight : allLimelights) {
+            limelight.updateInstance();
+        }
     }
     
 }

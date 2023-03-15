@@ -11,11 +11,13 @@ import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.subsystems.swerve.RotationalPID;
 import frc.robot.subsystems.swerve.Swerve;
 import frc.robot.util.NumericDebouncer;
+import frc.robot.limelight.Limelight;
 import frc.robot.subsystems.Vision;
 
 public class AprilTags extends CommandBase {
@@ -39,6 +41,9 @@ public class AprilTags extends CommandBase {
     distancePID.setTolerance(1);
   }
 
+  // public Translation2d getDistanceToTag (int tagID) {
+  // }
+
   //Get Swerve to drive to the tag given as input
   public double getDriveToTag (Optional<Double> targetDistance) {
     double driveSpeed;
@@ -49,18 +54,19 @@ public class AprilTags extends CommandBase {
     return driveSpeed;
   }
 
-  public double getTurnToTag (Optional<Double> targetRotationDegrees) {
-    double turnSpeed;
+  // public double getTurnToTag (Optional<Double> targetRotationDegrees) {
+  //   double turnSpeed;
 
-    if (targetRotationDegrees.isPresent()) {
-      Rotation2d targetRotation = Rotation2d.fromDegrees(targetRotationDegrees.get());
-      turnSpeed = rotationPID.calculate(swerveDrive.getRobotRotation(), targetRotation);
-    } else {
-      turnSpeed = 0;
-    }
+  //   if (targetRotationDegrees.isPresent()) {
+  //     Rotation2d targetRotation = Rotation2d.fromDegrees(targetRotationDegrees.get());
+  //     // Rotation2d robotRotation = Rotation2d.fromDegrees(swerveDrive.getRobotYaw());
+  //     turnSpeed = rotationPID.calculate(robotRotation, targetRotation);
+  //   } else {
+  //     turnSpeed = 0;
+  //   }
 
-    return turnRateLimiter.calculate(turnSpeed);
-  }
+  //   return turnRateLimiter.calculate(turnSpeed);
+  // }
 
   // Check if any cameras have been activated, if true, continue normally, if false start a new camera
   @Override
@@ -74,19 +80,19 @@ public class AprilTags extends CommandBase {
     Optional<Double> targetRotation;
     Optional<Double> targetDistance;
 
-    if (vision.seesTarget()) {
-      Rotation2d tagAbsRotation = swerveDrive.getRobotRotation().plus(Rotation2d.fromDegrees(vision.getHorizontalOffset()));
-      targetRotation = rotationMeasurement.calculate(Optional.of(tagAbsRotation.getDegrees()));
+    if (vision.seesTarget() && vision.isTargetFriendly()) {
+      // Rotation2d tagAbsRotation = Rotation2d.fromDegrees(swerveDrive.getRobotYaw() + vision.getHorizontalOffset());
+      // targetRotation = rotationMeasurement.calculate(Optional.of(tagAbsRotation.getDegrees()));
       targetDistance = distanceMeasurement.calculate(Optional.of(vision.getDistance()));
     } else {
       targetRotation = rotationMeasurement.calculate(Optional.empty());
       targetDistance = distanceMeasurement.calculate(Optional.empty());
     }
 
-    double turnRate = getTurnToTag(targetRotation);
+    // double turnRate = getTurnToTag(targetRotation);
     double driveSpeed = getDriveToTag(targetDistance);
 
-    swerveDrive.moveRobotRelative(new ChassisSpeeds(driveSpeed, 0, turnRate));
+    // swerveDrive.moveRobotRelative(new ChassisSpeeds(driveSpeed, 0, turnRate));
   }
 
   @Override
