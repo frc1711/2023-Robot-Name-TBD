@@ -9,13 +9,12 @@ import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
 import claw.CLAWRobot;
-import claw.hardware.Device;
 import claw.hardware.LimitSwitchDevice;
-import claw.hardware.Device.DeviceInitializer;
 import claw.hardware.LimitSwitchDevice.NormalState;
-import claw.math.InputTransform;
+import claw.math.input.InputTransform;
 import claw.math.Transform;
 import edu.wpi.first.util.sendable.SendableBuilder;
+import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.LiveCommandTester;
 import frc.robot.RobotContainer;
@@ -30,45 +29,22 @@ public class Intake extends SubsystemBase {
         return intakeInstance;
     }
     
-    private static DeviceInitializer<CANSparkMax> getSparkMaxInitializer (IdleMode idleMode) {
-        return (id) -> {
-            CANSparkMax motor = new CANSparkMax(id, MotorType.kBrushless);
-            motor.clearFaults();
-            motor.setIdleMode(idleMode);
-            return motor;
-        };
+    private static CANSparkMax getSparkMax (int id, IdleMode idleMode) {
+        CANSparkMax motor = new CANSparkMax(id, MotorType.kBrushless);
+        motor.clearFaults();
+        motor.setIdleMode(idleMode);
+        return motor;
     }
     
-    private static void finalizeSparkMax (CANSparkMax motor) {
-        motor.stopMotor();
-        motor.close();
-    }
-    
-    private final Device<CANSparkMax>
-        topRoller = new Device<>(
-            "CAN.MOTOR_CONTROLLER.INTAKE.TOP_ROLLER",
-            getSparkMaxInitializer(IdleMode.kCoast),
-            Intake::finalizeSparkMax
-        ),
-        bottomRoller = new Device<>(
-            "CAN.MOTOR_CONTROLLER.INTAKE.BOTTOM_ROLLER",
-            getSparkMaxInitializer(IdleMode.kCoast),
-            Intake::finalizeSparkMax
-        ),
-        leftEngage = new Device<>(
-            "CAN.MOTOR_CONTROLLER.INTAKE.LEFT_ENGAGE",
-            getSparkMaxInitializer(IdleMode.kBrake),
-            Intake::finalizeSparkMax
-        ),
-        rightEngage = new Device<>(
-            "CAN.MOTOR_CONTROLLER.INTAKE.RIGHT_ENGAGE",
-            getSparkMaxInitializer(IdleMode.kBrake),
-            Intake::finalizeSparkMax
-        );
+    private final CANSparkMax
+        topRoller = getSparkMax(16, IdleMode.kCoast),
+        bottomRoller = getSparkMax(17, IdleMode.kCoast),
+        leftEngage = getSparkMax(19, IdleMode.kBrake),
+        rightEngage = getSparkMax(18, IdleMode.kBrake);
     
     private final LimitSwitchDevice
-        lowerLimitSwitch = new LimitSwitchDevice("DIO.LIMIT_SWITCH.INTAKE.LOWER_LIMIT", NormalState.NORMALLY_CLOSED),
-        upperLimitSwitch = new LimitSwitchDevice("DIO.LIMIT_SWITCH.INTAKE.UPPER_LIMIT", NormalState.NORMALLY_CLOSED);
+        lowerLimitSwitch = new LimitSwitchDevice(new DigitalInput(1), NormalState.NORMALLY_CLOSED),
+        upperLimitSwitch = new LimitSwitchDevice(new DigitalInput(0), NormalState.NORMALLY_CLOSED);
     
     private final double BOTTOM_INTAKE_RAW_POSITION = 6.69;
     private double engagementPositionOffset = getEngagementRawPosition();
@@ -85,14 +61,6 @@ public class Intake extends SubsystemBase {
         );
         
         CLAWRobot.getExtensibleCommandInterpreter().addCommandProcessor(tester.toCommandProcessor("intaketest"));
-    }
-    
-    private boolean isLowerPressed () {
-        return !lowerLimitSwitch.isPressed();
-    }
-    
-    private boolean isUpperPressed () {
-        return !upperLimitSwitch.isPressed();
     }
     
     public enum IntakeSpeedMode {
@@ -144,17 +112,17 @@ public class Intake extends SubsystemBase {
     }
     
     public void setIntakeSpeedMode (IntakeSpeedMode mode) {
-        topRoller.get().setVoltage(mode.intakeTopVoltage);
-        bottomRoller.get().setVoltage(mode.intakeBottomVoltage);
+        topRoller.setVoltage(mode.intakeTopVoltage);
+        bottomRoller.setVoltage(mode.intakeBottomVoltage);
     }
     
     public void setIntakeEngagement (IntakeEngagement engagement) {
         double voltage = engagement.positionToVoltage.apply(getEngagementPosition());
         
         if (engagement == IntakeEngagement.ENGAGE) {
-            setEngagementVoltage(isLowerPressed() ? 0 : voltage);
+            setEngagementVoltage(lowerLimitSwitch.isPressed() ? 0 : voltage);
         } else if (engagement == IntakeEngagement.DISENGAGE) {
-            setEngagementVoltage(isUpperPressed() ? 0 : voltage);
+            setEngagementVoltage(upperLimitSwitch.isPressed() ? 0 : voltage);
         } else if (engagement == IntakeEngagement.PASSIVE) {
             setEngagementVoltage(voltage);
         }
@@ -164,7 +132,7 @@ public class Intake extends SubsystemBase {
      * The raw engagement position according to the encoders.
      */
     private double getEngagementRawPosition () {
-        return leftEngage.get().getEncoder().getPosition() - rightEngage.get().getEncoder().getPosition();
+        return leftEngage.getEncoder().getPosition() - rightEngage.getEncoder().getPosition();
     }
     
     /**
@@ -179,13 +147,13 @@ public class Intake extends SubsystemBase {
      * so that a positive value is engaging and a negative value is disengaging.
      */
     private void setEngagementVoltage (double voltage) {
-        leftEngage.get().setVoltage(voltage);
-        rightEngage.get().setVoltage(-voltage);
+        leftEngage.setVoltage(voltage);
+        rightEngage.setVoltage(-voltage);
     }
     
     private void stopEngagementMotors () {
-        leftEngage.get().stopMotor();
-        rightEngage.get().stopMotor();
+        leftEngage.stopMotor();
+        rightEngage.stopMotor();
     }
     
     public void stop () {
@@ -194,15 +162,15 @@ public class Intake extends SubsystemBase {
     }
     
     public void initSendable (SendableBuilder builder) {
-        builder.addBooleanProperty("lower-limit", this::isLowerPressed, null);
-        builder.addBooleanProperty("upper-limit", this::isUpperPressed, null);
+        builder.addBooleanProperty("lower-limit", lowerLimitSwitch::isPressed, null);
+        builder.addBooleanProperty("upper-limit", upperLimitSwitch::isPressed, null);
     }
     
     @Override
     public void periodic () {
-        if (isUpperPressed() && !isLowerPressed())
+        if (upperLimitSwitch.isPressed() && !lowerLimitSwitch.isPressed())
             engagementPositionOffset = getEngagementRawPosition();
-        else if (isLowerPressed() && !isUpperPressed())
+        else if (lowerLimitSwitch.isPressed() && !upperLimitSwitch.isPressed())
             engagementPositionOffset = getEngagementRawPosition() - BOTTOM_INTAKE_RAW_POSITION;
     }
     

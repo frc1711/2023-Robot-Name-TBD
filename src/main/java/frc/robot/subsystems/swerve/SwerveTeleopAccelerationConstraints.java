@@ -44,15 +44,13 @@ public class SwerveTeleopAccelerationConstraints {
         Vector<N2> requestedDeltaSpeeds = requestedStrafeVelocity.subtract(lastStrafeVelocity);
         
         // Apply a scale to limit the magnitude of the delta velocity vector
-        Vector<N2> adjustedDeltaSpeeds = requestedDeltaSpeeds.applyScale(this::getAdjustedStrafeDeltaVelocityMagnitude);
+        Vector<N2> adjustedDeltaSpeeds = requestedDeltaSpeeds.scaleToMagnitude(
+            getAdjustedStrafeDeltaVelocityMagnitude(requestedDeltaSpeeds.getMagnitude())
+        );
         
         // Calculate the adjusted strafe velocity
         // TODO: FIX CLAW VECTOR.ADD
-        Vector<N2> adjustedStrafeVelocity = new Vector<N2>(
-            Nat.N2(),
-            lastStrafeVelocity.components[0] + adjustedDeltaSpeeds.components[0],
-            lastStrafeVelocity.components[1] + adjustedDeltaSpeeds.components[1]
-        );
+        Vector<N2> adjustedStrafeVelocity = lastStrafeVelocity.add(adjustedDeltaSpeeds);
         
         lastStrafeVelocity = adjustedStrafeVelocity;
         
@@ -62,8 +60,8 @@ public class SwerveTeleopAccelerationConstraints {
         // Update the lastApplicationTime
         lastApplicationTime = getTimeSecs();
         return new ChassisSpeeds(
-            adjustedStrafeVelocity.components[0],
-            adjustedStrafeVelocity.components[1],
+            adjustedStrafeVelocity.getX(),
+            adjustedStrafeVelocity.getY(),
             adjustedTurnSpeed
         );
     }
