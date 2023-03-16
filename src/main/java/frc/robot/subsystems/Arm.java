@@ -25,6 +25,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.LiveCommandTester;
 import frc.robot.RobotContainer;
 import frc.robot.subsystems.DigitalInputEncoder.AnglePoint;
+import frc.robot.vision.VisionManager;
 
 public class Arm extends SubsystemBase {
     
@@ -188,6 +189,11 @@ public class Arm extends SubsystemBase {
         builder.addDoubleProperty("Arm position", () -> getArmRotation().getDegrees(), null);
         builder.addDoubleProperty("Left arm output current", () -> leftArmMotor.getOutputCurrent(), null);
         builder.addDoubleProperty("Right arm output current", () -> rightArmMotor.getOutputCurrent(), null);
+    }
+    
+    @Override
+    public void periodic () {
+        VisionManager.getInstance().manageCamStreams(getArmRotation());
     }
     
 }
