@@ -26,7 +26,6 @@ import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrajectoryGenerator;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 import edu.wpi.first.util.sendable.SendableBuilder;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -193,13 +192,11 @@ public class Swerve extends SubsystemBase {
      * This method must be called periodically. The movement will be relative to the last zeroGyroTeleop reset.
      * @param speeds The {@code ChassisSpeeds} to try to match with the swerve drive.
      */
-    public void moveFieldRelativeTeleop (ChassisSpeeds speeds) {
-        ChassisSpeeds robotRelativeSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
+    public ChassisSpeeds getFieldRelativeTeleopChassisSpeeds (ChassisSpeeds speeds) {
+        return ChassisSpeeds.fromFieldRelativeSpeeds(
             speeds,
             getTeleopDriveRobotRotation()
         );
-        
-        moveRobotRelative(robotRelativeSpeeds);
     }
     
     public void xMode () {

@@ -52,6 +52,8 @@ public class RobotContainer {
         driveController::getRightX,
         driveController::getLeftStickButton,
         () -> driveController.getLeftTriggerAxis() > 0.8 && driveController.getRightTriggerAxis() > 0.8,
+        driveController::getXButton,
+        
         () -> {
             int povRead = driveController.getPOV();
             return povRead == -1 ? Optional.empty() : Optional.of(Double.valueOf(povRead));
