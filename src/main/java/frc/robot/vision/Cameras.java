@@ -5,6 +5,8 @@ import java.util.Optional;
 import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.cscore.UsbCamera;
 import edu.wpi.first.cscore.VideoSink;
+import edu.wpi.first.cscore.VideoSource;
+import frc.robot.limelight.Limelight;
 
 public class Cameras {
     
@@ -24,12 +26,17 @@ public class Cameras {
     }
     
     public enum Camera {
-        INTAKE_CAMERA   (0),
-        PAN_CAMERA      (1);
+        PAN_CAMERA      (1),
+        INTAKE_CAMERA   (Limelight.INTAKE_LIMELIGHT),
+        ARM_CAMERA      (Limelight.ARM_LIMELIGHT);
         
-        private final UsbCamera camera;
+        private final VideoSource camera;
         private Camera (int deviceNum) {
             this.camera = new UsbCamera(this.name(), deviceNum);
+        }
+        
+        private Camera (Limelight limelight) {
+            camera = limelight.getSource();
         }
     }
     
