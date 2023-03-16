@@ -10,7 +10,9 @@ import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 
 public class Limelight {
-
+    
+    private static final ArrayList<Limelight> allLimelights = new ArrayList<>();
+    
     public static final Limelight
         INTAKE_LIMELIGHT = new Limelight("intake"),
         ARM_LIMELIGHT = new Limelight("arm");
@@ -46,8 +48,6 @@ public class Limelight {
         ENTRY_STREAM_MODE,
         ENTRY_SNAPSHOT,
         ENTRY_CROP_RECTANGLE;
-
-    private static final ArrayList<Limelight> allLimelights = new ArrayList<>();
 
     public Limelight (String cameraAddress) {
         TABLE = NetworkTableInstance.getDefault().getTable("limelight-" + cameraAddress);
@@ -104,17 +104,15 @@ public class Limelight {
         }
     }
     
-
-
     public boolean hasAprilTag() {
-        return ENTRY_TID.getDouble(0) != 0;
+        return ENTRY_TID.getDouble(0) != -1;
     }
     
     /**
      * Gets a {@code Pose3d} from a Translation(x, y, z), Rotation(roll, pitch, yaw) array
      */
     private static Pose3d getPoseFromArray (double[] array) {
-        if (array.length != 6) return new Pose3d();
+        if (array.length < 6) return new Pose3d();
         return new Pose3d(
             array[0], array[1], array[2],                   // x, y, z
             new Rotation3d(array[3], array[4], array[5])    // roll, pitch, yaw
