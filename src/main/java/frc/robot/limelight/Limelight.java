@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.cscore.MjpegServer;
+import edu.wpi.first.cscore.VideoSource;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.networktables.NetworkTable;
@@ -80,11 +81,13 @@ public class Limelight {
         ENTRY_CROP_RECTANGLE    = TABLE.getEntry("crop");
 
         cameraServer = new MjpegServer("limelight", "http://" + cameraIP, 5800);
-        CameraServer.addCamera(cameraServer.getSource());
 
         allLimelights.add(this);
     }
 
+    public VideoSource getSource () {
+        return cameraServer.getSource();
+    }
     
     // Basic target recognition
    
@@ -110,8 +113,6 @@ public class Limelight {
             ));
         }
     }
-    
-
 
     public boolean hasAprilTag() {
         return ENTRY_TID.getDouble(0) != 0;
