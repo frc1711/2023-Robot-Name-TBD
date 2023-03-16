@@ -5,7 +5,6 @@
 package frc.robot.subsystems.swerve;
 
 import java.util.List;
-import java.util.Optional;
 
 import com.kauailabs.navx.frc.AHRS;
 
@@ -37,8 +36,6 @@ import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
 import frc.robot.IDMap;
 import frc.robot.LiveCommandTester;
 import frc.robot.RobotContainer;
-import frc.robot.limelight.Limelight;
-import frc.robot.limelight.Limelight.AprilTagData;
 
 public class Swerve extends SubsystemBase {
     
@@ -291,14 +288,13 @@ public class Swerve extends SubsystemBase {
             rrModule.getPosition(),
         });
         
-        Optional<AprilTagData> tag = Limelight.ARM_LIMELIGHT.getAprilTag();
-        if (tag.isPresent()) {
-            // TODO: make more robust to bad vision data, figure out why we're not seeing the apriltag in the limelight NT API
-            AprilTagData data = tag.get();
-            double time = Timer.getFPGATimestamp();
-            System.out.println(data.robotPose());
-            poseEstimator.addVisionMeasurement(data.robotPose().toPose2d(), time);
-        }
+        // Optional<AprilTagData> tag = Limelight.ARM_LIMELIGHT.getAprilTag();
+        // if (tag.isPresent()) {
+        //     // TODO: make more robust to bad vision data, figure out why we're not seeing the apriltag in the limelight NT API
+        //     AprilTagData data = tag.get();
+        //     double time = Timer.getFPGATimestamp();
+        //     poseEstimator.addVisionMeasurement(data.robotPose().toPose2d(), time);
+        // }
         
         sendableField.setRobotPose(poseEstimator.getEstimatedPosition());
     }

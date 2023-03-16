@@ -38,6 +38,9 @@ public class VisionManager {
 	}
     
 	public void manageCamStreams (Rotation2d armRotation) {
+        Limelight.INTAKE_LIMELIGHT.setCameraMode(CameraMode.DRIVER_CAMERA);
+        Limelight.ARM_LIMELIGHT.setCameraMode(CameraMode.DRIVER_CAMERA);
+        
         double armAngle = armRotation.getDegrees();
 		if (armAngle <= ARM_OFFSET_DEGREES) {
 			camServer.setSource(panCam);
