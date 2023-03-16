@@ -3,7 +3,7 @@ package frc.robot.limelight;
 import java.util.ArrayList;
 import java.util.Optional;
 
-import edu.wpi.first.cscore.MjpegServer;
+import edu.wpi.first.cscore.HttpCamera;
 import edu.wpi.first.cscore.VideoSource;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
@@ -21,7 +21,10 @@ public class Limelight {
 
     private NetworkTable TABLE;
     private static final long SNAPSHOT_RESET_MILLIS = 1000;
-    private final MjpegServer cameraServer;
+    private Optional<HttpCamera> cameraServer = Optional.empty();
+    
+    private final String cameraAddress;
+    private final String cameraIP;
     
     /**
      * Basic targeting data
@@ -53,6 +56,10 @@ public class Limelight {
         ENTRY_CROP_RECTANGLE;
 
     public Limelight (String cameraAddress, String cameraIP) {
+        
+        this.cameraAddress = cameraAddress;
+        this.cameraIP = cameraIP;
+        
         TABLE = NetworkTableInstance.getDefault().getTable("limelight-" + cameraAddress);
         ENTRY_TV =      TABLE.getEntry("tv");
         ENTRY_TX =      TABLE.getEntry("tx");
@@ -77,8 +84,6 @@ public class Limelight {
         ENTRY_STREAM_MODE       = TABLE.getEntry("stream");
         ENTRY_SNAPSHOT          = TABLE.getEntry("snapshot");
         ENTRY_CROP_RECTANGLE    = TABLE.getEntry("crop");
-
-        cameraServer = new MjpegServer("limelight", "http://" + cameraIP, 5800);
 
         allLimelights.add(this);
     }
@@ -213,7 +218,11 @@ public class Limelight {
     }
     
     public VideoSource getSource () {
-        return cameraServer.getSource();
+        if (cameraServer.isEmpty()) {
+            cameraServer = Optional.of(new HttpCamera("limelight-"+cameraAddress, "http://" + cameraIP + ":5800"));
+        }
+        
+        return cameraServer.get();
     }
     
     /**

@@ -27,6 +27,8 @@ public class VisionManager {
 	private double ARM_OFFSET_DEGREES = 10;
 	private MjpegServer camServer;
     
+    private UsbCamera panCam = new UsbCamera("Pan Camera", 0);
+    
 	private VisionManager () {
 		camServer = CameraServer.addSwitchedCamera("Arm Camera stream");
 		CameraServer.startAutomaticCapture(Limelight.INTAKE_LIMELIGHT.getSource());
@@ -38,7 +40,7 @@ public class VisionManager {
 	public void manageCamStreams (Rotation2d armRotation) {
         double armAngle = armRotation.getDegrees();
 		if (armAngle <= ARM_OFFSET_DEGREES) {
-			camServer.setSource(new UsbCamera("Pan Camera", 0));
+			camServer.setSource(panCam);
 		}
 		if (armAngle > ARM_OFFSET_DEGREES) {
 			camServer.setSource(Limelight.ARM_LIMELIGHT.getSource());

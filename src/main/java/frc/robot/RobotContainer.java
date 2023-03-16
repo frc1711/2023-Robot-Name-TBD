@@ -17,12 +17,10 @@ import frc.robot.subsystems.Conveyor;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Arm.ArmPosition;
 import frc.robot.subsystems.swerve.Swerve;
-import frc.robot.vision.Cameras;
 
 import java.util.function.Supplier;
 import java.util.Optional;
 
-import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.XboxController;
@@ -83,8 +81,6 @@ public class RobotContainer {
     );
     
     public RobotContainer () {
-        Cameras.getInstance();
-        
         swerveSubsystem.setDefaultCommand(driveCommand);
         intakeSubsystem.setDefaultCommand(intakeCommand);
         conveyorSubsystem.setDefaultCommand(intakeCommand);
