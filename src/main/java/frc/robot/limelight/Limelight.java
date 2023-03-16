@@ -3,7 +3,6 @@ package frc.robot.limelight;
 import java.util.ArrayList;
 import java.util.Optional;
 
-import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.cscore.MjpegServer;
 import edu.wpi.first.cscore.VideoSource;
 import edu.wpi.first.math.geometry.Pose3d;
@@ -11,7 +10,6 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 
 public class Limelight {
 
