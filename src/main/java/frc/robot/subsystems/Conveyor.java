@@ -22,7 +22,9 @@ public class Conveyor extends SubsystemBase{
     
     public enum ConveyorMode {
         FORWARD (4),
+        FAST_FORWARD (8),
         REVERSE (-4),
+        FAST_REVERSE (-8),
         STOP (0);
         
         private final double voltage;

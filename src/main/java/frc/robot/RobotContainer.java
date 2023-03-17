@@ -66,7 +66,8 @@ public class RobotContainer {
         () -> driveController.getLeftBumper(),
         () -> driveController.getRightBumper(),
         () -> systemController.getRightY() < -0.5,
-        () -> systemController.getRightY() > 0.5
+        () -> systemController.getRightY() > 0.5,
+        () -> systemController.getLeftTriggerAxis() > 0.5
     );
     
     private final ArmControlCommand armCommand = new ArmControlCommand(

@@ -20,7 +20,7 @@ public class TeleopIntake extends CommandBase {
     
     private final Conveyor conveyor;
     private final Intake intake;
-    private final BooleanSupplier intakeCubeControl, intakeConeControl, runConveyorSoloControl, runConveyorReverseSoloControl;
+    private final BooleanSupplier intakeCubeControl, intakeConeControl, runConveyorSoloControl, runConveyorReverseSoloControl, runConveyorTurbo;
     
     private final Debouncer runConveyorDebouncer = new Debouncer(3.5, DebounceType.kFalling);
     private IntakeRunType lastIntakeRunType = IntakeRunType.NONE;
@@ -33,7 +33,8 @@ public class TeleopIntake extends CommandBase {
         BooleanSupplier intakeConeControl,
         
         BooleanSupplier runConveyorSoloControl,
-        BooleanSupplier runConveyorReverseSoloControl
+        BooleanSupplier runConveyorReverseSoloControl,
+        BooleanSupplier runConveyorTurbo
     ) {
         this.conveyor = conveyor;
         this.intake = intake;
@@ -41,6 +42,7 @@ public class TeleopIntake extends CommandBase {
         this.intakeConeControl = intakeConeControl;
         this.runConveyorSoloControl = runConveyorSoloControl;
         this.runConveyorReverseSoloControl = runConveyorReverseSoloControl;
+        this.runConveyorTurbo = runConveyorTurbo;
         addRequirements(conveyor, intake);
     }
     
@@ -109,12 +111,12 @@ public class TeleopIntake extends CommandBase {
         if (runConveyorSoloControl.getAsBoolean()) {
             
             // If conveyor solo mode is being used, it takes priority over default control of the conveyor
-            conveyor.setMode(ConveyorMode.FORWARD);
+            conveyor.setMode(runConveyorTurbo.getAsBoolean() ? ConveyorMode.FAST_FORWARD : ConveyorMode.FORWARD);
             
         } else if (runConveyorReverseSoloControl.getAsBoolean()) {
             
             // If conveyor reverse solo mode is being used, it takes priority over default control of the conveyor
-            conveyor.setMode(ConveyorMode.REVERSE);
+            conveyor.setMode(runConveyorTurbo.getAsBoolean() ? ConveyorMode.FAST_REVERSE : ConveyorMode.REVERSE);
             
         } else {
             
