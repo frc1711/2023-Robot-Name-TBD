@@ -105,7 +105,7 @@ public class TeleopIntake extends CommandBase {
         // Run the conveyor according to a debouncer, allowing for running for a period
         // of time after the intake is stopped (this is the default control mode)
         ConveyorMode defaultConveyorMode = runConveyorDebouncer.calculate(runType != IntakeRunType.NONE)
-            ? ConveyorMode.FORWARD
+            ? ConveyorMode.FAST_FORWARD
             : ConveyorMode.STOP;
         
         if (runConveyorSoloControl.getAsBoolean()) {
