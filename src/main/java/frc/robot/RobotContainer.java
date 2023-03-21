@@ -6,7 +6,8 @@ package frc.robot;
 
 import frc.robot.commands.ArmControlCommand;
 import frc.robot.commands.DriveCommand;
-import frc.robot.commands.DriveTest;
+import frc.robot.commands.test.AprilTagTest;
+import frc.robot.commands.test.DriveTest;
 import frc.robot.commands.TeleopIntake;
 import frc.robot.commands.auton.BalanceCommandAuton;
 import frc.robot.commands.auton.PlaceAndBalanceAuton;
@@ -108,6 +109,7 @@ public class RobotContainer {
         autonChooser.addOption("Place and Balance", () -> new PlaceAndBalanceAuton(swerveSubsystem, armSubsystem, clawSubsystem, ArmPosition.HIGH));
         autonChooser.addOption("Place and Taxi (Octopus)", () -> new PlaceAndTaxi(swerveSubsystem, armSubsystem, clawSubsystem, ArmPosition.HIGH, DriverStation.getAlliance()));
         autonChooser.addOption("TEST DRIVE", () -> new DriveTest(swerveSubsystem));
+        autonChooser.addOption("TEST APRIL TAG", () -> new AprilTagTest(swerveSubsystem));
         putConfigSendable("AUTON SELECT", autonChooser);
     }
     

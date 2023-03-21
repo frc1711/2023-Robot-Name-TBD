@@ -4,11 +4,15 @@
 
 package frc.robot.vision;
 
+import java.util.Optional;
+
+import claw.math.DualDebouncer;
 import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.cscore.MjpegServer;
 import edu.wpi.first.cscore.UsbCamera;
 import edu.wpi.first.math.geometry.Rotation2d;
 import frc.robot.limelight.Limelight;
+import frc.robot.limelight.Limelight.AprilTagData;
 import frc.robot.limelight.Limelight.CameraMode;
 
 /** Add your docs here. */
@@ -29,6 +33,8 @@ public class VisionManager {
     
     private UsbCamera panCam = new UsbCamera("Pan Camera", 0);
     
+    private final DualDebouncer armVisionProcessorDebouncer = new DualDebouncer(false, 0.5, 0);
+    
 	private VisionManager () {
 		camServer = CameraServer.addSwitchedCamera("Arm Camera stream");
 		CameraServer.startAutomaticCapture(Limelight.INTAKE_LIMELIGHT.getSource());
@@ -37,10 +43,24 @@ public class VisionManager {
         Limelight.ARM_LIMELIGHT.setCameraMode(CameraMode.DRIVER_CAMERA);
 	}
     
-	public void manageCamStreams (Rotation2d armRotation) {
-        Limelight.INTAKE_LIMELIGHT.setCameraMode(CameraMode.DRIVER_CAMERA);
-        Limelight.ARM_LIMELIGHT.setCameraMode(CameraMode.DRIVER_CAMERA);
+    private void setLimelightProcessorSettings () {
         
+        boolean useArmVisionProcessor = armVisionProcessorDebouncer.calculate(false);
+        
+        Limelight.ARM_LIMELIGHT.setCameraMode(
+            useArmVisionProcessor ? CameraMode.VISION_PROCESSOR : CameraMode.DRIVER_CAMERA
+        );
+        
+        Limelight.INTAKE_LIMELIGHT.setCameraMode(CameraMode.DRIVER_CAMERA);
+        
+    }
+    
+    public Optional<AprilTagData> getArmAprilTag () {
+        armVisionProcessorDebouncer.calculate(true);
+        return Limelight.ARM_LIMELIGHT.getAprilTag();
+    }
+    
+	public void updateArmRotation (Rotation2d armRotation) {
         double armAngle = armRotation.getDegrees();
 		if (armAngle <= ARM_OFFSET_DEGREES) {
 			camServer.setSource(panCam);
@@ -49,5 +69,9 @@ public class VisionManager {
 			camServer.setSource(Limelight.ARM_LIMELIGHT.getSource());
 		}
 	}
+    
+    public void update () {
+        setLimelightProcessorSettings();
+    }
     
 }
