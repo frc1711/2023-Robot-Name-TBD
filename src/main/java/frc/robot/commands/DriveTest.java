@@ -22,23 +22,27 @@ public class DriveTest extends CommandBase {
     private final HolonomicDriveController driveController = new HolonomicDriveController(
         new PIDController(1, 0, 0),
         new PIDController(1, 0, 0),
-        new ProfiledPIDController(1, 0, 0,
-            new Constraints(10, 10)
+        new ProfiledPIDController(5, 0, 0,
+            new Constraints(4, 2)
         )
     );
     
     private final Trajectory trajectory = TrajectoryGenerator.generateTrajectory(
         List.of(
             new Pose2d(0, 0, Rotation2d.fromDegrees(0)),
-            new Pose2d(1, 0, Rotation2d.fromDegrees(0))
+            new Pose2d(1, -1, Rotation2d.fromDegrees(45)),
+            new Pose2d(1, 1, Rotation2d.fromDegrees(90)),
+            new Pose2d(0, 1, Rotation2d.fromDegrees(180)),
+            new Pose2d(0, 0, Rotation2d.fromDegrees(0))
         ),
-        new TrajectoryConfig(5, 5)
+        new TrajectoryConfig(5, 1)
     );
     
     private double time;
     
     public DriveTest (Swerve swerve) {
         this.swerve = swerve;
+        addRequirements(swerve);
     }
     
     @Override
@@ -51,7 +55,9 @@ public class DriveTest extends CommandBase {
     public void execute () {
         double sysTime = WPIUtilJNI.getSystemTime() * 1.e-6 - time;
         
-        ChassisSpeeds speeds = driveController.calculate(swerve.getPose(), trajectory.sample(sysTime), Rotation2d.fromDegrees(0));
+        Trajectory.State desiredPose = trajectory.sample(sysTime);
+        ChassisSpeeds speeds = driveController.calculate(swerve.getPose(), desiredPose, desiredPose.poseMeters.getRotation());
+        // System.out.println(speeds);
         swerve.moveRobotRelative(speeds);
     }
     
