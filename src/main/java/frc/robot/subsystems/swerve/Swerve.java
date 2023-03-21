@@ -276,6 +276,10 @@ public class Swerve extends SubsystemBase {
         );
     }
     
+    public Pose2d getPose () {
+        return poseEstimator.getEstimatedPosition();
+    }
+    
     @Override
     public void periodic () {
         poseEstimator.update(gyro.getRotation2d(), new SwerveModulePosition[]{
