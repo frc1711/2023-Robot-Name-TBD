@@ -42,7 +42,9 @@ public class Limelight {
         ENTRY_TC,                   // Get the average HSV color underneath the crosshair region as a NumberArray
         ENTRY_TPOSE,                // Get the pose of the target relative to the robot in an array of 6 doubles
         ENTRY_RPOSE,                // The robot pose in fieldspace
-        ENTRY_TID;                  // Get the ID of the tag identified (Only effective for AprilTags)
+        ENTRY_TID,                  // Get the ID of the tag identified (Only effective for AprilTags)
+        ENTRY_RRPOSE,        
+        ENTRY_BRPOSE;
 
     private final NetworkTableEntry
         ENTRY_LED_MODE,
@@ -70,6 +72,8 @@ public class Limelight {
         ENTRY_TPOSE =   TABLE.getEntry("targetpose_robotspace");
         ENTRY_RPOSE =   TABLE.getEntry("botpose");
         ENTRY_TID =     TABLE.getEntry("tid");
+        ENTRY_RRPOSE = TABLE.getEntry("botpose_wpired");
+        ENTRY_BRPOSE = TABLE.getEntry("botpose_wpiblue");
 
         ENTRY_LED_MODE          = TABLE.getEntry("ledMode");
         ENTRY_CAMERA_MODE       = TABLE.getEntry("camMode");
@@ -81,6 +85,15 @@ public class Limelight {
         cameraServer = new MjpegServer("limelight", "http://" + cameraIP, 5800);
 
         allLimelights.add(this);
+    }
+
+    /**
+     * Take in boolean @param alliance {@code false} for red, {@code true} for blue,
+     * @return double array which contains the botpose (x, y, z) relative to the alliance
+     */
+    public double[] getFieldRelativeBotPose (boolean alliance) {
+        if (alliance) return ENTRY_BRPOSE.getDoubleArray(new double[9]);
+        else return ENTRY_RRPOSE.getDoubleArray(new double[9]);
     }
 
     public VideoSource getSource () {
