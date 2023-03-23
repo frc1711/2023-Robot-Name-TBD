@@ -4,9 +4,13 @@
 
 package frc.robot.commands.auton;
 
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.limelight.Limelight;
+import frc.robot.limelight.Limelight.AprilTagData;
 import frc.robot.subsystems.Arm.ArmPosition;
 import frc.robot.subsystems.swerve.Swerve;
 
@@ -89,14 +93,17 @@ public class PlacementSetupCommand extends CommandBase {
   //   } 
   // }
 
-  double tagID;
-  private void runSetupSequence (Alliance alliance, HubPosition hub, NodeSide side, ArmPosition armPosition) {
-    
-    tagID = alliance == Alliance.BLUE ? hub.tagIDBlue : hub.tagIDRed;
+  double aprilTagDistanceX, aprilTagDistanceY, aprilTagDistanceDirect;
+  Rotation2d rotation = new Rotation2d();
+  private Command runSetupSequence (Alliance alliance, HubPosition hub, NodeSide side, ArmPosition armPosition, AprilTagData aprilTag) {
+    aprilTagDistanceX = Math.abs(alliance.fieldRelativeBotPose[0] - aprilTag.targetPose().getX());
+    aprilTagDistanceY = Math.abs(alliance.fieldRelativeBotPose[1] - aprilTag.targetPose().getY());
+    aprilTagDistanceDirect = Math.sqrt((aprilTagDistanceX * aprilTagDistanceX) + (aprilTagDistanceY * aprilTagDistanceY));
+    Translation2d translation = new Translation2d(aprilTagDistanceDirect, swerveDrive.getRobotRotation());
 
-    
+    Pose2d poseOne = new Pose2d(translation, rotation);
 
-    swerveDrive.stop();
+    return swerveDrive.getControllerCommand(poseOne);
   }
 
   @Override
