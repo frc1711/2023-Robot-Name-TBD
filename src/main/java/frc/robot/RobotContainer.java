@@ -7,7 +7,9 @@ package frc.robot;
 import frc.robot.commands.ArmControlCommand;
 import frc.robot.commands.DriveCommand;
 import frc.robot.commands.test.AprilTagTest;
+import frc.robot.commands.test.Container;
 import frc.robot.commands.test.DriveTest;
+import frc.robot.commands.test.GetAprilTagPose;
 import frc.robot.commands.TeleopIntake;
 import frc.robot.commands.auton.BalanceCommandAuton;
 import frc.robot.commands.auton.PlaceAndBalanceAuton;
@@ -23,6 +25,7 @@ import frc.robot.subsystems.swerve.Swerve;
 import java.util.function.Supplier;
 import java.util.Optional;
 
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.XboxController;
@@ -109,7 +112,8 @@ public class RobotContainer {
         autonChooser.addOption("Place and Balance", () -> new PlaceAndBalanceAuton(swerveSubsystem, armSubsystem, clawSubsystem, ArmPosition.HIGH));
         autonChooser.addOption("Place and Taxi (Octopus)", () -> new PlaceAndTaxi(swerveSubsystem, armSubsystem, clawSubsystem, ArmPosition.HIGH, DriverStation.getAlliance()));
         autonChooser.addOption("TEST DRIVE", () -> new DriveTest(swerveSubsystem));
-        autonChooser.addOption("TEST APRIL TAG", () -> new AprilTagTest(swerveSubsystem));
+        autonChooser.addOption("TEST APRIL TAG DRIVE", () -> new AprilTagTest(swerveSubsystem));
+        autonChooser.addOption("TEST APRIL TAG POSE RETRIEVE", () -> new GetAprilTagPose(new Container<Pose2d>(null)));
         putConfigSendable("AUTON SELECT", autonChooser);
     }
     
