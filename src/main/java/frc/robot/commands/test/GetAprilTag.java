@@ -2,18 +2,18 @@ package frc.robot.commands.test;
 
 import java.util.Optional;
 
-import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.limelight.Limelight.AprilTagData;
 import frc.robot.vision.VisionManager;
 
-public class GetAprilTagPose extends CommandBase {
+public class GetAprilTag extends CommandBase {
     
-    private final Container<Pose2d> data;
+    private final Container<Transform2d> data;
     
-    public GetAprilTagPose (Container<Pose2d> data) {
+    public GetAprilTag (Container<Transform2d> data) {
         this.data = data;
     }
     
@@ -28,7 +28,7 @@ public class GetAprilTagPose extends CommandBase {
             double tagY = -tag.targetPose().getX();
             double tagYawRadians = tag.targetPose().getRotation().getY();
             
-            data.set(new Pose2d(
+            data.set(new Transform2d(
                 new Translation2d(tagX, tagY),
                 Rotation2d.fromDegrees(180).minus(new Rotation2d(tagYawRadians))
             ));
@@ -39,18 +39,7 @@ public class GetAprilTagPose extends CommandBase {
     
     @Override
     public boolean isFinished () {
-        
-        if (data.get() != null) {
-            
-            Pose2d tagPose = data.get();
-            
-            System.out.println(tagPose);
-            
-            
-            return true;
-        }
-        
-        return false;
+        return data.get() != null;
     }
     
 }
