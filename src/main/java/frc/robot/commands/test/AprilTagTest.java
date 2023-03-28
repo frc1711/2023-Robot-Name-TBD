@@ -9,33 +9,30 @@ import frc.robot.subsystems.swerve.Swerve;
 
 public class AprilTagTest extends SequentialCommandGroup {
     
-    private final Container<Transform2d> aprilTagTransform = new Container<Transform2d>(null);
+    private final Container<Transform2d>
+        aprilTagTransform = new Container<>(),
+        currentPoseToFinal = new Container<>();
     
     public AprilTagTest (Swerve swerve) {
         addCommands(
-            new DriveToTransform(swerve, new Container<Transform2d>(
-                new Transform2d(
-                    new Translation2d(-0.5, 0),
-                    Rotation2d.fromDegrees(0)
-                )
-            ))
-            // new GetAprilTag(aprilTagTransform),
-            // new InstantCommand(() -> {
+            new GetAprilTag(aprilTagTransform),
+            new InstantCommand(() -> {
                 
-            //     // Transform from tag to final pose
-            //     Transform2d tagToFinalPose = new Transform2d(
-            //         new Translation2d(1.5, 0),
-            //         Rotation2d.fromDegrees(180)
-            //     );
+                // Transform from tag to final pose
+                Transform2d tagToFinalPose = new Transform2d(
+                    new Translation2d(1.5, 0),
+                    Rotation2d.fromDegrees(180)
+                );
                 
-            //     // Get the transform from the current pose to the final pose
-            //     Transform2d currentPoseToFinal = aprilTagTransform.get().plus(tagToFinalPose);
+                // Get the transform from the current pose to the final pose
+                currentPoseToFinal.set(aprilTagTransform.get().plus(tagToFinalPose));
                 
-            //     System.out.println("April tag transform:   " + aprilTagTransform.get());
-            //     System.out.println("Tag to final pose:     " + tagToFinalPose);
-            //     System.out.println("Current pose to final: " + currentPoseToFinal);
+                System.out.println("April tag transform:   " + aprilTagTransform);
+                System.out.println("Tag to final pose:     " + tagToFinalPose);
+                System.out.println("Current pose to final: " + currentPoseToFinal);
                 
-            // })
+            }),
+            new DriveToTransform(swerve, currentPoseToFinal)
         );
     }
     

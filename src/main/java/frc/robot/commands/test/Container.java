@@ -4,6 +4,10 @@ public class Container <T> {
     
     private T internalValue;
     
+    public Container () {
+        set(null);
+    }
+    
     public Container (T value) {
         set(value);
     }
@@ -14,6 +18,11 @@ public class Container <T> {
     
     public void set (T value) {
         internalValue = value;
+    }
+    
+    @Override
+    public String toString () {
+        return internalValue == null ? "null" : internalValue.toString();
     }
     
 }

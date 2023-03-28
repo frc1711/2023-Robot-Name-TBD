@@ -3,6 +3,7 @@ package frc.robot.commands.test;
 import java.util.List;
 import java.util.function.Supplier;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.HolonomicDriveController;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
@@ -71,10 +72,6 @@ public class DriveToTransform extends CommandBase {
             new Pose2d(finalPose.getTranslation(), artificialRotation)
         );
         
-        for (Pose2d pose : poses) {
-            System.out.println(pose);
-        }
-        
         trajectory = TrajectoryGenerator.generateTrajectory(
             poses,
             config
@@ -82,7 +79,7 @@ public class DriveToTransform extends CommandBase {
         
         headerSupplier = () -> {
             double p = getSampleTime() / trajectory.getTotalTimeSeconds();
-            return startRotation.times(p).plus(finalRotation.times(1-p));
+            return startRotation.interpolate(finalRotation, MathUtil.clamp(p, 0, 1));
         };
         
     }
@@ -94,7 +91,7 @@ public class DriveToTransform extends CommandBase {
         ChassisSpeeds speeds = driveController.calculate(
             swerve.getPose(),
             desiredPose,
-            artificialRotation
+            headerSupplier.get()
         );
         
         swerve.moveRobotRelative(speeds);
