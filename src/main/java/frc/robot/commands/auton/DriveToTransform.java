@@ -1,4 +1,4 @@
-package frc.robot.commands.test;
+package frc.robot.commands.auton;
 
 import java.util.List;
 import java.util.function.Supplier;
@@ -17,6 +17,7 @@ import edu.wpi.first.math.trajectory.TrajectoryGenerator;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 import edu.wpi.first.util.WPIUtilJNI;
 import edu.wpi.first.wpilibj2.command.CommandBase;
+import frc.robot.commands.Container;
 import frc.robot.subsystems.swerve.Swerve;
 
 public class DriveToTransform extends CommandBase {
@@ -44,7 +45,7 @@ public class DriveToTransform extends CommandBase {
         this.swerve = swerve;
         this.transformContainer = transformContainer;
         addRequirements(swerve);
-        driveController.setTolerance(new Pose2d(0.02, 0.02, Rotation2d.fromDegrees(1)));
+        driveController.setTolerance(new Pose2d(0.02, 0.02, Rotation2d.fromDegrees(0.5)));
     }
     
     private double getSampleTime () {

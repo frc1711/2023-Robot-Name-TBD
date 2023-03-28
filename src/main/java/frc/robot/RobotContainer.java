@@ -6,13 +6,12 @@ package frc.robot;
 
 import frc.robot.commands.ArmControlCommand;
 import frc.robot.commands.DriveCommand;
-import frc.robot.commands.test.AprilTagTest;
-import frc.robot.commands.test.DriveTest;
 import frc.robot.commands.TeleopIntake;
 import frc.robot.commands.auton.BalanceCommandAuton;
 import frc.robot.commands.auton.PlaceAndBalanceAuton;
 import frc.robot.commands.auton.PlaceAndTaxi;
 import frc.robot.commands.auton.TaxiAuton;
+import frc.robot.commands.auton.vision.DriveRelativeToAprilTag;
 import frc.robot.subsystems.Arm;
 import frc.robot.subsystems.Claw;
 import frc.robot.subsystems.Conveyor;
@@ -23,6 +22,10 @@ import frc.robot.subsystems.swerve.Swerve;
 import java.util.function.Supplier;
 import java.util.Optional;
 
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.XboxController;
@@ -30,7 +33,10 @@ import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandBase;
+import edu.wpi.first.wpilibj2.command.ConditionalCommand;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 
 public class RobotContainer {
     
@@ -75,6 +81,7 @@ public class RobotContainer {
     private final ArmControlCommand armCommand = new ArmControlCommand(
         armSubsystem,
         clawSubsystem,
+        
         () -> -systemController.getLeftY(),
         systemController::getAButton,
         systemController::getXButton,
@@ -92,6 +99,24 @@ public class RobotContainer {
         armSubsystem.setDefaultCommand(armCommand);
         
         configAutonChooser();
+        
+        new Trigger(systemController::getStartButton).whileTrue(
+            new ConditionalCommand(
+                new DriveRelativeToAprilTag(
+                    swerveSubsystem,
+                    new Transform2d(
+                        new Translation2d(
+                            Units.inchesToMeters(28),
+                            0
+                        ),
+                        Rotation2d.fromDegrees(180)
+                    )
+                ),
+                new InstantCommand(()->{}),
+                () -> armSubsystem.getArmRotation().getDegrees() > 70
+            )
+        );
+        
     }
 
     public static void putConfigSendable (String title, Sendable sendable) {
@@ -108,8 +133,6 @@ public class RobotContainer {
         autonChooser.addOption("Taxi only", () -> new TaxiAuton(swerveSubsystem));
         autonChooser.addOption("Place and Balance", () -> new PlaceAndBalanceAuton(swerveSubsystem, armSubsystem, clawSubsystem, ArmPosition.HIGH));
         autonChooser.addOption("Place and Taxi (Octopus)", () -> new PlaceAndTaxi(swerveSubsystem, armSubsystem, clawSubsystem, ArmPosition.HIGH, DriverStation.getAlliance()));
-        autonChooser.addOption("TEST DRIVE", () -> new DriveTest(swerveSubsystem));
-        autonChooser.addOption("TEST APRIL TAG DRIVE", () -> new AprilTagTest(swerveSubsystem));
         putConfigSendable("AUTON SELECT", autonChooser);
     }
     
