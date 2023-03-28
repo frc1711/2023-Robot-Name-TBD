@@ -43,6 +43,7 @@ public class DriveToTransform extends CommandBase {
         this.swerve = swerve;
         this.transformContainer = transformContainer;
         addRequirements(swerve);
+        driveController.setTolerance(new Pose2d(0.05, 0.05, Rotation2d.fromDegrees(1)));
     }
     
     private double getSampleTime () {
@@ -60,7 +61,7 @@ public class DriveToTransform extends CommandBase {
         
         // The robot should follow the angle of the change from the start pose to final pose
         // So that it always faces in the same direction it drives in
-        artificialRotation = transformContainer.get().getTranslation().getAngle().plus(startPose.getRotation());
+        artificialRotation = finalPose.getTranslation().minus(startPose.getTranslation()).getAngle();
         
         Rotation2d startRotation = startPose.getRotation();
         Rotation2d finalRotation = finalPose.getRotation();
@@ -90,13 +91,8 @@ public class DriveToTransform extends CommandBase {
     public void execute () {
         Trajectory.State desiredPose = trajectory.sample(getSampleTime());
         
-        Pose2d artificialPose = new Pose2d(swerve.getPose().getTranslation(), artificialRotation);
-        
-        System.out.println("Current: " + artificialPose);
-        System.out.println("Desired: " + desiredPose.poseMeters);
-        
         ChassisSpeeds speeds = driveController.calculate(
-            artificialPose,
+            swerve.getPose(),
             desiredPose,
             artificialRotation
         );
@@ -107,6 +103,11 @@ public class DriveToTransform extends CommandBase {
     @Override
     public void end (boolean interrupted) {
         swerve.stop();
+    }
+    
+    @Override
+    public boolean isFinished () {
+        return getSampleTime() > trajectory.getTotalTimeSeconds() && driveController.atReference();
     }
     
 }
