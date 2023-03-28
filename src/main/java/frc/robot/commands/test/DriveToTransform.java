@@ -23,9 +23,9 @@ public class DriveToTransform extends CommandBase {
     
     private final Swerve swerve;
     private final HolonomicDriveController driveController = new HolonomicDriveController(
-        new PIDController(1, 0, 0),
-        new PIDController(1, 0, 0),
-        new ProfiledPIDController(5, 0, 0,
+        new PIDController(3, 0, 0),
+        new PIDController(3, 0, 0),
+        new ProfiledPIDController(7, 0, 0,
             new Constraints(4, 2)
         )
     );
@@ -44,7 +44,7 @@ public class DriveToTransform extends CommandBase {
         this.swerve = swerve;
         this.transformContainer = transformContainer;
         addRequirements(swerve);
-        driveController.setTolerance(new Pose2d(0.05, 0.05, Rotation2d.fromDegrees(1)));
+        driveController.setTolerance(new Pose2d(0.02, 0.02, Rotation2d.fromDegrees(1)));
     }
     
     private double getSampleTime () {
