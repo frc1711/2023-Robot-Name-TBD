@@ -8,7 +8,7 @@ public class BalanceCommandAuton extends SequentialCommandGroup {
     
     public BalanceCommandAuton (Swerve swerve, boolean reverse) {
         super(
-            new DriveStraightCommand(swerve, !reverse, 3.5, 1.2, true),
+            new DriveStraightCommand(swerve, !reverse, 3, 1.1, true),
             new BalanceSlowCommand(swerve),
             new RunCommand(swerve::xMode, swerve).withTimeout(2)
         );

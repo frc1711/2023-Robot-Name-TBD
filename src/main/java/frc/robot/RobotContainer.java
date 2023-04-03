@@ -17,12 +17,10 @@ import frc.robot.subsystems.Conveyor;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Arm.ArmPosition;
 import frc.robot.subsystems.swerve.Swerve;
-import frc.robot.vision.Cameras;
 
 import java.util.function.Supplier;
 import java.util.Optional;
 
-import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.XboxController;
@@ -54,6 +52,8 @@ public class RobotContainer {
         driveController::getRightX,
         driveController::getLeftStickButton,
         () -> driveController.getLeftTriggerAxis() > 0.8 && driveController.getRightTriggerAxis() > 0.8,
+        driveController::getXButton,
+        
         () -> {
             int povRead = driveController.getPOV();
             return povRead == -1 ? Optional.empty() : Optional.of(Double.valueOf(povRead));
@@ -66,7 +66,8 @@ public class RobotContainer {
         () -> driveController.getLeftBumper(),
         () -> driveController.getRightBumper(),
         () -> systemController.getRightY() < -0.5,
-        () -> systemController.getRightY() > 0.5
+        () -> systemController.getRightY() > 0.5,
+        () -> systemController.getLeftTriggerAxis() > 0.5
     );
     
     private final ArmControlCommand armCommand = new ArmControlCommand(
@@ -83,8 +84,6 @@ public class RobotContainer {
     );
     
     public RobotContainer () {
-        Cameras.getInstance();
-        
         swerveSubsystem.setDefaultCommand(driveCommand);
         intakeSubsystem.setDefaultCommand(intakeCommand);
         conveyorSubsystem.setDefaultCommand(intakeCommand);

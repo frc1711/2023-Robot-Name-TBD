@@ -23,7 +23,7 @@ public class DriveCommand extends CommandBase {
     private final SwerveTeleopAccelerationConstraints accelerationConstraints = new SwerveTeleopAccelerationConstraints(14.7, 54);
     
     private final Swerve swerve;
-    private final BooleanSupplier xModeInput, turboModeControl, resetGyro;
+    private final BooleanSupplier xModeInput, turboModeControl, resetGyro, robotRelDriveControl;
     private final DoubleSupplier strafeXAxis, strafeYAxis, rotateAxis;
     
     private final Supplier<Optional<Double>> lockInRotationControl;
@@ -44,6 +44,7 @@ public class DriveCommand extends CommandBase {
             
             BooleanSupplier turboModeControl,
             BooleanSupplier resetGyro,
+            BooleanSupplier robotRelDriveControl,
             
             Supplier<Optional<Double>>  lockInRotationControl
         ) {
@@ -56,6 +57,7 @@ public class DriveCommand extends CommandBase {
         
         this.turboModeControl = turboModeControl;
         this.resetGyro = resetGyro;
+        this.robotRelDriveControl = robotRelDriveControl;
         
         this.lockInRotationControl = lockInRotationControl;
         addRequirements(swerve);
@@ -133,7 +135,20 @@ public class DriveCommand extends CommandBase {
         ChassisSpeeds desiredSpeeds = new ChassisSpeeds(-strafeSpeeds.y(), -strafeSpeeds.x(), rotateSpeed);
         
         // Apply the final acceleration constraints to the desired speeds
-        swerve.moveFieldRelativeTeleop(accelerationConstraints.applyToSpeeds(desiredSpeeds));
+        if (!robotRelDriveControl.getAsBoolean()) {
+            // Field-relative
+            desiredSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(desiredSpeeds, swerve.getTeleopDriveRobotRotation());
+        } else {
+            
+            // Invert for driving relative to intake side (camera)
+            desiredSpeeds = new ChassisSpeeds(
+                -desiredSpeeds.vxMetersPerSecond,
+                -desiredSpeeds.vyMetersPerSecond,
+                desiredSpeeds.omegaRadiansPerSecond
+            );
+        }
+        
+        swerve.moveRobotRelative(accelerationConstraints.applyToSpeeds(desiredSpeeds));
     }
     
     @Override

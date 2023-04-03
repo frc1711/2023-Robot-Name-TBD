@@ -3,7 +3,7 @@ package frc.robot.limelight;
 import java.util.ArrayList;
 import java.util.Optional;
 
-import edu.wpi.first.cscore.MjpegServer;
+import edu.wpi.first.cscore.HttpCamera;
 import edu.wpi.first.cscore.VideoSource;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
@@ -12,16 +12,19 @@ import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 
 public class Limelight {
-
+    
     private static final ArrayList<Limelight> allLimelights = new ArrayList<>();
-
+    
     public static final Limelight
         INTAKE_LIMELIGHT = new Limelight("intake", "10.17.11.17"),
-        ARM_LIMELIGHT = new Limelight("arm", "10.17.11.16"); 
+        ARM_LIMELIGHT = new Limelight("arm", "10.17.11.16");
 
     private NetworkTable TABLE;
     private static final long SNAPSHOT_RESET_MILLIS = 1000;
-    private MjpegServer cameraServer;
+    private Optional<HttpCamera> cameraServer = Optional.empty();
+    
+    private final String cameraAddress;
+    private final String cameraIP;
     
     /**
      * Basic targeting data
@@ -55,6 +58,10 @@ public class Limelight {
         ENTRY_CROP_RECTANGLE;
 
     public Limelight (String cameraAddress, String cameraIP) {
+        
+        this.cameraAddress = cameraAddress;
+        this.cameraIP = cameraIP;
+        
         TABLE = NetworkTableInstance.getDefault().getTable("limelight-" + cameraAddress);
         ENTRY_TV =      TABLE.getEntry("tv");
         ENTRY_TX =      TABLE.getEntry("tx");
@@ -81,9 +88,7 @@ public class Limelight {
         ENTRY_STREAM_MODE       = TABLE.getEntry("stream");
         ENTRY_SNAPSHOT          = TABLE.getEntry("snapshot");
         ENTRY_CROP_RECTANGLE    = TABLE.getEntry("crop");
-
-        cameraServer = new MjpegServer("limelight", "http://" + cameraIP, 5800);
-
+        
         allLimelights.add(this);
     }
 
@@ -94,10 +99,6 @@ public class Limelight {
     public double[] getFieldRelativeBotPose (boolean alliance) {
         if (alliance) return ENTRY_BRPOSE.getDoubleArray(new double[9]);
         else return ENTRY_RRPOSE.getDoubleArray(new double[9]);
-    }
-
-    public VideoSource getSource () {
-        return cameraServer.getSource();
     }
     
     // Basic target recognition
@@ -124,16 +125,16 @@ public class Limelight {
             ));
         }
     }
-
+    
     public boolean hasAprilTag() {
-        return ENTRY_TID.getDouble(0) != 0;
+        return ENTRY_TID.getDouble(0) != -1;
     }
     
     /**
      * Gets a {@code Pose3d} from a Translation(x, y, z), Rotation(roll, pitch, yaw) array
      */
     private static Pose3d getPoseFromArray (double[] array) {
-        if (array.length != 6) return new Pose3d();
+        if (array.length < 6) return new Pose3d();
         return new Pose3d(
             array[0], array[1], array[2],                   // x, y, z
             new Rotation3d(array[3], array[4], array[5])    // roll, pitch, yaw
@@ -226,6 +227,14 @@ public class Limelight {
             this.mode = mode;
         }
         
+    }
+    
+    public VideoSource getSource () {
+        if (cameraServer.isEmpty()) {
+            cameraServer = Optional.of(new HttpCamera("limelight-"+cameraAddress, "http://" + cameraIP + ":5800"));
+        }
+        
+        return cameraServer.get();
     }
     
     /**

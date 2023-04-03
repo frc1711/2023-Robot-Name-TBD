@@ -25,11 +25,12 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.LiveCommandTester;
 import frc.robot.RobotContainer;
 import frc.robot.subsystems.DigitalInputEncoder.AnglePoint;
+import frc.robot.vision.VisionManager;
 
 public class Arm extends SubsystemBase {
     
     public static final double
-        ARM_MIN_ANGLE_DEGREES = -4.5,
+        ARM_MIN_ANGLE_DEGREES = -5.3,
         ARM_MAX_ANGLE_DEGREES = 99;
     
     private static final double ARM_CURRENT_LIMIT = 25;
@@ -151,7 +152,7 @@ public class Arm extends SubsystemBase {
         HIGH    (Rotation2d.fromDegrees(95)),
         MIDDLE  (Rotation2d.fromDegrees(70)),
         LOW     (Rotation2d.fromDegrees(35)),
-        STOWED  (Rotation2d.fromDegrees(-6));
+        STOWED  (Rotation2d.fromDegrees(-5));
         
         public final Rotation2d rotation;
         private ArmPosition (Rotation2d rotation) {
@@ -188,6 +189,11 @@ public class Arm extends SubsystemBase {
         builder.addDoubleProperty("Arm position", () -> getArmRotation().getDegrees(), null);
         builder.addDoubleProperty("Left arm output current", () -> leftArmMotor.getOutputCurrent(), null);
         builder.addDoubleProperty("Right arm output current", () -> rightArmMotor.getOutputCurrent(), null);
+    }
+    
+    @Override
+    public void periodic () {
+        VisionManager.getInstance().manageCamStreams(getArmRotation());
     }
     
 }

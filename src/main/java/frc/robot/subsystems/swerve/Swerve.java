@@ -9,12 +9,12 @@ import java.util.List;
 import com.kauailabs.navx.frc.AHRS;
 
 import claw.CLAWRobot;
+import claw.Setting;
 import edu.wpi.first.math.controller.HolonomicDriveController;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
-import claw.Setting;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -192,13 +192,11 @@ public class Swerve extends SubsystemBase {
      * This method must be called periodically. The movement will be relative to the last zeroGyroTeleop reset.
      * @param speeds The {@code ChassisSpeeds} to try to match with the swerve drive.
      */
-    public void moveFieldRelativeTeleop (ChassisSpeeds speeds) {
-        ChassisSpeeds robotRelativeSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
+    public ChassisSpeeds getFieldRelativeTeleopChassisSpeeds (ChassisSpeeds speeds) {
+        return ChassisSpeeds.fromFieldRelativeSpeeds(
             speeds,
             getTeleopDriveRobotRotation()
         );
-        
-        moveRobotRelative(robotRelativeSpeeds);
     }
     
     public void xMode () {
@@ -287,7 +285,7 @@ public class Swerve extends SubsystemBase {
             rrModule.getPosition(),
         });
         
-        // Optional<AprilTagData> tag = Limelight.getAprilTag();
+        // Optional<AprilTagData> tag = Limelight.ARM_LIMELIGHT.getAprilTag();
         // if (tag.isPresent()) {
         //     // TODO: make more robust to bad vision data, figure out why we're not seeing the apriltag in the limelight NT API
         //     AprilTagData data = tag.get();
