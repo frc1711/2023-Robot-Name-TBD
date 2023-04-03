@@ -17,27 +17,21 @@ import frc.robot.subsystems.swerve.Swerve;
 public class PlacementSetupCommand extends CommandBase {
   
   private final Swerve swerveDrive;
+  private final HubPosition position;
+  private final NodeSide side;
+  private final ArmPosition arm;
+  private final AprilTagData tagData;
+  private double[] botPose;
 
-  public PlacementSetupCommand(Swerve swerveDrive) {
+  public PlacementSetupCommand(Swerve swerveDrive, HubPosition position, NodeSide side, ArmPosition arm, AprilTagData tagData) {
     this.swerveDrive = swerveDrive;
+    this.position = position;
+    this.side = side;
+    this.arm = arm;
+    this.tagData = tagData;
+    this.botPose = Limelight.ARM_LIMELIGHT.getFieldRelativeBotPose();
     addRequirements(swerveDrive);
   }
-
-  public enum Alliance {
-    RED (
-      Limelight.INTAKE_LIMELIGHT.getFieldRelativeBotPose(false)
-    ),
-    BLUE (
-      Limelight.INTAKE_LIMELIGHT.getFieldRelativeBotPose(true)
-    );
-
-    private double[] fieldRelativeBotPose;
-
-    Alliance (double[] fieldRelativeBotPose) {
-      this.fieldRelativeBotPose = fieldRelativeBotPose;
-    }
-  }
-
   public enum HubPosition {
     LEFT (
       3, 6
@@ -93,11 +87,12 @@ public class PlacementSetupCommand extends CommandBase {
   //   } 
   // }
 
+
   double aprilTagDistanceX, aprilTagDistanceY, aprilTagDistanceDirect;
   Rotation2d rotation = new Rotation2d();
-  private Command runSetupSequence (Alliance alliance, HubPosition hub, NodeSide side, ArmPosition armPosition, AprilTagData aprilTag) {
-    aprilTagDistanceX = Math.abs(alliance.fieldRelativeBotPose[0] - aprilTag.targetPose().getX());
-    aprilTagDistanceY = Math.abs(alliance.fieldRelativeBotPose[1] - aprilTag.targetPose().getY());
+  private Command runSetupSequence (HubPosition hub, NodeSide side, ArmPosition armPosition, AprilTagData aprilTag) {
+    aprilTagDistanceX = Math.abs(botPose[0] - aprilTag.targetPose().getX());
+    aprilTagDistanceY = Math.abs(botPose[1] - aprilTag.targetPose().getY());
     aprilTagDistanceDirect = Math.sqrt((aprilTagDistanceX * aprilTagDistanceX) + (aprilTagDistanceY * aprilTagDistanceY));
     Translation2d translation = new Translation2d(aprilTagDistanceDirect, swerveDrive.getRobotRotation());
 
@@ -113,7 +108,9 @@ public class PlacementSetupCommand extends CommandBase {
 
   // Called every time the scheduler runs while the command is scheduled.
   @Override
-  public void execute() {}
+  public void execute() {
+    runSetupSequence(position, side, arm, tagData);
+  }
 
   // Called once the command ends or is interrupted.
   @Override
