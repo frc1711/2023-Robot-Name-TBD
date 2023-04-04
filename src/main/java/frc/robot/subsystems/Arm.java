@@ -193,7 +193,7 @@ public class Arm extends SubsystemBase {
     
     @Override
     public void periodic () {
-        VisionManager.getInstance().manageCamStreams(getArmRotation());
+        VisionManager.getInstance().updateArmRotation(getArmRotation());
     }
     
 }

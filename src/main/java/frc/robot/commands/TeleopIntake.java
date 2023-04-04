@@ -6,7 +6,6 @@ package frc.robot.commands;
 
 import java.util.function.BooleanSupplier;
 
-import claw.math.DualDebouncer;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.wpilibj2.command.CommandBase;
@@ -22,7 +21,7 @@ public class TeleopIntake extends CommandBase {
     private final Intake intake;
     private final BooleanSupplier intakeCubeControl, intakeConeControl, runConveyorSoloControl, runConveyorReverseSoloControl, runConveyorTurbo;
     
-    private final Debouncer runConveyorDebouncer = new Debouncer(3.5, DebounceType.kFalling);
+    private final Debouncer runConveyorDebouncer = new Debouncer(1.75, DebounceType.kFalling);
     private IntakeRunType lastIntakeRunType = IntakeRunType.NONE;
     
     public TeleopIntake(
@@ -105,7 +104,7 @@ public class TeleopIntake extends CommandBase {
         // Run the conveyor according to a debouncer, allowing for running for a period
         // of time after the intake is stopped (this is the default control mode)
         ConveyorMode defaultConveyorMode = runConveyorDebouncer.calculate(runType != IntakeRunType.NONE)
-            ? ConveyorMode.FORWARD
+            ? ConveyorMode.FAST_FORWARD
             : ConveyorMode.STOP;
         
         if (runConveyorSoloControl.getAsBoolean()) {

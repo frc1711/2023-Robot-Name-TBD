@@ -50,9 +50,10 @@ public class ArmControlCommand extends CommandBase {
         
         BooleanSupplier grabControl,
         BooleanSupplier releaseControl
-    ) {
+    ){
         this.arm = arm;
         this.claw = claw;
+        
         this.armControl = armControl;
         this.armToLow = armToLow;
         this.armToMid = armToMid;
