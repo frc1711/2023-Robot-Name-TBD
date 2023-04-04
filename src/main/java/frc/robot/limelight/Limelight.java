@@ -5,8 +5,12 @@ import java.util.Optional;
 
 import edu.wpi.first.cscore.HttpCamera;
 import edu.wpi.first.cscore.VideoSource;
+import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.WPIMathJNI;
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -74,7 +78,7 @@ public class Limelight {
         ENTRY_JSON =    TABLE.getEntry("json");
         ENTRY_TCLASS =  TABLE.getEntry("tclass");
         ENTRY_TC =      TABLE.getEntry("tc");
-        ENTRY_TPOSE =   TABLE.getEntry("targetpose_robotspace");
+        ENTRY_TPOSE =   TABLE.getEntry("targetpose_cameraspace");
         ENTRY_RPOSE =   TABLE.getEntry("botpose");
         ENTRY_TID =     TABLE.getEntry("tid");
 
@@ -132,7 +136,11 @@ public class Limelight {
         if (array.length < 6) return new Pose3d();
         return new Pose3d(
             array[0], array[1], array[2],                   // x, y, z
-            new Rotation3d(array[3], array[4], array[5])    // roll, pitch, yaw
+            new Rotation3d(                                 // roll, pitch, yaw
+                Units.degreesToRadians(array[3]),
+                Units.degreesToRadians(array[4]),
+                Units.degreesToRadians(array[5])
+            )
         );
     }
     
