@@ -7,6 +7,7 @@ import frc.robot.subsystems.Claw;
 import frc.robot.subsystems.Arm.ArmPosition;
 import frc.robot.subsystems.swerve.Swerve;
 
+// Octopus, clear side auto
 public class PlaceAndTaxi extends SequentialCommandGroup {
     
     public PlaceAndTaxi (Swerve swerve, Arm arm, Claw claw, ArmPosition scorePosition, Alliance alliance) {
