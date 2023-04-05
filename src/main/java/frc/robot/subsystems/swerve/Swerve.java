@@ -83,18 +83,6 @@ public class Swerve extends SubsystemBase {
         REAR_RIGHT_MODULE_TRANSLATION
     );
     
-    private final SwerveDrivePoseEstimator poseEstimator = new SwerveDrivePoseEstimator(
-        kinematics,
-        gyro.getRotation2d(),
-        new SwerveModulePosition[]{
-            flModule.getPosition(),
-            frModule.getPosition(),
-            rlModule.getPosition(),
-            rrModule.getPosition(),
-        },
-        new Pose2d()
-    );
-    
     private final Constraints robotConstraints = new Constraints(8, 8);
     
     private final PIDController
@@ -110,11 +98,24 @@ public class Swerve extends SubsystemBase {
     
     private final Field2d sendableField = new Field2d();
     
+    private Rotation2d absoluteRobotRotationOffset = gyro.getRotation2d();
     private Rotation2d gyroTeleopYawOffset = Rotation2d.fromDegrees(0);
     private double gyroZeroPitchOffset = 0;
     
     
     private double measurementOffset = 0;
+    
+    private final SwerveDrivePoseEstimator poseEstimator = new SwerveDrivePoseEstimator(
+        kinematics,
+        getRobotRotation(),
+        new SwerveModulePosition[]{
+            flModule.getPosition(),
+            frModule.getPosition(),
+            rlModule.getPosition(),
+            rrModule.getPosition(),
+        },
+        new Pose2d(0, 0, getRobotRotation())
+    );
     
     private Swerve () {
         RobotContainer.putConfigSendable("Swerve Subsystem", this);
@@ -232,10 +233,6 @@ public class Swerve extends SubsystemBase {
         return gyro.getRoll();
     }
     
-    public Rotation2d getRobotRotation () {
-        return gyro.getRotation2d();
-    }
-    
     public Rotation2d getTeleopDriveRobotRotation () {
         return getRobotRotation().minus(gyroTeleopYawOffset);
     }
@@ -280,9 +277,30 @@ public class Swerve extends SubsystemBase {
         return poseEstimator.getEstimatedPosition();
     }
     
+    public Rotation2d getRobotRotation () {
+        // P = R - A
+        return gyro.getRotation2d().minus(absoluteRobotRotationOffset);
+    }
+    
+    /**
+     * USE WITH CAUTION - THIS ADJUSTS ROTATION AND POSE READINGS
+     */
+    public void setPose (Pose2d newPose) {
+        // A = R - P
+        // Adjust absoluteRobotRotationOffset to reset the getRobotRotation reading to fit the pose
+        absoluteRobotRotationOffset = gyro.getRotation2d().minus(newPose.getRotation());
+        
+        poseEstimator.resetPosition(getRobotRotation(), new SwerveModulePosition[]{
+            flModule.getPosition(),
+            frModule.getPosition(),
+            rlModule.getPosition(),
+            rrModule.getPosition(),
+        }, newPose);
+    }
+    
     @Override
     public void periodic () {
-        poseEstimator.update(gyro.getRotation2d(), new SwerveModulePosition[]{
+        poseEstimator.update(getRobotRotation(), new SwerveModulePosition[]{
             flModule.getPosition(),
             frModule.getPosition(),
             rlModule.getPosition(),

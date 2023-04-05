@@ -6,6 +6,7 @@ import claw.math.Vector;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N2;
@@ -56,6 +57,8 @@ public class DriveToRelativePosition extends CommandBase {
     
     @Override
     public void initialize () {
+        swerve.setPose(new Pose2d(2, 2, new Rotation2d(3)));
+        
         targetPose = robotPoseToTargetPose.apply(swerve.getPose());
         lastCommandedSpeeds = new ChassisSpeeds();
         xController.reset();
