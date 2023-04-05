@@ -88,10 +88,17 @@ public class Limelight {
         ENTRY_STREAM_MODE       = TABLE.getEntry("stream");
         ENTRY_SNAPSHOT          = TABLE.getEntry("snapshot");
         ENTRY_CROP_RECTANGLE    = TABLE.getEntry("crop");
-
+        
         allLimelights.add(this);
     }
 
+    /**
+     * Take in boolean @param alliance {@code false} for red, {@code true} for blue,
+     * @return double array which contains the botpose (x, y, z) relative to the alliance
+     */
+    public double[] getFieldRelativeBotPose () {
+        return ENTRY_RPOSE.getDoubleArray(new double[0]);
+    }
     
     // Basic target recognition
    
