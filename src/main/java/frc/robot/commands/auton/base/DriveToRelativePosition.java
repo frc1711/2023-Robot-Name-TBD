@@ -22,15 +22,15 @@ public class DriveToRelativePosition extends CommandBase {
         MAX_DIST_FROM_ENDPOINT = 0.1,
         MAX_RADIANS_FROM_ENDPOINT = 0.1;
     
-    private static final double MAX_STRAFE_VELOCITY = 4, MAX_ANGULAR_VELOCITY = 5;
-    
     private final Swerve swerve;
     private final Function<Pose2d, Pose2d> robotPoseToTargetPose;
     private final PIDController
-        xController = new PIDController(1, 0, 0),
-        yController = new PIDController(1, 0, 0),
-        thetaRadiansController = new PIDController(1, 0, 0);
-    private final SwerveTeleopAccelerationConstraints constraints = new SwerveTeleopAccelerationConstraints(3, 3);
+        xController = new PIDController(6, 0, 0),
+        yController = new PIDController(6, 0, 0),
+        thetaRadiansController = new PIDController(3, 0, 0);
+    
+    private static final double MAX_STRAFE_VELOCITY = 4.5, MAX_ANGULAR_VELOCITY = 4.5;
+    private final SwerveTeleopAccelerationConstraints constraints = new SwerveTeleopAccelerationConstraints(14.5, 9);
     
     private Pose2d targetPose = new Pose2d();
     private ChassisSpeeds lastCommandedSpeeds = new ChassisSpeeds();
@@ -57,8 +57,6 @@ public class DriveToRelativePosition extends CommandBase {
     
     @Override
     public void initialize () {
-        swerve.setPose(new Pose2d(2, 2, new Rotation2d(3)));
-        
         targetPose = robotPoseToTargetPose.apply(swerve.getPose());
         lastCommandedSpeeds = new ChassisSpeeds();
         xController.reset();
