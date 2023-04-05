@@ -276,6 +276,10 @@ public class Swerve extends SubsystemBase {
         );
     }
     
+    public Pose2d getPose () {
+        return poseEstimator.getEstimatedPosition();
+    }
+    
     @Override
     public void periodic () {
         poseEstimator.update(gyro.getRotation2d(), new SwerveModulePosition[]{
@@ -284,14 +288,6 @@ public class Swerve extends SubsystemBase {
             rlModule.getPosition(),
             rrModule.getPosition(),
         });
-        
-        // Optional<AprilTagData> tag = Limelight.ARM_LIMELIGHT.getAprilTag();
-        // if (tag.isPresent()) {
-        //     // TODO: make more robust to bad vision data, figure out why we're not seeing the apriltag in the limelight NT API
-        //     AprilTagData data = tag.get();
-        //     double time = Timer.getFPGATimestamp();
-        //     poseEstimator.addVisionMeasurement(data.robotPose().toPose2d(), time);
-        // }
         
         sendableField.setRobotPose(poseEstimator.getEstimatedPosition());
     }
