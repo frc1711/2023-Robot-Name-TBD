@@ -31,8 +31,6 @@ import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandBase;
-import edu.wpi.first.wpilibj2.command.ConditionalCommand;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
@@ -99,11 +97,11 @@ public class RobotContainer {
         configAutonChooser();
         
         new Trigger(systemController::getStartButton).whileTrue(
-            new ConditionalCommand(
-                new AutoCubeSetup(swerveSubsystem, armSubsystem, clawSubsystem, false),
-                new InstantCommand(()->{}),
-                () -> armSubsystem.getArmRotation().getDegrees() > 70
-            )
+            new AutoCubeSetup(swerveSubsystem, armSubsystem, clawSubsystem, true)
+        );
+        
+        new Trigger(systemController::getBackButton).whileTrue(
+            new AutoCubeSetup(swerveSubsystem, armSubsystem, clawSubsystem, false)
         );
         
     }
