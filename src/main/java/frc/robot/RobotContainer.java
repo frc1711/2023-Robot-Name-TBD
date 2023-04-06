@@ -10,11 +10,10 @@ import frc.robot.commands.TeleopIntake;
 import frc.robot.commands.auton.BalanceCommandAuton;
 import frc.robot.commands.auton.PlaceAndBalanceAuton;
 import frc.robot.commands.auton.PlaceAndTaxi;
-import frc.robot.commands.auton.RunTimedIntake;
 import frc.robot.commands.auton.TaxiAuton;
 import frc.robot.commands.auton.WireGuardPlaceAndIntake;
 import frc.robot.commands.auton.WireGuardPlaceAndTaxi;
-import frc.robot.commands.auton.vision.DriveRelativeToAprilTag;
+import frc.robot.commands.auton.vision.AutoCubeSetup;
 import frc.robot.subsystems.Arm;
 import frc.robot.subsystems.Claw;
 import frc.robot.subsystems.Conveyor;
@@ -25,10 +24,6 @@ import frc.robot.subsystems.swerve.Swerve;
 import java.util.function.Supplier;
 import java.util.Optional;
 
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.XboxController;
@@ -105,7 +100,7 @@ public class RobotContainer {
         
         new Trigger(systemController::getStartButton).whileTrue(
             new ConditionalCommand(
-                DriveRelativeToAprilTag.getMidCentering(swerveSubsystem),
+                new AutoCubeSetup(swerveSubsystem, armSubsystem, clawSubsystem, false),
                 new InstantCommand(()->{}),
                 () -> armSubsystem.getArmRotation().getDegrees() > 70
             )

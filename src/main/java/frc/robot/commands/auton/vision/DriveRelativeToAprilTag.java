@@ -66,7 +66,7 @@ public class DriveRelativeToAprilTag extends SequentialCommandGroup {
             // Adjust this as needed.
             new Transform2d(
                 new Translation2d(
-                    Units.inchesToMeters(42),
+                    Units.inchesToMeters(43.5),
                     Units.inchesToMeters(0)
                 ),
                 Rotation2d.fromDegrees(0)
