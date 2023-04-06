@@ -105,7 +105,7 @@ public class RobotContainer {
         
         new Trigger(systemController::getStartButton).whileTrue(
             new ConditionalCommand(
-                DriveRelativeToAprilTag.getHighCentering(swerveSubsystem),
+                DriveRelativeToAprilTag.getMidCentering(swerveSubsystem),
                 new InstantCommand(()->{}),
                 () -> armSubsystem.getArmRotation().getDegrees() > 70
             )

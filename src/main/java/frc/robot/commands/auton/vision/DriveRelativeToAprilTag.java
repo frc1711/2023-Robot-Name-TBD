@@ -58,4 +58,20 @@ public class DriveRelativeToAprilTag extends SequentialCommandGroup {
         );
     }
     
+    public static DriveRelativeToAprilTag getMidCentering (Swerve swerve) {
+        return new DriveRelativeToAprilTag(
+            swerve,
+            
+            // Note: This transform isn't exactly precise, because the april tag in our room is slightly off-center.
+            // Adjust this as needed.
+            new Transform2d(
+                new Translation2d(
+                    Units.inchesToMeters(42),
+                    Units.inchesToMeters(0)
+                ),
+                Rotation2d.fromDegrees(0)
+            )
+        );
+    }
+    
 }
