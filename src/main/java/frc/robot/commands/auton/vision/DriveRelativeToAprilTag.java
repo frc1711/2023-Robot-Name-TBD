@@ -1,10 +1,11 @@
 package frc.robot.commands.auton.vision;
 
 import frc.robot.commands.Container;
+import frc.robot.commands.auton.base.DriveToPosition;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.ProxyCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
-import frc.robot.commands.auton.DriveToTransform;
 import frc.robot.subsystems.swerve.Swerve;
 
 public class DriveRelativeToAprilTag extends SequentialCommandGroup {
@@ -23,7 +24,7 @@ public class DriveRelativeToAprilTag extends SequentialCommandGroup {
                 currentPoseToFinal.set(aprilTagTransform.get().plus(tagToFinalPose));
                 
             }),
-            new DriveToTransform(swerve, currentPoseToFinal)
+            new ProxyCommand(() -> new DriveToPosition(swerve, currentPoseToFinal.get()))
         );
     }
     

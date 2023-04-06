@@ -14,7 +14,6 @@ import frc.robot.commands.auton.RunTimedIntake;
 import frc.robot.commands.auton.TaxiAuton;
 import frc.robot.commands.auton.WireGuardPlaceAndIntake;
 import frc.robot.commands.auton.WireGuardPlaceAndTaxi;
-import frc.robot.commands.auton.base.DriveToRelativePosition;
 import frc.robot.commands.auton.vision.DriveRelativeToAprilTag;
 import frc.robot.subsystems.Arm;
 import frc.robot.subsystems.Claw;
@@ -139,7 +138,6 @@ public class RobotContainer {
         autonChooser.addOption("Place and Taxi (Octopus)", () -> new PlaceAndTaxi(swerveSubsystem, armSubsystem, clawSubsystem, ArmPosition.HIGH, DriverStation.getAlliance()));
         autonChooser.addOption("Wire-guard-side Place and Taxi", () -> new WireGuardPlaceAndTaxi(swerveSubsystem, armSubsystem, clawSubsystem));
         autonChooser.addOption("Wire-guard-side Place and Intake", () -> new WireGuardPlaceAndIntake(swerveSubsystem, armSubsystem, clawSubsystem, intakeSubsystem));
-        autonChooser.addOption("Drive test", () -> new DriveToRelativePosition(swerveSubsystem, new Transform2d(new Translation2d(2, 0.5), new Rotation2d(1))));
         putConfigSendable("AUTON SELECT", autonChooser);
     }
     

@@ -14,13 +14,14 @@ import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.subsystems.swerve.Swerve;
 import frc.robot.subsystems.swerve.SwerveTeleopAccelerationConstraints;
 
-public class DriveToRelativePosition extends CommandBase {
+public class DriveToPosition extends CommandBase {
     
+    // Distances measured in meters, time in seconds, angles in radians
     private static final double
-        MAX_STRAFE_VELOCITY_AT_END = 0.2,
+        MAX_STRAFE_VELOCITY_AT_END = 0.05,
         MAX_ANGULAR_VELOCITY_AT_END = 0.2,
-        MAX_DIST_FROM_ENDPOINT = 0.1,
-        MAX_RADIANS_FROM_ENDPOINT = 0.1;
+        MAX_DIST_FROM_ENDPOINT = 0.02,
+        MAX_RADIANS_FROM_ENDPOINT = 0.01;
     
     private final Swerve swerve;
     private final Function<Pose2d, Pose2d> robotPoseToTargetPose;
@@ -38,18 +39,18 @@ public class DriveToRelativePosition extends CommandBase {
     /**
      * Drives the swerve drive to a final target pose
      */
-    public DriveToRelativePosition (Swerve swerve, Pose2d targetPose) {
+    public DriveToPosition (Swerve swerve, Pose2d targetPose) {
         this(swerve, robotPose -> targetPose);
     }
     
     /**
      * Drives the swerve drive across the transform
      */
-    public DriveToRelativePosition (Swerve swerve, Transform2d transform) {
+    public DriveToPosition (Swerve swerve, Transform2d transform) {
         this(swerve, robotPose -> robotPose.plus(transform));
     }
     
-    private DriveToRelativePosition (Swerve swerve, Function<Pose2d, Pose2d> robotPoseToTargetPose) {
+    private DriveToPosition (Swerve swerve, Function<Pose2d, Pose2d> robotPoseToTargetPose) {
         this.swerve = swerve;
         this.robotPoseToTargetPose = robotPoseToTargetPose;
         addRequirements(swerve);
